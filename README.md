@@ -1,2 +1,2 @@
-SimpleLevelDB
+EZ LevelDB
 =============
