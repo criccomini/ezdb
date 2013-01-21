@@ -2,7 +2,9 @@ package ezleveldb;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
@@ -19,6 +21,7 @@ public class Table<P, O, V> {
   public Table(File path, Serde<P> partitionKeySerde, Serde<O> orderKeySerde, Serde<V> valueSerde) throws IOException {
     Options options = new Options();
     options.createIfMissing(true);
+    options.comparator(new PartitionOrderComparator());
     this.path = path;
     this.db = JniDBFactory.factory.open(path, options);
     this.partitionKeySerde = partitionKeySerde;
@@ -28,17 +31,20 @@ public class Table<P, O, V> {
 
   public Iterator<V> get(P partitionKey, O orderKey) {
     final DBIterator iterator = db.iterator();
-    byte[] keyBytes = combine(partitionKeySerde.toBytes(partitionKey), orderKeySerde.toBytes(orderKey));
+    final byte[] keyBytes = combine(partitionKeySerde.toBytes(partitionKey), orderKeySerde.toBytes(orderKey));
     iterator.seek(keyBytes);
     return new Iterator<V>() {
       @Override
       public boolean hasNext() {
-        return iterator.hasNext();
+        return iterator.hasNext() && ByteBuffer.wrap(keyBytes).compareTo(ByteBuffer.wrap(iterator.peekNext().getKey())) < 1;
       }
 
       @Override
       public V next() {
-        return valueSerde.fromBytes(iterator.next().getValue());
+        if (hasNext()) {
+          return valueSerde.fromBytes(iterator.next().getValue());
+        }
+        throw new NoSuchElementException();
       }
 
       @Override
@@ -49,20 +55,45 @@ public class Table<P, O, V> {
   }
 
   public Iterator<V> scan(P partitionKeyFrom, O orderKeyFrom, P partitionKeyTo, O orderKeyTo) {
-    return null;
+    final DBIterator iterator = db.iterator();
+    final byte[] keyBytesFrom = combine(partitionKeySerde.toBytes(partitionKeyFrom), orderKeySerde.toBytes(orderKeyFrom));
+    final byte[] keyBytesTo = combine(partitionKeySerde.toBytes(partitionKeyFrom), orderKeySerde.toBytes(orderKeyFrom));
+    iterator.seek(keyBytesFrom);
+    return new Iterator<V>() {
+      @Override
+      public boolean hasNext() {
+        return iterator.hasNext() && ByteBuffer.wrap(keyBytesTo).compareTo(ByteBuffer.wrap(iterator.peekNext().getKey())) < 1;
+      }
+
+      @Override
+      public V next() {
+        if (hasNext()) {
+          return valueSerde.fromBytes(iterator.next().getValue());
+        }
+        throw new NoSuchElementException();
+      }
+
+      @Override
+      public void remove() {
+        iterator.remove();
+      }
+    };
   }
 
   public void put(P partitionKey, O orderKey, V value) {
-  }
-
-  public static byte[] combine(byte[] arg1, byte[] arg2) {
-    byte[] result = new byte[arg1.length + arg2.length];
-    System.arraycopy(arg1, 0, result, 0, arg1.length);
-    System.arraycopy(arg2, 0, result, arg1.length, arg2.length);
-    return result;
+    db.put(combine(partitionKeySerde.toBytes(partitionKey), orderKeySerde.toBytes(orderKey)), valueSerde.toBytes(value));
   }
 
   public void delete() throws IOException {
     JniDBFactory.factory.destroy(path, new Options());
+  }
+
+  public static byte[] combine(byte[] arg1, byte[] arg2) {
+    byte[] result = new byte[8 + arg1.length + arg2.length];
+    System.arraycopy(ByteBuffer.allocate(4).putInt(arg1.length).array(), 0, result, 0, 4);
+    System.arraycopy(arg1, 0, result, 4, arg1.length);
+    System.arraycopy(ByteBuffer.allocate(4).putInt(arg2.length).array(), 0, result, 4 + arg1.length, 4);
+    System.arraycopy(arg2, 0, result, 8 + arg1.length, arg2.length);
+    return result;
   }
 }
