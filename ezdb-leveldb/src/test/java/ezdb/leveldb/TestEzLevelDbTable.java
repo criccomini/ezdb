@@ -9,6 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import ezdb.Db;
+import ezdb.RangeTable;
 import ezdb.Table;
 import ezdb.TableIterator;
 import ezdb.serde.IntegerSerde;
@@ -16,7 +17,7 @@ import ezdb.serde.StringSerde;
 
 public class TestEzLevelDbTable {
   private Db ezdb;
-  private Table<Integer, Integer, Integer> table;
+  private RangeTable<Integer, Integer, Integer> table;
 
   @Test
   public void testNulls() {
@@ -32,6 +33,7 @@ public class TestEzLevelDbTable {
 
   @Test
   public void testPutGetH() {
+    Table<Integer, Integer> table = ezdb.getTable("test-simple", IntegerSerde.get, IntegerSerde.get);
     table.put(1, 1);
     assertEquals(new Integer(1), table.get(1));
     table.put(1, 2);
@@ -148,7 +150,7 @@ public class TestEzLevelDbTable {
   @Test
   public void testSortedStrings() {
     ezdb.deleteTable("test-range-strings");
-    Table<Integer, String, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get, StringSerde.get, IntegerSerde.get);
+    RangeTable<Integer, String, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get, StringSerde.get, IntegerSerde.get);
 
     table.put(1213, "20120102-foo", 1);
     table.put(1213, "20120102-bar", 2);
@@ -172,7 +174,7 @@ public class TestEzLevelDbTable {
 
   @Test
   public void testCustomRangeComparator() {
-    Table<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new Comparator<byte[]>() {
+    RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new Comparator<byte[]>() {
       // Let's do things in reverse lexicographical order.
       @Override
       public int compare(byte[] o1, byte[] o2) {
@@ -205,6 +207,7 @@ public class TestEzLevelDbTable {
   @After
   public void after() {
     ezdb.deleteTable("test");
+    ezdb.deleteTable("test-simple");
     ezdb.deleteTable("test-range-strings");
     ezdb.deleteTable("test-custom-range-comparator");
     ezdb.deleteTable("test-table-does-not-exist");

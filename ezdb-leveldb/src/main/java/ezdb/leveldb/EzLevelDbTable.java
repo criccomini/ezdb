@@ -9,13 +9,13 @@ import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import ezdb.DbException;
-import ezdb.Table;
+import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.leveldb.EzLevelDbComparator.LexicographicalComparator;
 import ezdb.serde.Serde;
 
-public class EzLevelDbTable<H, R, V> implements Table<H, R, V> {
+public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
   private final DB db;
   private final Serde<H> hashKeySerde;
   private final Serde<R> rangeKeySerde;

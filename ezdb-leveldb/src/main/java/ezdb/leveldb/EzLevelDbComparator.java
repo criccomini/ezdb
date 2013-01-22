@@ -4,6 +4,20 @@ import java.nio.ByteBuffer;
 import java.util.Comparator;
 import org.iq80.leveldb.DBComparator;
 
+/**
+ * LevelDb provides a comparator interface that we can use to handle hash/range
+ * pairs. Hash/range key pairs are persisted in the following byte format:
+ * 
+ * <pre>
+ * [4 byte hash key length]
+ * [arbitrary hash key bytes]
+ * [4 byte range key length]
+ * [arbitrary range key bytes]
+ * </pre>
+ * 
+ * @author criccomini
+ * 
+ */
 public class EzLevelDbComparator implements DBComparator {
   public static final String name = EzLevelDbComparator.class.toString();
 
