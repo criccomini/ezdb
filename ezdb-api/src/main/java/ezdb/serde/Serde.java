@@ -1,4 +1,4 @@
-package ezleveldb.serde;
+package ezdb.serde;
 
 public interface Serde<O> {
   public O fromBytes(byte[] bytes);

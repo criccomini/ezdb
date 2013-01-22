@@ -1,4 +1,4 @@
-package ezleveldb.hashrange;
+package ezdb;
 
 import java.util.Iterator;
 

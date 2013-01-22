@@ -1,4 +1,4 @@
-package ezleveldb.serde;
+package ezdb.serde;
 
 public class ByteSerde implements Serde<byte[]> {
   public static final ByteSerde get = new ByteSerde();

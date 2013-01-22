@@ -1,4 +1,4 @@
-package ezleveldb.serde;
+package ezdb.serde;
 
 import java.io.UnsupportedEncodingException;
 

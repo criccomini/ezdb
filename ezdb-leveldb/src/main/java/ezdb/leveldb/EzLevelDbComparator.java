@@ -1,11 +1,11 @@
-package ezleveldb;
+package ezdb.leveldb;
 
 import java.nio.ByteBuffer;
 
 import org.iq80.leveldb.DBComparator;
 
-public class HashRangeComparator implements DBComparator {
-  public static final String name = HashRangeComparator.class.toString();
+public class EzLevelDbComparator implements DBComparator {
+  public static final String name = EzLevelDbComparator.class.toString();
 
   @Override
   public int compare(byte[] k1, byte[] k2) {

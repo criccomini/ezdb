@@ -1,6 +1,6 @@
-package ezleveldb.hashrange;
+package ezdb;
 
-public interface HashRangeTable<H, R, V> {
+public interface Table<H, R, V> {
   public void put(H hashKey, V value);
 
   public void put(H hashKey, R rangeKey, V value);

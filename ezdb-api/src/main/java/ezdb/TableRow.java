@@ -1,4 +1,4 @@
-package ezleveldb.hashrange;
+package ezdb;
 
 public interface TableRow<H, R, V> {
   public H getHashKey();
