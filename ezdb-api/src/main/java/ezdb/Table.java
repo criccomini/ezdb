@@ -11,6 +11,8 @@ public interface Table<H, R, V> {
 
   public TableIterator<H, R, V> range(H hashKey);
 
+  public TableIterator<H, R, V> range(H hashKey, R fromRangeKey);
+
   public TableIterator<H, R, V> range(H hashKey, R fromRangeKey, R toRangeKey);
 
   public void delete(H hashKey);

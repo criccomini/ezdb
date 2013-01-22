@@ -11,6 +11,12 @@ public class EzLevelDbTableRow<H, R, V> implements TableRow<H, R, V> {
   private final R rangeKey;
   private final V value;
 
+  public EzLevelDbTableRow(H hashKey, R rangeKey, V value) {
+    this.hashKey = hashKey;
+    this.rangeKey = rangeKey;
+    this.value = value;
+  }
+
   public EzLevelDbTableRow(Entry<byte[], byte[]> rawRow, Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde) {
     // TODO could make serde lazy for a bit of extra speed
     byte[] compoundKeyBytes = rawRow.getKey();
@@ -20,11 +26,16 @@ public class EzLevelDbTableRow<H, R, V> implements TableRow<H, R, V> {
     byte[] hashKeyBytes = new byte[hashKeyBytesLength];
     keyBuffer.get(hashKeyBytes);
     int rangeKeyBytesLength = keyBuffer.getInt();
-    byte[] rangeKeyBytes = new byte[rangeKeyBytesLength];
-    keyBuffer.get(rangeKeyBytes);
+
+    if (rangeKeyBytesLength > 0) {
+      byte[] rangeKeyBytes = new byte[rangeKeyBytesLength];
+      keyBuffer.get(rangeKeyBytes);
+      rangeKey = rangeKeySerde.fromBytes(rangeKeyBytes);
+    } else {
+      rangeKey = null;
+    }
 
     hashKey = hashKeySerde.fromBytes(hashKeyBytes);
-    rangeKey = rangeKeySerde.fromBytes(rangeKeyBytes);
     value = valueSerde.fromBytes(rawRow.getValue());
   }
 

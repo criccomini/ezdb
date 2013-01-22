@@ -85,6 +85,34 @@ public class EzLevelDbTable<H, R, V> implements Table<H, R, V> {
   }
 
   @Override
+  public TableIterator<H, R, V> range(H hashKey, R fromRangeKey) {
+    final DBIterator iterator = db.iterator();
+    final byte[] keyBytesFrom = combine(hashKey, fromRangeKey);
+    iterator.seek(keyBytesFrom);
+    return new TableIterator<H, R, V>() {
+      @Override
+      public boolean hasNext() {
+        return iterator.hasNext() && EzLevelDbComparator.compareKeys(keyBytesFrom, iterator.peekNext().getKey(), true) <= 0;
+      }
+
+      @Override
+      public TableRow<H, R, V> next() {
+        return new EzLevelDbTableRow<H, R, V>(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+      }
+
+      @Override
+      public void remove() {
+        iterator.remove();
+      }
+
+      @Override
+      public void close() {
+        iterator.close();
+      }
+    };
+  }
+
+  @Override
   public TableIterator<H, R, V> range(H hashKey, R fromRangeKey, R toRangeKey) {
     final DBIterator iterator = db.iterator();
     final byte[] keyBytesFrom = combine(hashKey, fromRangeKey);
