@@ -23,8 +23,6 @@ EZDB also supports hash/range lookups!
     
     table.put(1213, "20120102-foo", 1234);
     table.put(1213, "20120102-bar", 5678);
-    
-    // you can even mix and match!
     table.put(1213, 12345678);
     
     TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
@@ -33,7 +31,7 @@ EZDB also supports hash/range lookups!
       System.out.println(it.next().getValue()); // prints 1234 then 5678
     }
     
-    System.out.println(table.get(1213));
+    System.out.println(table.get(1213)); // prints 12345678
 
 This functionality is very similar to DynamoDB's hash key/range key behavior. Using the hash key, you can group rows together, and then perform range queries within these buckets! Pretty cool, huh?
 
