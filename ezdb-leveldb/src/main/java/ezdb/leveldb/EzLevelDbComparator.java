@@ -6,14 +6,7 @@ import org.iq80.leveldb.DBComparator;
 
 /**
  * LevelDb provides a comparator interface that we can use to handle hash/range
- * pairs. Hash/range key pairs are persisted in the following byte format:
- * 
- * <pre>
- * [4 byte hash key length]
- * [arbitrary hash key bytes]
- * [4 byte range key length]
- * [arbitrary range key bytes]
- * </pre>
+ * pairs.
  * 
  * @author criccomini
  * 
@@ -79,5 +72,31 @@ public class EzLevelDbComparator implements DBComparator {
     }
 
     return partitionComparison;
+  }
+
+  /**
+   * Utility function to combine a hash key and range key. Hash/range key pairs
+   * are expected to be persisted in the following byte format:
+   * 
+   * <pre>
+   * [4 byte hash key length]
+   * [arbitrary hash key bytes]
+   * [4 byte range key length]
+   * [arbitrary range key bytes]
+   * </pre>
+   * 
+   * @param hashKeyBytes
+   *          Are the hash key's bytes.
+   * @param rangeKeyBytes
+   *          Are the range key's bytes.
+   * @return Returns a byte array defined by the format above.
+   */
+  public static byte[] combine(byte[] hashKeyBytes, byte[] rangeKeyBytes) {
+    byte[] result = new byte[8 + hashKeyBytes.length + rangeKeyBytes.length];
+    System.arraycopy(ByteBuffer.allocate(4).putInt(hashKeyBytes.length).array(), 0, result, 0, 4);
+    System.arraycopy(hashKeyBytes, 0, result, 4, hashKeyBytes.length);
+    System.arraycopy(ByteBuffer.allocate(4).putInt(rangeKeyBytes.length).array(), 0, result, 4 + hashKeyBytes.length, 4);
+    System.arraycopy(rangeKeyBytes, 0, result, 8 + hashKeyBytes.length, rangeKeyBytes.length);
+    return result;
   }
 }

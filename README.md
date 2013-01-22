@@ -70,14 +70,21 @@ EZDB also supports custom range key comparators. By default, everything is sorte
       System.out.println(it.next().getValue());
     }
 
-##### Versioned Keys
+##### Versioned Values
 
-EZDB provides basic versioning of both hash and range keys, if you wish to use it. Here's an example:
+EZDB provides some utility functions to handle basic versioning of your data.
 
-    RangeTable<Integer, Versioned<Integer>, Integer> table = ezdb.getTable("test-versioned-range", IntegerSerde.get, new VersionedSerde<Integer>(IntegerSerde.get), IntegerSerde.get, new LexicographicalComparator(), new VersionedComparator());
-    table.put(1213, new Versioned<Integer>(1, 1234), 100);
-    table.put(1213, new Versioned<Integer>(1, 5678), 200);
+    RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-versioned-values", IntegerSerde.get, StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
     
+    table.put(1213, "foo", new Versioned<Integer>(2, 0));
+    table.put(1213, "foo", new Versioned<Integer>(3, 1));
+    table.put(1213, new Versioned<Integer>(12345678, 0));
+    
+    // Prints obj=3, version=1.
+    System.out.println(table.get(1213, "foo"))
+    
+    // Prints obj=12345678, version=0.
+    System.out.println(table.get(1213))
 
 ##### TODO
 

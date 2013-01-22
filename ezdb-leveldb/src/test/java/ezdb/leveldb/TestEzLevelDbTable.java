@@ -2,7 +2,6 @@ package ezdb.leveldb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
@@ -10,12 +9,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import ezdb.Db;
-import ezdb.DbException;
 import ezdb.RangeTable;
 import ezdb.Table;
 import ezdb.TableIterator;
 import ezdb.comparator.LexicographicalComparator;
-import ezdb.comparator.VersionedComparator;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.StringSerde;
 import ezdb.serde.VersionedSerde;
@@ -44,6 +41,7 @@ public class TestEzLevelDbTable {
     assertEquals(new Integer(1), table.get(1));
     table.put(1, 2);
     assertEquals(new Integer(2), table.get(1));
+    table.close();
   }
 
   @Test
@@ -176,6 +174,7 @@ public class TestEzLevelDbTable {
     assertTrue(!it.hasNext());
     it.close();
     assertEquals(new Integer(12345678), table.get(1213));
+    table.close();
   }
 
   @Test
@@ -202,6 +201,7 @@ public class TestEzLevelDbTable {
     assertEquals(new EzLevelDbTableRow<Integer, Integer, Integer>(1, 1, 1), it.next());
     assertTrue(!it.hasNext());
     it.close();
+    table.close();
   }
 
   @Test
@@ -246,6 +246,7 @@ public class TestEzLevelDbTable {
       assertEquals(new Integer(1213), it.next().getHashKey());
     }
     it.close();
+    table.close();
   }
 
   @Before
@@ -257,6 +258,7 @@ public class TestEzLevelDbTable {
 
   @After
   public void after() {
+    table.close();
     ezdb.deleteTable("test");
     ezdb.deleteTable("test-simple");
     ezdb.deleteTable("test-range-strings");

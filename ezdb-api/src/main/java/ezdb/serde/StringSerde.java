@@ -1,6 +1,7 @@
 package ezdb.serde;
 
 import java.io.UnsupportedEncodingException;
+import ezdb.DbException;
 
 public class StringSerde implements Serde<String> {
   public static final StringSerde get = new StringSerde();
@@ -10,7 +11,7 @@ public class StringSerde implements Serde<String> {
     try {
       return new String(bytes, "UTF-8");
     } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
+      throw new DbException(e);
     }
   }
 
@@ -19,7 +20,7 @@ public class StringSerde implements Serde<String> {
     try {
       return obj.getBytes("UTF-8");
     } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
+      throw new DbException(e);
     }
   }
 }

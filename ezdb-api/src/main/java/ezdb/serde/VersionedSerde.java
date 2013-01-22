@@ -1,9 +1,22 @@
 package ezdb.serde;
 
 import java.util.Arrays;
-import ezdb.DbException;
 import ezdb.serde.VersionedSerde.Versioned;
 
+/**
+ * A wrapper serde that handles pre-pending some version number to a byte
+ * payload. The format for the version byte array is:
+ * 
+ * <pre>
+ * [4 byte version]
+ * [arbitrary object bytes]
+ * </pre>
+ * 
+ * @author criccomini
+ * 
+ * @param <O>
+ *          The type of object that we wish to version.
+ */
 public class VersionedSerde<O> implements Serde<Versioned<O>> {
   public static final int VERSION_NUMBER_BYTE_SIZE = 8;
 
@@ -15,18 +28,18 @@ public class VersionedSerde<O> implements Serde<Versioned<O>> {
 
   @Override
   public Versioned<O> fromBytes(byte[] bytes) {
-    byte[] bytesWithoutVersion = Arrays.copyOfRange(bytes, 0, bytes.length - VERSION_NUMBER_BYTE_SIZE);
-    byte[] versionBytes = Arrays.copyOfRange(bytes, bytes.length - VERSION_NUMBER_BYTE_SIZE, bytes.length);
+    byte[] versionBytes = Arrays.copyOfRange(bytes, 0, VERSION_NUMBER_BYTE_SIZE);
+    byte[] bytesWithoutVersion = Arrays.copyOfRange(bytes, VERSION_NUMBER_BYTE_SIZE, bytes.length);
     return new Versioned<O>(objectSerde.fromBytes(bytesWithoutVersion), LongSerde.get.fromBytes(versionBytes));
   }
 
   @Override
   public byte[] toBytes(Versioned<O> versioned) {
-    byte[] bytesWithoutVersion = objectSerde.toBytes(versioned.getObj());
     byte[] versionBytes = LongSerde.get.toBytes(versioned.getVersion());
+    byte[] bytesWithoutVersion = objectSerde.toBytes(versioned.getObj());
     byte[] bytes = new byte[bytesWithoutVersion.length + VERSION_NUMBER_BYTE_SIZE];
-    System.arraycopy(bytesWithoutVersion, 0, bytes, 0, bytesWithoutVersion.length);
-    System.arraycopy(versionBytes, 0, bytes, bytesWithoutVersion.length, VERSION_NUMBER_BYTE_SIZE);
+    System.arraycopy(versionBytes, 0, bytes, 0, VERSION_NUMBER_BYTE_SIZE);
+    System.arraycopy(bytesWithoutVersion, 0, bytes, VERSION_NUMBER_BYTE_SIZE, bytesWithoutVersion.length);
     return bytes;
   }
 

@@ -2,7 +2,6 @@ package ezdb.leveldb;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Comparator;
 import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.DB;
@@ -177,15 +176,6 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
       rangeBytes = rangeKeySerde.toBytes(rangeKey);
     }
 
-    return combine(hashKeySerde.toBytes(hashKey), rangeBytes);
-  }
-
-  public static byte[] combine(byte[] arg1, byte[] arg2) {
-    byte[] result = new byte[8 + arg1.length + arg2.length];
-    System.arraycopy(ByteBuffer.allocate(4).putInt(arg1.length).array(), 0, result, 0, 4);
-    System.arraycopy(arg1, 0, result, 4, arg1.length);
-    System.arraycopy(ByteBuffer.allocate(4).putInt(arg2.length).array(), 0, result, 4 + arg1.length, 4);
-    System.arraycopy(arg2, 0, result, 8 + arg1.length, arg2.length);
-    return result;
+    return EzLevelDbComparator.combine(hashKeySerde.toBytes(hashKey), rangeBytes);
   }
 }
