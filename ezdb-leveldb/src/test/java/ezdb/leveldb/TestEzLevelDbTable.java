@@ -155,6 +155,7 @@ public class TestEzLevelDbTable {
     table.put(1213, "20120103-foo", 5);
     table.put(1212, "20120102-foo", 1);
     table.put(1214, "20120102-bar", 2);
+    table.put(1213, 12345678);
 
     TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
 
@@ -164,6 +165,7 @@ public class TestEzLevelDbTable {
     assertEquals(new EzLevelDbTableRow<Integer, String, Integer>(1213, "20120102-foo", 1), it.next());
     assertTrue(!it.hasNext());
     it.close();
+    assertEquals(new Integer(12345678), table.get(1213));
   }
 
   @Before
