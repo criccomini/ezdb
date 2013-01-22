@@ -2,7 +2,6 @@ package ezdb.leveldb;
 
 import java.nio.ByteBuffer;
 import java.util.Map.Entry;
-
 import ezdb.TableRow;
 import ezdb.serde.Serde;
 
@@ -17,7 +16,11 @@ public class EzLevelDbTableRow<H, R, V> implements TableRow<H, R, V> {
     this.value = value;
   }
 
-  public EzLevelDbTableRow(Entry<byte[], byte[]> rawRow, Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde) {
+  public EzLevelDbTableRow(
+      Entry<byte[], byte[]> rawRow,
+      Serde<H> hashKeySerde,
+      Serde<R> rangeKeySerde,
+      Serde<V> valueSerde) {
     // TODO could make serde lazy for a bit of extra speed
     byte[] compoundKeyBytes = rawRow.getKey();
 
