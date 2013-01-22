@@ -34,7 +34,7 @@ EZDB also supports hash/range lookups!
     // Let's do a range query from January 2nd (inclusive) to January 3rd (exclusive).
     TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
     
-    // Prints 1234 then 5678, but not 1357, 2468, or 12345678.
+    // Prints 5678 then 1234, but not 1357, 2468, or 12345678.
     while(it.hasNext()) {
       System.out.println(it.next().getValue());
     }
@@ -46,4 +46,28 @@ This functionality is very similar to DynamoDB's hash key/range key behavior. Us
 
 ##### Pluggable Serialization
 
-EZDB allows you to plug in your own serializations. The examples above show IntegerSerde and StringSerde, but you can plug in anything you want. The only thing that you need to be mindful of is how bytes are sorted (lexicographically) when plugging in a custom range serializer, as this will affect the sort order of your range queries.
+EZDB allows you to plug in your own serializations. The examples above show IntegerSerde and StringSerde, but you can plug in anything you want. The only thing that you need to be mindful of is how bytes are sorted (they default to lexicographical sorting) when plugging in a custom range serializer, as this will affect the sort order of your range queries.
+
+##### Pluggable Range Key Comparators
+
+EZDB also supports custom range key comparators. By Default, everything is sorted lexicographically, but you can always change range key sorting to suit your needs. Here's an example that sorts things backwards.
+
+    Table<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new Comparator<byte[]>() {
+      // Let's do things in reverse lexicographical order.
+      @Override
+      public int compare(byte[] o1, byte[] o2) {
+        return -1 * ByteBuffer.wrap(o1).compareTo(ByteBuffer.wrap(o2));
+      }
+    });
+
+    table.put(1, 1, 100);
+    table.put(1, 2, 200);
+    table.put(1, 3, 300);
+
+    // Get all rows in hash key bucket 1 with range key >= 3.
+    TableIterator<Integer, Integer, Integer> it = table.range(1, 3);
+
+    // Prints 300, 200, and 100.
+    while(it.hasNext()) {
+      System.out.println(it.next().getValue());
+    }

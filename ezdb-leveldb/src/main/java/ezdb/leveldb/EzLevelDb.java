@@ -2,15 +2,15 @@ package ezdb.leveldb;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.Options;
-
 import ezdb.Db;
 import ezdb.DbException;
 import ezdb.Table;
+import ezdb.leveldb.EzLevelDbComparator.LexicographicalComparator;
 import ezdb.serde.Serde;
 
 public class EzLevelDb implements Db {
@@ -35,17 +35,26 @@ public class EzLevelDb implements Db {
     }
   }
 
+  public <P, O, V> Table<P, O, V> getTable(
+      String tableName,
+      Serde<P> hashKeySerde,
+      Serde<O> rangeKeySerde,
+      Serde<V> valueSerde) {
+    return getTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator());
+  }
+
   @SuppressWarnings("unchecked")
-  public <P, O, V> Table<P, O, V> getTable(String tableName, Serde<P> hashKeySerde, Serde<O> rangeKeySerde, Serde<V> valueSerde) {
+  public <P, O, V> Table<P, O, V> getTable(
+      String tableName,
+      Serde<P> hashKeySerde,
+      Serde<O> rangeKeySerde,
+      Serde<V> valueSerde,
+      Comparator<byte[]> rangeComparator) {
     synchronized (lock) {
       Table<P, O, V> table = (Table<P, O, V>) tables.get(tableName);
 
       if (table == null) {
-        try {
-          tables.put(tableName, new EzLevelDbTable<P, O, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde));
-        } catch (IOException e) {
-          throw new DbException(e);
-        }
+        tables.put(tableName, new EzLevelDbTable<P, O, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde, rangeComparator));
         table = (Table<P, O, V>) tables.get(tableName);
       }
 

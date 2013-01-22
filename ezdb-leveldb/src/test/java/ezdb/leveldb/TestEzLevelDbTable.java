@@ -3,6 +3,8 @@ package ezdb.leveldb;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.Comparator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -168,6 +170,31 @@ public class TestEzLevelDbTable {
     assertEquals(new Integer(12345678), table.get(1213));
   }
 
+  @Test
+  public void testCustomRangeComparator() {
+    Table<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new Comparator<byte[]>() {
+      // Let's do things in reverse lexicographical order.
+      @Override
+      public int compare(byte[] o1, byte[] o2) {
+        return -1 * ByteBuffer.wrap(o1).compareTo(ByteBuffer.wrap(o2));
+      }
+    });
+
+    table.put(1, 1, 1);
+    table.put(1, 2, 2);
+    table.put(1, 3, 3);
+
+    TableIterator<Integer, Integer, Integer> it = table.range(1, 3);
+
+    assertTrue(it.hasNext());
+    assertEquals(new EzLevelDbTableRow<Integer, Integer, Integer>(1, 3, 3), it.next());
+    assertTrue(it.hasNext());
+    assertEquals(new EzLevelDbTableRow<Integer, Integer, Integer>(1, 2, 2), it.next());
+    assertTrue(it.hasNext());
+    assertEquals(new EzLevelDbTableRow<Integer, Integer, Integer>(1, 1, 1), it.next());
+    assertTrue(!it.hasNext());
+  }
+
   @Before
   public void before() {
     ezdb = new EzLevelDb(new File("/tmp"));
@@ -178,5 +205,8 @@ public class TestEzLevelDbTable {
   @After
   public void after() {
     ezdb.deleteTable("test");
+    ezdb.deleteTable("test-range-strings");
+    ezdb.deleteTable("test-custom-range-comparator");
+    ezdb.deleteTable("test-table-does-not-exist");
   }
 }
