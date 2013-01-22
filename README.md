@@ -72,7 +72,7 @@ EZDB also supports custom range key comparators. By default, everything is sorte
 
 ##### Versioned Values
 
-EZDB provides some utility functions to handle basic versioning of your data.
+Lastly, EZDB provides some utility functions to handle basic versioning of your data.
 
     RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-versioned-values", IntegerSerde.get, StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
     
