@@ -21,7 +21,7 @@ public class Table<P, O, V> {
   public Table(File path, Serde<P> partitionKeySerde, Serde<O> orderKeySerde, Serde<V> valueSerde) throws IOException {
     Options options = new Options();
     options.createIfMissing(true);
-    options.comparator(new PartitionOrderComparator());
+    options.comparator(new HashRangeComparator());
     this.path = path;
     this.db = JniDBFactory.factory.open(path, options);
     this.partitionKeySerde = partitionKeySerde;
@@ -80,8 +80,16 @@ public class Table<P, O, V> {
     };
   }
 
+  public void put(P partitionKey, V value) {
+    put(partitionKey, null, value);
+  }
+
   public void put(P partitionKey, O orderKey, V value) {
     db.put(combine(partitionKeySerde.toBytes(partitionKey), orderKeySerde.toBytes(orderKey)), valueSerde.toBytes(value));
+  }
+
+  public void append(P partitionKey, O orderKey, V value) {
+    put(partitionKey, orderKey, value);
   }
 
   public void delete() throws IOException {
