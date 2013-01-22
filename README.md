@@ -34,7 +34,7 @@ EZDB also supports hash/range lookups!
     // Let's do a range query from January 2nd (inclusive) to January 3rd (exclusive).
     TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
     
-    // Prints 1234 then 5678, but not 1357 or 2468.
+    // Prints 1234 then 5678, but not 1357, 2468, or 12345678.
     while(it.hasNext()) {
       System.out.println(it.next().getValue());
     }
