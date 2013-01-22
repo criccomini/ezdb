@@ -1,4 +1,4 @@
-EZ LevelDB
+EZDB
 =============
 
 Messing with LevelDB
