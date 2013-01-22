@@ -18,7 +18,6 @@ You can always use EZDB as a regular key/value store.
 
 EZDB also supports hash/range lookups!
 
-    Db ezdb = new EzLevelDb(new File("/tmp"));
     RangeTable<Integer, String, Integer> table = ezdb.getTable("hash-range", IntegerSerde.get, StringSerde.get, IntegerSerde.get);
     
     table.put(1213, "20120101-bang", 1357);
@@ -70,6 +69,15 @@ EZDB also supports custom range key comparators. By default, everything is sorte
     while(it.hasNext()) {
       System.out.println(it.next().getValue());
     }
+
+##### Versioned Keys
+
+EZDB provides basic versioning of both hash and range keys, if you wish to use it. Here's an example:
+
+    RangeTable<Integer, Versioned<Integer>, Integer> table = ezdb.getTable("test-versioned-range", IntegerSerde.get, new VersionedSerde<Integer>(IntegerSerde.get), IntegerSerde.get, new LexicographicalComparator(), new VersionedComparator());
+    table.put(1213, new Versioned<Integer>(1, 1234), 100);
+    table.put(1213, new Versioned<Integer>(1, 5678), 200);
+    
 
 ##### TODO
 

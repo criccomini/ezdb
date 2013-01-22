@@ -207,39 +207,40 @@ public class TestEzLevelDbTable {
   @Test
   public void testVersionedSortedStrings() {
     ezdb.deleteTable("test-range-strings");
-    RangeTable<Integer, Versioned<String>, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get, new VersionedSerde<String>(StringSerde.get), IntegerSerde.get, new LexicographicalComparator(), new VersionedComparator());
+    RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-range-strings", IntegerSerde.get, StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
 
-    table.put(1213, new Versioned<String>("20120102-foo", 0), 1);
-    table.put(1213, new Versioned<String>("20120102-bar", 0), 2);
-    table.put(1213, new Versioned<String>("20120102-bar", Long.MIN_VALUE), 2);
-    table.put(1213, new Versioned<String>("20120102-bara", 0), 2);
-    table.put(1213, new Versioned<String>("20120101-foo", 0), 3);
-    table.put(1213, new Versioned<String>("20120104-foo", 0), 4);
-    table.put(1213, new Versioned<String>("20120103-foo", 0), 5);
-    table.put(1212, new Versioned<String>("20120102-foo", 0), 1);
-    table.put(1214, new Versioned<String>("20120102-bar", 0), 2);
-    table.put(1213, 12345678);
+    table.put(1213, "20120102-foo", new Versioned<Integer>(1, 0));
+    table.put(1213, "20120102-bar", new Versioned<Integer>(2, 0));
+    table.put(1213, "20120102-bar", new Versioned<Integer>(3, 1));
+    table.put(1213, "20120101-foo", new Versioned<Integer>(3, 0));
+    table.put(1213, "20120104-foo", new Versioned<Integer>(4, 0));
+    table.put(1213, "20120103-foo", new Versioned<Integer>(5, 0));
+    table.put(1212, "20120102-foo", new Versioned<Integer>(1, 0));
+    table.put(1214, "20120102-bar", new Versioned<Integer>(2, 0));
+    table.put(1213, new Versioned<Integer>(12345678, 0));
 
-    TableIterator<Integer, Versioned<String>, Integer> it = table.range(1213, new Versioned<String>("20120102", 0), new Versioned<String>("20120103", 0));
+    assertEquals(new Versioned<Integer>(1, 0), table.get(1213, "20120102-foo"));
+    assertEquals(new Versioned<Integer>(3, 1), table.get(1213, "20120102-bar"));
+    assertEquals(new Versioned<Integer>(12345678, 0), table.get(1213));
+
+    TableIterator<Integer, String, Versioned<Integer>> it = table.range(1213, "20120102", "20120103");
 
     assertTrue(it.hasNext());
-    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120102-bar", Long.MIN_VALUE), 2), it.next());
+    assertEquals(new EzLevelDbTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-bar", new Versioned<Integer>(3, 1)), it.next());
     assertTrue(it.hasNext());
-    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120102-bara", 0), 2), it.next());
-    assertTrue(it.hasNext());
-    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120102-foo", 0), 1), it.next());
+    assertEquals(new EzLevelDbTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-foo", new Versioned<Integer>(1, 0)), it.next());
     assertTrue(!it.hasNext());
     it.close();
-    assertEquals(new Integer(12345678), table.get(1213));
+    assertEquals(new Versioned<Integer>(12345678, 0), table.get(1213));
 
     // check how things work when iterating between null/versioned range keys
     it = table.range(1213);
     assertTrue(it.hasNext());
-    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, null, 12345678), it.next());
+    assertEquals(new EzLevelDbTableRow<Integer, String, Versioned<Integer>>(1213, null, new Versioned<Integer>(12345678, 0)), it.next());
     assertTrue(it.hasNext());
-    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120101-foo", 0), 3), it.next());
+    assertEquals(new EzLevelDbTableRow<Integer, String, Versioned<Integer>>(1213, "20120101-foo", new Versioned<Integer>(3, 0)), it.next());
     assertTrue(it.hasNext());
-    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120102-bar", Long.MIN_VALUE), 2), it.next());
+    assertEquals(new EzLevelDbTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-bar", new Versioned<Integer>(3, 1)), it.next());
     // trust that everything works from here on out
     while (it.hasNext()) {
       assertEquals(new Integer(1213), it.next().getHashKey());
