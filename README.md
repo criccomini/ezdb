@@ -22,13 +22,15 @@ EZDB also supports hash/range lookups!
     Db ezdb = new EzLevelDb(new File("/tmp"));
     Table<Integer, String, Integer> table = ezdb.getTable("test", IntegerSerde.get, StringSerde.get, IntegerSerde.get);
     
+    table.put(1213, "20120101-bang", 2468);
     table.put(1213, "20120102-foo", 1234);
     table.put(1213, "20120102-bar", 5678);
+    table.put(1213, "20120103-baz", 2468);
     table.put(1213, 12345678);
     
     TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
     
-    // prints 1234 then 5678
+    // prints 1234 then 5678, but not 2468
     while(it.hasNext()) {
       System.out.println(it.next().getValue());
     }
