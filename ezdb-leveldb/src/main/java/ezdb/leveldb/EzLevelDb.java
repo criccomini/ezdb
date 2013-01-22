@@ -36,13 +36,13 @@ public class EzLevelDb implements Db {
   }
 
   @SuppressWarnings("unchecked")
-  public <P, O, V> Table<P, O, V> getTable(String tableName, Serde<P> partitionKeySerde, Serde<O> orderKeySerde, Serde<V> valueSerde) {
+  public <P, O, V> Table<P, O, V> getTable(String tableName, Serde<P> hashKeySerde, Serde<O> rangeKeySerde, Serde<V> valueSerde) {
     synchronized (lock) {
       Table<P, O, V> table = (Table<P, O, V>) tables.get(tableName);
 
       if (table == null) {
         try {
-          tables.put(tableName, new EzLevelDbTable<P, O, V>(new File(root, tableName), partitionKeySerde, orderKeySerde, valueSerde));
+          tables.put(tableName, new EzLevelDbTable<P, O, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde));
         } catch (IOException e) {
           throw new DbException(e);
         }

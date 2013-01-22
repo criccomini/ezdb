@@ -3,12 +3,10 @@ package ezdb.leveldb;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
 import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
-
 import ezdb.Table;
 import ezdb.TableIterator;
 import ezdb.TableRow;
@@ -20,7 +18,8 @@ public class EzLevelDbTable<H, R, V> implements Table<H, R, V> {
   private final Serde<R> rangeKeySerde;
   private final Serde<V> valueSerde;
 
-  public EzLevelDbTable(File path, Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde) throws IOException {
+  public EzLevelDbTable(File path, Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde)
+      throws IOException {
     Options options = new Options();
     options.createIfMissing(true);
     options.comparator(new EzLevelDbComparator());
@@ -92,7 +91,7 @@ public class EzLevelDbTable<H, R, V> implements Table<H, R, V> {
     return new TableIterator<H, R, V>() {
       @Override
       public boolean hasNext() {
-        return iterator.hasNext() && EzLevelDbComparator.compareKeys(keyBytesFrom, iterator.peekNext().getKey(), true) <= 0;
+        return iterator.hasNext() && EzLevelDbComparator.compareKeys(keyBytesFrom, iterator.peekNext().getKey(), false) == 0;
       }
 
       @Override
@@ -121,7 +120,7 @@ public class EzLevelDbTable<H, R, V> implements Table<H, R, V> {
     return new TableIterator<H, R, V>() {
       @Override
       public boolean hasNext() {
-        return iterator.hasNext() && EzLevelDbComparator.compareKeys(keyBytesFrom, iterator.peekNext().getKey(), true) <= 0 && EzLevelDbComparator.compareKeys(keyBytesTo, iterator.peekNext().getKey(), true) >= 0;
+        return iterator.hasNext() && EzLevelDbComparator.compareKeys(keyBytesTo, iterator.peekNext().getKey(), true) > 0;
       }
 
       @Override
