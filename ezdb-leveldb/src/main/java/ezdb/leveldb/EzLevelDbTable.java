@@ -12,7 +12,6 @@ import ezdb.DbException;
 import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.TableRow;
-import ezdb.leveldb.EzLevelDbComparator.LexicographicalComparator;
 import ezdb.serde.Serde;
 
 public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
@@ -22,17 +21,14 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
   private final Serde<V> valueSerde;
   private final EzLevelDbComparator comparator;
 
-  public EzLevelDbTable(File path, Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde) {
-    this(path, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator());
-  }
-
   public EzLevelDbTable(
       File path,
       Serde<H> hashKeySerde,
       Serde<R> rangeKeySerde,
       Serde<V> valueSerde,
+      Comparator<byte[]> hashKeyComparator,
       Comparator<byte[]> rangeKeyComparator) {
-    this.comparator = new EzLevelDbComparator(rangeKeyComparator);
+    this.comparator = new EzLevelDbComparator(hashKeyComparator, rangeKeyComparator);
     this.hashKeySerde = hashKeySerde;
     this.rangeKeySerde = rangeKeySerde;
     this.valueSerde = valueSerde;

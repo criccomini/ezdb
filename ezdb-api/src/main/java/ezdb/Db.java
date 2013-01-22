@@ -70,7 +70,9 @@ public interface Db {
    *          serializer can be supplied, as it will be ignored.
    * @param valueSerde
    *          The value serializer.
-   * @param rangeComparator
+   * @param hashKeyComparator
+   *          A comparator to be used when sorting hash keys.
+   * @param rangeKeyComparator
    *          A comparator to be used when sorting range keys that have the same
    *          hash key.
    * @return
@@ -80,7 +82,8 @@ public interface Db {
       Serde<H> hashKeySerde,
       Serde<R> rangeKeySerde,
       Serde<V> valueSerde,
-      Comparator<byte[]> rangeComparator);
+      Comparator<byte[]> hashKeyComparator,
+      Comparator<byte[]> rangeKeyComparator);
 
   /**
    * Delete a table from disk and memory.

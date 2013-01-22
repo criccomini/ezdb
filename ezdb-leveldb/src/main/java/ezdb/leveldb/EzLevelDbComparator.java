@@ -21,9 +21,11 @@ import org.iq80.leveldb.DBComparator;
 public class EzLevelDbComparator implements DBComparator {
   public static final String name = EzLevelDbComparator.class.toString();
 
+  private final Comparator<byte[]> hashKeyComparator;
   private final Comparator<byte[]> rangeKeyComparator;
 
-  public EzLevelDbComparator(Comparator<byte[]> rangeKeyComparator) {
+  public EzLevelDbComparator(Comparator<byte[]> hashKeyComparator, Comparator<byte[]> rangeKeyComparator) {
+    this.hashKeyComparator = hashKeyComparator;
     this.rangeKeyComparator = rangeKeyComparator;
   }
 
@@ -60,10 +62,7 @@ public class EzLevelDbComparator implements DBComparator {
     byte[] k2PartitionKeyBytes = new byte[k2PartitionKeyLength];
     k2Buffer.get(k2PartitionKeyBytes);
 
-    ByteBuffer k1PartitionKey = ByteBuffer.wrap(k1PartitionKeyBytes);
-    ByteBuffer k2PartitionKey = ByteBuffer.wrap(k2PartitionKeyBytes);
-
-    int partitionComparison = k1PartitionKey.compareTo(k2PartitionKey);
+    int partitionComparison = this.hashKeyComparator.compare(k1PartitionKeyBytes, k2PartitionKeyBytes);
 
     if (includeRangeKey && partitionComparison == 0) {
       // First range key
@@ -80,14 +79,5 @@ public class EzLevelDbComparator implements DBComparator {
     }
 
     return partitionComparison;
-  }
-
-  public static class LexicographicalComparator implements Comparator<byte[]> {
-    public static final LexicographicalComparator get = new LexicographicalComparator();
-
-    @Override
-    public int compare(byte[] rangeKey1, byte[] rangeKey2) {
-      return ByteBuffer.wrap(rangeKey1).compareTo(ByteBuffer.wrap(rangeKey2));
-    }
   }
 }

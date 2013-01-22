@@ -11,7 +11,7 @@ import ezdb.Db;
 import ezdb.DbException;
 import ezdb.RangeTable;
 import ezdb.Table;
-import ezdb.leveldb.EzLevelDbComparator.LexicographicalComparator;
+import ezdb.comparator.LexicographicalComparator;
 import ezdb.serde.ByteSerde;
 import ezdb.serde.Serde;
 
@@ -57,7 +57,7 @@ public class EzLevelDb implements Db {
       Serde<H> hashKeySerde,
       Serde<R> rangeKeySerde,
       Serde<V> valueSerde) {
-    return getTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator());
+    return getTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator(), new LexicographicalComparator());
   }
 
   @SuppressWarnings("unchecked")
@@ -67,12 +67,13 @@ public class EzLevelDb implements Db {
       Serde<H> hashKeySerde,
       Serde<R> rangeKeySerde,
       Serde<V> valueSerde,
-      Comparator<byte[]> rangeComparator) {
+      Comparator<byte[]> hashKeyComparator,
+      Comparator<byte[]> rangeKeyComparator) {
     synchronized (lock) {
       RangeTable<H, R, V> table = (RangeTable<H, R, V>) tables.get(tableName);
 
       if (table == null) {
-        tables.put(tableName, new EzLevelDbTable<H, R, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde, rangeComparator));
+        tables.put(tableName, new EzLevelDbTable<H, R, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator));
         table = (RangeTable<H, R, V>) tables.get(tableName);
       }
 

@@ -2,6 +2,7 @@ package ezdb.leveldb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
@@ -9,11 +10,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import ezdb.Db;
+import ezdb.DbException;
 import ezdb.RangeTable;
 import ezdb.Table;
 import ezdb.TableIterator;
+import ezdb.comparator.LexicographicalComparator;
+import ezdb.comparator.VersionedComparator;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.StringSerde;
+import ezdb.serde.VersionedSerde;
+import ezdb.serde.VersionedSerde.Versioned;
 
 public class TestEzLevelDbTable {
   private Db ezdb;
@@ -174,7 +180,7 @@ public class TestEzLevelDbTable {
 
   @Test
   public void testCustomRangeComparator() {
-    RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new Comparator<byte[]>() {
+    RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new LexicographicalComparator(), new Comparator<byte[]>() {
       // Let's do things in reverse lexicographical order.
       @Override
       public int compare(byte[] o1, byte[] o2) {
@@ -195,6 +201,50 @@ public class TestEzLevelDbTable {
     assertTrue(it.hasNext());
     assertEquals(new EzLevelDbTableRow<Integer, Integer, Integer>(1, 1, 1), it.next());
     assertTrue(!it.hasNext());
+    it.close();
+  }
+
+  @Test
+  public void testVersionedSortedStrings() {
+    ezdb.deleteTable("test-range-strings");
+    RangeTable<Integer, Versioned<String>, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get, new VersionedSerde<String>(StringSerde.get), IntegerSerde.get, new LexicographicalComparator(), new VersionedComparator());
+
+    table.put(1213, new Versioned<String>("20120102-foo", 0), 1);
+    table.put(1213, new Versioned<String>("20120102-bar", 0), 2);
+    table.put(1213, new Versioned<String>("20120102-bar", Long.MIN_VALUE), 2);
+    table.put(1213, new Versioned<String>("20120102-bara", 0), 2);
+    table.put(1213, new Versioned<String>("20120101-foo", 0), 3);
+    table.put(1213, new Versioned<String>("20120104-foo", 0), 4);
+    table.put(1213, new Versioned<String>("20120103-foo", 0), 5);
+    table.put(1212, new Versioned<String>("20120102-foo", 0), 1);
+    table.put(1214, new Versioned<String>("20120102-bar", 0), 2);
+    table.put(1213, 12345678);
+
+    TableIterator<Integer, Versioned<String>, Integer> it = table.range(1213, new Versioned<String>("20120102", 0), new Versioned<String>("20120103", 0));
+
+    assertTrue(it.hasNext());
+    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120102-bar", Long.MIN_VALUE), 2), it.next());
+    assertTrue(it.hasNext());
+    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120102-bara", 0), 2), it.next());
+    assertTrue(it.hasNext());
+    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120102-foo", 0), 1), it.next());
+    assertTrue(!it.hasNext());
+    it.close();
+    assertEquals(new Integer(12345678), table.get(1213));
+
+    // check how things work when iterating between null/versioned range keys
+    it = table.range(1213);
+    assertTrue(it.hasNext());
+    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, null, 12345678), it.next());
+    assertTrue(it.hasNext());
+    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120101-foo", 0), 3), it.next());
+    assertTrue(it.hasNext());
+    assertEquals(new EzLevelDbTableRow<Integer, Versioned<String>, Integer>(1213, new Versioned<String>("20120102-bar", Long.MIN_VALUE), 2), it.next());
+    // trust that everything works from here on out
+    while (it.hasNext()) {
+      assertEquals(new Integer(1213), it.next().getHashKey());
+    }
+    it.close();
   }
 
   @Before
