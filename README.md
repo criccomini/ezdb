@@ -1,8 +1,10 @@
 # EZDB
 
-EZDB provides a nice API to wrap LevelDB. Here are some examples.
+EZDB provides a nice wrapper around LevelDB. Let's take a look!
 
 ##### Simple Key/Value
+
+You can always use EZDB as a regular key/value store.
 
     Db ezdb = new EzLevelDb(new File("/tmp"));
     Table<Integer, Integer, Integer> table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
@@ -10,6 +12,8 @@ EZDB provides a nice API to wrap LevelDB. Here are some examples.
     System.out.println(table.get(1)); // prints 1
 
 ##### Hash/Range Combination
+
+EZDB also supports hash/range lookups!
 
     Db ezdb = new EzLevelDb(new File("/tmp"));
     Table<Integer, String, Integer> table = ezdb.getTable("test", IntegerSerde.get, StringSerde.get, IntegerSerde.get);
@@ -19,3 +23,5 @@ EZDB provides a nice API to wrap LevelDB. Here are some examples.
     while(it.hasNext()) {
       System.out.println(it.next().getValue()); // prints 1234 then 5678
     }
+
+This functionality is very similar to DynamoDB's hash key/range key behavior. Using the hash key, you can group rows together, and then perform range queries within these buckets!
