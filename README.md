@@ -9,10 +9,10 @@ You can always use EZDB as a regular key/value store.
     Db ezdb = new EzLevelDb(new File("/tmp"));
     Table<Integer, Integer, Integer> table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
     
-    // we're not using the range key here!
+    // We're not using the range key here!
     table.put(1, 1);
     
-    // prints 1
+    // Prints 1.
     System.out.println(table.get(1));
 
 ##### Hash/Range Combination
@@ -30,12 +30,12 @@ EZDB also supports hash/range lookups!
     
     TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
     
-    // prints 1234 then 5678, but not 1357 or 2468
+    // Prints 1234 then 5678, but not 1357 or 2468.
     while(it.hasNext()) {
       System.out.println(it.next().getValue());
     }
     
-    // prints 12345678
+    // Prints 12345678.
     System.out.println(table.get(1213));
 
 This functionality is very similar to DynamoDB's hash key/range key behavior. Using the hash key, you can group rows together, and then perform range queries within these buckets! Pretty cool, huh?
