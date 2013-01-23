@@ -14,7 +14,7 @@ public class TortureEzLevelDb {
     ezdb.deleteTable("torture-test");
     Random rand = new Random();
     RangeTable<Integer, Integer, Integer> table = ezdb.getTable("torture-test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
-    long tables = 0, deletes = 0, writes = 0, reads = 0, lastPrint = 0;
+    long tables = 0, deletes = 0, writes = 0, reads = 0, lastPrint = System.currentTimeMillis();
 
     while (true) {
       // pick something to do
@@ -23,8 +23,8 @@ public class TortureEzLevelDb {
       int rangeKey = rand.nextInt(500);
       int value = rand.nextInt(500);
 
-      if (pick < 0.001d) {
-        // .1% of the time, recycle the table
+      if (pick < 0.0001d) {
+        // .01% of the time, recycle the table
         table.close();
         table = ezdb.getTable("torture-test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
         ++tables;
