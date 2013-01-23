@@ -12,13 +12,15 @@ import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.serde.Serde;
+import ezdb.util.Util;
 
 public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
   private final DB db;
   private final Serde<H> hashKeySerde;
   private final Serde<R> rangeKeySerde;
   private final Serde<V> valueSerde;
-  private final EzLevelDbComparator comparator;
+  private final Comparator<byte[]> hashKeyComparator;
+  private final Comparator<byte[]> rangeKeyComparator;
 
   public EzLevelDbTable(
       File path,
@@ -27,14 +29,15 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
       Serde<V> valueSerde,
       Comparator<byte[]> hashKeyComparator,
       Comparator<byte[]> rangeKeyComparator) {
-    this.comparator = new EzLevelDbComparator(hashKeyComparator, rangeKeyComparator);
     this.hashKeySerde = hashKeySerde;
     this.rangeKeySerde = rangeKeySerde;
     this.valueSerde = valueSerde;
+    this.hashKeyComparator = hashKeyComparator;
+    this.rangeKeyComparator = rangeKeyComparator;
 
     Options options = new Options();
     options.createIfMissing(true);
-    options.comparator(comparator);
+    options.comparator(new EzLevelDbComparator(hashKeyComparator, rangeKeyComparator));
 
     try {
       this.db = JniDBFactory.factory.open(path, options);
@@ -50,7 +53,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
   @Override
   public void put(H hashKey, R rangeKey, V value) {
-    db.put(combine(hashKey, rangeKey), valueSerde.toBytes(value));
+    db.put(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey), valueSerde.toBytes(value));
   }
 
   @Override
@@ -60,7 +63,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
   @Override
   public V get(H hashKey, R rangeKey) {
-    byte[] valueBytes = db.get(combine(hashKey, rangeKey));
+    byte[] valueBytes = db.get(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
 
     if (valueBytes == null) {
       return null;
@@ -72,12 +75,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
   @Override
   public TableIterator<H, R, V> range(H hashKey) {
     final DBIterator iterator = db.iterator();
-    final byte[] keyBytesFrom = combine(hashKey, null);
+    final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
     iterator.seek(keyBytesFrom);
     return new TableIterator<H, R, V>() {
       @Override
       public boolean hasNext() {
-        return iterator.hasNext() && comparator.compareKeys(keyBytesFrom, iterator.peekNext().getKey(), false) == 0;
+        return iterator.hasNext() && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, iterator.peekNext().getKey()) == 0;
       }
 
       @Override
@@ -100,12 +103,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
   @Override
   public TableIterator<H, R, V> range(H hashKey, R fromRangeKey) {
     final DBIterator iterator = db.iterator();
-    final byte[] keyBytesFrom = combine(hashKey, fromRangeKey);
+    final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
     iterator.seek(keyBytesFrom);
     return new TableIterator<H, R, V>() {
       @Override
       public boolean hasNext() {
-        return iterator.hasNext() && comparator.compareKeys(keyBytesFrom, iterator.peekNext().getKey(), false) == 0;
+        return iterator.hasNext() && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, iterator.peekNext().getKey()) == 0;
       }
 
       @Override
@@ -128,13 +131,13 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
   @Override
   public TableIterator<H, R, V> range(H hashKey, R fromRangeKey, R toRangeKey) {
     final DBIterator iterator = db.iterator();
-    final byte[] keyBytesFrom = combine(hashKey, fromRangeKey);
-    final byte[] keyBytesTo = combine(hashKey, toRangeKey);
+    final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+    final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
     iterator.seek(keyBytesFrom);
     return new TableIterator<H, R, V>() {
       @Override
       public boolean hasNext() {
-        return iterator.hasNext() && comparator.compareKeys(keyBytesTo, iterator.peekNext().getKey(), true) > 0;
+        return iterator.hasNext() && Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo, iterator.peekNext().getKey()) > 0;
       }
 
       @Override
@@ -161,21 +164,11 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
   @Override
   public void delete(H hashKey, R rangeKey) {
-    this.db.delete(combine(hashKey, rangeKey));
+    this.db.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
   }
 
   @Override
   public void close() {
     this.db.close();
-  }
-
-  private byte[] combine(H hashKey, R rangeKey) {
-    byte[] rangeBytes = new byte[0];
-
-    if (rangeKey != null) {
-      rangeBytes = rangeKeySerde.toBytes(rangeKey);
-    }
-
-    return EzLevelDbComparator.combine(hashKeySerde.toBytes(hashKey), rangeBytes);
   }
 }

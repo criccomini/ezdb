@@ -3,8 +3,6 @@ package ezdb.leveldb;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.Options;
 import ezdb.Db;
