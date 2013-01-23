@@ -24,7 +24,7 @@ public interface Db {
    *          The hash key serializer.
    * @param valueSerde
    *          The value serializer.
-   * @return
+   * @return A simple key/value table.
    */
   public <H, V> Table<H, V> getTable(String tableName, Serde<H> hashKeySerde, Serde<V> valueSerde);
 
@@ -45,7 +45,7 @@ public interface Db {
    *          serializer can be supplied, as it will be ignored.
    * @param valueSerde
    *          The value serializer.
-   * @return
+   * @return A hash/range table.
    */
   public <H, R, V> RangeTable<H, R, V> getTable(
       String tableName,
@@ -75,7 +75,7 @@ public interface Db {
    * @param rangeKeyComparator
    *          A comparator to be used when sorting range keys that have the same
    *          hash key.
-   * @return
+   * @return A hash/range table.
    */
   public <H, R, V> RangeTable<H, R, V> getTable(
       String tableName,

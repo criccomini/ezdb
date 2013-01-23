@@ -25,22 +25,15 @@ import ezdb.serde.Serde;
  */
 public class EzLevelDb implements Db {
   private final File root;
-  private final Map<String, RangeTable<?, ?, ?>> tables;
-  private final Object lock;
 
   public EzLevelDb(File root) {
     this.root = root;
-    this.tables = new HashMap<String, RangeTable<?, ?, ?>>();
-    lock = new Object();
   }
 
   @Override
   public void deleteTable(String tableName) {
     try {
-      synchronized (lock) {
-        tables.remove(tableName);
-        JniDBFactory.factory.destroy(getFile(tableName), new Options());
-      }
+      JniDBFactory.factory.destroy(getFile(tableName), new Options());
     } catch (IOException e) {
       throw new DbException(e);
     }
@@ -60,7 +53,6 @@ public class EzLevelDb implements Db {
     return getTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator(), new LexicographicalComparator());
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public <H, R, V> RangeTable<H, R, V> getTable(
       String tableName,
@@ -69,16 +61,7 @@ public class EzLevelDb implements Db {
       Serde<V> valueSerde,
       Comparator<byte[]> hashKeyComparator,
       Comparator<byte[]> rangeKeyComparator) {
-    synchronized (lock) {
-      RangeTable<H, R, V> table = (RangeTable<H, R, V>) tables.get(tableName);
-
-      if (table == null) {
-        tables.put(tableName, new EzLevelDbTable<H, R, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator));
-        table = (RangeTable<H, R, V>) tables.get(tableName);
-      }
-
-      return table;
-    }
+    return new EzLevelDbTable<H, R, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
   }
 
   /**
