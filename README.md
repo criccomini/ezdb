@@ -86,7 +86,8 @@ Lastly, EZDB provides some utility functions to handle basic versioning of your 
     // Prints obj=12345678, version=0.
     System.out.println(table.get(1213))
 
-### TODO
+### Java Documentation
 
-* Mavenize.
-* Get the Javadocs up somewhere.
+You can get the javadocs for EZDB here:
+
+http://criccomini.github.com/ezdb/javadocs
