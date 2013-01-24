@@ -12,7 +12,9 @@ import ezdb.treemap.TreeMapTable;
 
 /**
  * This is a little test that mostly just compares random behavior between a
- * mock implementation, and LevelDB.
+ * mock implementation, and LevelDB. It's not really a valid performance test,
+ * since it resets the tables frequently enough to never get a large data set,
+ * and duplicates all actions in TreeMap.
  * 
  * @author criccomini
  * 
@@ -64,11 +66,11 @@ public class TortureEzLevelDb {
 
         while (iterator.hasNext() && mockIterator.hasNext()) {
           assertEquals(mockIterator.next(), iterator.next());
+          ++rangeH;
         }
 
         assertFalse(iterator.hasNext());
         assertFalse(mockIterator.hasNext());
-        ++rangeH;
       } else if (pick < 0.80) {
         // 10% of the time range(h, f)
         int hash = rand.nextInt(500);
@@ -78,11 +80,11 @@ public class TortureEzLevelDb {
 
         while (iterator.hasNext() && mockIterator.hasNext()) {
           assertEquals(mockIterator.next(), iterator.next());
+          ++rangeHF;
         }
 
         assertFalse(iterator.hasNext());
         assertFalse(mockIterator.hasNext());
-        ++rangeHF;
       } else {
         // 20% of the time range(h, f, t)
         int hash = rand.nextInt(500);
@@ -93,16 +95,16 @@ public class TortureEzLevelDb {
 
         while (iterator.hasNext() && mockIterator.hasNext()) {
           assertEquals(mockIterator.next(), iterator.next());
+          ++rangeHFT;
         }
 
         assertFalse(iterator.hasNext());
         assertFalse(mockIterator.hasNext());
-        ++rangeHFT;
       }
 
       if (System.currentTimeMillis() - lastPrint > LOG_SECONDS * 1000) {
         lastPrint = System.currentTimeMillis();
-        StringBuffer out = new StringBuffer().append("Table creations: ").append(tables / LOG_SECONDS).append("/s, deletes: ").append(deletes / LOG_SECONDS).append("/s, writes: ").append(writes / LOG_SECONDS).append("/s, reads: ").append(reads / LOG_SECONDS).append("/s, range(hash): ").append(rangeH / LOG_SECONDS).append("/s, range(hash, from): ").append(rangeHF / LOG_SECONDS).append("/s, range(hash, from, to): ").append(rangeHFT / LOG_SECONDS).append("/s");
+        StringBuffer out = new StringBuffer().append("Table creations: ").append(tables / LOG_SECONDS).append("/s, deletes: ").append(deletes / LOG_SECONDS).append("/s, writes: ").append(writes / LOG_SECONDS).append("/s, reads: ").append(reads / LOG_SECONDS).append("/s, range(hash): ").append(rangeH / LOG_SECONDS).append("/s, range(hash, from): ").append(rangeHF / LOG_SECONDS).append("/s, range(hash, from, to): ").append(rangeHFT / LOG_SECONDS).append("/s, total reads: ").append((reads + rangeH + rangeHF + rangeHFT) / LOG_SECONDS).append("/s");
 
         tables = 0;
         deletes = 0;
