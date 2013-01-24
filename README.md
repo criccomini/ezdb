@@ -2,7 +2,7 @@
 
 EZDB provides a nice Java wrapper around LevelDB. Let's take a look!
 
-##### Simple Key/Value
+### Simple Key/Value
 
 You can always use EZDB as a regular key/value store.
 
@@ -14,7 +14,7 @@ You can always use EZDB as a regular key/value store.
     // Prints 1.
     System.out.println(table.get(1));
 
-##### Hash/Range Combination
+### Hash/Range Combination
 
 EZDB also supports hash/range lookups!
 
@@ -42,11 +42,11 @@ EZDB also supports hash/range lookups!
 
 This functionality is very similar to DynamoDB's hash key/range key behavior. Using the hash key, you can group rows together, and then perform range queries within these buckets! Pretty cool, huh?
 
-##### Pluggable Serialization
+### Pluggable Serialization
 
 EZDB allows you to plug in your own serializations. The examples above show IntegerSerde and StringSerde, but you can plug in anything you want. The only thing that you need to be mindful of is how bytes are sorted (they default to lexicographical sorting) when plugging in a custom range serializer, as this will affect the sort order of your range queries.
 
-##### Pluggable Range Key Comparators
+### Pluggable Range Key Comparators
 
 EZDB also supports custom range key comparators. By default, everything is sorted lexicographically, but you can always change range key sorting to suit your needs. Here's an example that sorts things backwards.
 
@@ -70,7 +70,7 @@ EZDB also supports custom range key comparators. By default, everything is sorte
       System.out.println(it.next().getValue());
     }
 
-##### Versioned Values
+### Versioned Values
 
 Lastly, EZDB provides some utility functions to handle basic versioning of your data.
 
@@ -86,9 +86,7 @@ Lastly, EZDB provides some utility functions to handle basic versioning of your 
     // Prints obj=12345678, version=0.
     System.out.println(table.get(1213))
 
-##### TODO
+### TODO
 
-* If we wish to use filtering to improve performance, we need to make sure that the bloom filter implementation LevelDB provides is compatible with our EzLevelDbCompartor and key byte format.
 * Mavenize.
 * Get the Javadocs up somewhere.
-* Write a torture test.
