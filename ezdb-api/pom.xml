@@ -9,7 +9,9 @@
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
+  <groupId>ezdb</groupId>
   <artifactId>ezdb-api</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
   <name>EZDB API</name>
   <packaging>jar</packaging>
 </project>
