@@ -18,7 +18,7 @@ import ezdb.serde.StringSerde;
 import ezdb.serde.VersionedSerde;
 import ezdb.serde.VersionedSerde.Versioned;
 
-public class TestEzLevelDbTable {
+public class TestEzLevelDb {
   private Db ezdb;
   private RangeTable<Integer, Integer, Integer> table;
 
