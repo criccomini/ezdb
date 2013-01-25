@@ -23,14 +23,14 @@ import ezdb.treemap.TreeMapTable;
  * 
  */
 public class TestEzLevelDbTorture {
-  public static final float LOG_SECONDS = 10;
   public static final int NUM_THREADS = 10;
   public static final int ITERATIONS = 50000;
+  public static final String tableName = "torture";
 
   @Test
   public void testTortureEzLevelDb() throws InterruptedException {
     Db db = new EzLevelDb(new File("/tmp"));
-    db.deleteTable("torture-test");
+    db.deleteTable(tableName);
     Thread[] threads = new Thread[NUM_THREADS];
 
     for (int i = 0; i < NUM_THREADS; ++i) {
@@ -54,9 +54,10 @@ public class TestEzLevelDbTorture {
 
     public void run() {
       Random rand = new Random();
-      RangeTable<Integer, Integer, Integer> table = db.getTable("torture-test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
+      RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
       RangeTable<Integer, Integer, Integer> mockTable = new TreeMapTable<Integer, Integer, Integer>(IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, LexicographicalComparator.get, LexicographicalComparator.get);
-      long tables = 0, deletes = 0, writes = 0, reads = 0, rangeH = 0, rangeHF = 0, rangeHFT = 0, lastPrint = System.currentTimeMillis();
+      long tables = 0, deletes = 0, writes = 0, reads = 0, rangeH = 0, rangeHF = 0, rangeHFT = 0;
+      long start = System.currentTimeMillis();
 
       for (int i = 0; i < ITERATIONS; ++i) {
         // pick something to do
@@ -122,22 +123,13 @@ public class TestEzLevelDbTorture {
           assertFalse(iterator.hasNext());
           assertFalse(mockIterator.hasNext());
         }
-
-        if (System.currentTimeMillis() - lastPrint > LOG_SECONDS * 1000) {
-          lastPrint = System.currentTimeMillis();
-          StringBuffer out = new StringBuffer().append("[").append(Thread.currentThread().getName()).append("] table creations: ").append(tables / LOG_SECONDS).append("/s, deletes: ").append(deletes / LOG_SECONDS).append("/s, writes: ").append(writes / LOG_SECONDS).append("/s, reads: ").append(reads / LOG_SECONDS).append("/s, range(hash): ").append(rangeH / LOG_SECONDS).append("/s, range(hash, from): ").append(rangeHF / LOG_SECONDS).append("/s, range(hash, from, to): ").append(rangeHFT / LOG_SECONDS).append("/s, total reads: ").append((reads + rangeH + rangeHF + rangeHFT) / LOG_SECONDS).append("/s");
-
-          tables = 0;
-          deletes = 0;
-          writes = 0;
-          reads = 0;
-          rangeH = 0;
-          rangeHF = 0;
-          rangeHFT = 0;
-
-          System.out.println(out.toString());
-        }
       }
+
+      long seconds = (System.currentTimeMillis() - start) / 1000;
+
+      StringBuffer out = new StringBuffer().append("[").append(Thread.currentThread().getName()).append("] table creations: ").append(tables / seconds).append("/s, deletes: ").append(deletes / seconds).append("/s, writes: ").append(writes / seconds).append("/s, reads: ").append(reads / seconds).append("/s, range(hash): ").append(rangeH / seconds).append("/s, range(hash, from): ").append(rangeHF / seconds).append("/s, range(hash, from, to): ").append(rangeHFT / seconds).append("/s, total reads: ").append((reads + rangeH + rangeHF + rangeHFT) / seconds).append("/s");
+
+      System.out.println(out.toString());
     }
   }
 }
