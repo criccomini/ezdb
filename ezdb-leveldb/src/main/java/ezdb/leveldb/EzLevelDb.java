@@ -3,6 +3,9 @@ package ezdb.leveldb;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.Options;
 import ezdb.Db;
@@ -23,14 +26,24 @@ import ezdb.serde.Serde;
  */
 public class EzLevelDb implements Db {
   private final File root;
+  private final AtomicReference<Map<String, RangeTable<?, ?, ?>>> cache;
+  private final Object createLevelDbLock = new Object();
 
   public EzLevelDb(File root) {
     this.root = root;
+    this.cache = new AtomicReference<Map<String, RangeTable<?, ?, ?>>>(new HashMap<String, RangeTable<?, ?, ?>>());
   }
 
   @Override
   public void deleteTable(String tableName) {
     try {
+      Map<String, RangeTable<?, ?, ?>> oldCache;
+      Map<String, RangeTable<?, ?, ?>> newCache;
+      do {
+        oldCache = cache.get();
+        newCache = new HashMap<String, RangeTable<?, ?, ?>>(oldCache);
+        newCache.remove(tableName);
+      } while (!cache.compareAndSet(oldCache, newCache));
       JniDBFactory.factory.destroy(getFile(tableName), new Options());
     } catch (IOException e) {
       throw new DbException(e);
@@ -51,6 +64,7 @@ public class EzLevelDb implements Db {
     return getTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator(), new LexicographicalComparator());
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <H, R, V> RangeTable<H, R, V> getTable(
       String tableName,
@@ -59,7 +73,27 @@ public class EzLevelDb implements Db {
       Serde<V> valueSerde,
       Comparator<byte[]> hashKeyComparator,
       Comparator<byte[]> rangeKeyComparator) {
-    return new EzLevelDbTable<H, R, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
+    Map<String, RangeTable<?, ?, ?>> oldCache = cache.get();
+    RangeTable<?, ?, ?> table = oldCache.get(tableName);
+
+    while (table == null) {
+      // We must lock when creating a LevelDB table since there's a race
+      // condition at the file system level over who gets to create the manifest
+      // and lock files.
+      synchronized (createLevelDbLock) {
+        table = new EzLevelDbTable<H, R, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
+      }
+
+      Map<String, RangeTable<?, ?, ?>> newCache = new HashMap<String, RangeTable<?, ?, ?>>(oldCache);
+      newCache.put(tableName, table);
+
+      if (!cache.compareAndSet(oldCache, newCache)) {
+        table.close();
+        table = cache.get().get(tableName);
+      }
+    }
+
+    return (RangeTable<H, R, V>) table;
   }
 
   /**
