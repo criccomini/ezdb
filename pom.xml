@@ -8,7 +8,7 @@
 
   <groupId>com.github.criccomini</groupId>
   <artifactId>ezdb-parent</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <version>0.1.1</version>
   <packaging>pom</packaging>
   <name>EZDB Parent</name>
   <description>
@@ -63,7 +63,7 @@
       <dependency>
         <groupId>com.github.criccomini</groupId>
         <artifactId>ezdb-api</artifactId>
-        <version>0.1.1-SNAPSHOT</version>
+        <version>0.1.1</version>
       </dependency>
       <dependency>
         <groupId>org.fusesource.leveldbjni</groupId>
