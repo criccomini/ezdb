@@ -111,6 +111,16 @@ Building EZDB is built with Maven:
 
 There is not yet a set of Maven coordinates for EZDB, but there will be soon.
 
+### Using EZDB
+
+EZDB is published to maven central. You can pull it in with:
+
+    <dependency>
+      <groupId>com.github.criccomini</groupId>
+      <artifactId>ezdb-leveldb</artifactId>
+      <version>0.1.5</version>
+    </dependency>
+
 ### Java Documentation
 
 You can get the javadocs for EZDB here:
