@@ -130,6 +130,7 @@
         <configuration>
           <outputDirectory>${project.build.directory}/javadoc</outputDirectory>
           <reportOutputDirectory>${project.reporting.outputDirectory}/javadoc</reportOutputDirectory>
+          <mavenExecutorId>forked-path</mavenExecutorId>
         </configuration>
         <executions>
           <execution>
