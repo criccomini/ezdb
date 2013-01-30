@@ -109,8 +109,6 @@ Building EZDB is built with Maven:
 
     mvn clean package
 
-There is not yet a set of Maven coordinates for EZDB, but there will be soon.
-
 ### Using EZDB
 
 EZDB is published to maven central. You can pull it in with:
