@@ -26,25 +26,20 @@ import ezdb.serde.Serde;
  */
 public class EzLevelDb implements Db {
   private final File root;
-  private final AtomicReference<Map<String, RangeTable<?, ?, ?>>> cache;
-  private final Object createLevelDbLock = new Object();
+  private final Map<String, RangeTable<?, ?, ?>> cache;
 
   public EzLevelDb(File root) {
     this.root = root;
-    this.cache = new AtomicReference<Map<String, RangeTable<?, ?, ?>>>(new HashMap<String, RangeTable<?, ?, ?>>());
+    this.cache = new HashMap<String, RangeTable<?, ?, ?>>();
   }
 
   @Override
   public void deleteTable(String tableName) {
     try {
-      Map<String, RangeTable<?, ?, ?>> oldCache;
-      Map<String, RangeTable<?, ?, ?>> newCache;
-      do {
-        oldCache = cache.get();
-        newCache = new HashMap<String, RangeTable<?, ?, ?>>(oldCache);
-        newCache.remove(tableName);
-      } while (!cache.compareAndSet(oldCache, newCache));
-      JniDBFactory.factory.destroy(getFile(tableName), new Options());
+      synchronized(cache) {
+        cache.remove(tableName);
+        JniDBFactory.factory.destroy(getFile(tableName), new Options());
+      }
     } catch (IOException e) {
       throw new DbException(e);
     }
@@ -73,27 +68,16 @@ public class EzLevelDb implements Db {
       Serde<V> valueSerde,
       Comparator<byte[]> hashKeyComparator,
       Comparator<byte[]> rangeKeyComparator) {
-    Map<String, RangeTable<?, ?, ?>> oldCache = cache.get();
-    RangeTable<?, ?, ?> table = oldCache.get(tableName);
+    synchronized (cache) {
+      RangeTable<?, ?, ?> table = cache.get(tableName);
 
-    while (table == null) {
-      // We must lock when creating a LevelDB table since there's a race
-      // condition at the file system level over who gets to create the manifest
-      // and lock files.
-      synchronized (createLevelDbLock) {
+      if (table == null) {
         table = new EzLevelDbTable<H, R, V>(new File(root, tableName), hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
+        cache.put(tableName, table);
       }
 
-      Map<String, RangeTable<?, ?, ?>> newCache = new HashMap<String, RangeTable<?, ?, ?>>(oldCache);
-      newCache.put(tableName, table);
-
-      if (!cache.compareAndSet(oldCache, newCache)) {
-        table.close();
-        table = cache.get().get(tableName);
-      }
+      return (RangeTable<H, R, V>) table;
     }
-
-    return (RangeTable<H, R, V>) table;
   }
 
   /**
