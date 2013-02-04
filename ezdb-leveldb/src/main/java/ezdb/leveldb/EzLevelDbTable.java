@@ -22,13 +22,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
   private final Comparator<byte[]> hashKeyComparator;
   private final Comparator<byte[]> rangeKeyComparator;
 
-  public EzLevelDbTable(
-      File path,
-      Serde<H> hashKeySerde,
-      Serde<R> rangeKeySerde,
-      Serde<V> valueSerde,
-      Comparator<byte[]> hashKeyComparator,
-      Comparator<byte[]> rangeKeyComparator) {
+  public EzLevelDbTable(File path, Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde, Comparator<byte[]> hashKeyComparator, Comparator<byte[]> rangeKeyComparator) {
     this.hashKeySerde = hashKeySerde;
     this.rangeKeySerde = rangeKeySerde;
     this.valueSerde = valueSerde;
@@ -95,7 +89,11 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
       @Override
       public void close() {
-        iterator.close();
+        try {
+          iterator.close();
+        } catch (Exception e) {
+          throw new DbException(e);
+        }
       }
     };
   }
@@ -123,7 +121,11 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
       @Override
       public void close() {
-        iterator.close();
+        try {
+          iterator.close();
+        } catch (Exception e) {
+          throw new DbException(e);
+        }
       }
     };
   }
@@ -152,7 +154,11 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
       @Override
       public void close() {
-        iterator.close();
+        try {
+          iterator.close();
+        } catch (Exception e) {
+          throw new DbException(e);
+        }
       }
     };
   }
@@ -169,6 +175,10 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
   @Override
   public void close() {
-    this.db.close();
+    try {
+      this.db.close();
+    } catch (Exception e) {
+      throw new DbException(e);
+    }
   }
 }
