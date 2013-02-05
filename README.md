@@ -124,3 +124,9 @@ EZDB is published to maven central. You can pull it in with:
 You can get the javadocs for EZDB here:
 
 http://criccomini.github.com/ezdb/javadocs
+
+### License
+
+Copyright (c) 2013 Chris Riccomini
+
+Published under Apache Software License 2.0, see LICENSE
