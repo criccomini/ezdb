@@ -26,6 +26,11 @@
       <artifactId>ezdb-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.github.criccomini</groupId>
+      <artifactId>ezdb-treemap</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.fusesource.leveldbjni</groupId>
       <artifactId>leveldbjni-all</artifactId>
     </dependency>

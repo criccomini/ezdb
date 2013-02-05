@@ -19,6 +19,7 @@
   <modules>
     <module>ezdb-api</module>
     <module>ezdb-leveldb</module>
+    <module>ezdb-treemap</module>
   </modules>
 
   <developers>
@@ -63,6 +64,11 @@
       <dependency>
         <groupId>com.github.criccomini</groupId>
         <artifactId>ezdb-api</artifactId>
+        <version>0.1.7-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.criccomini</groupId>
+        <artifactId>ezdb-treemap</artifactId>
         <version>0.1.7-SNAPSHOT</version>
       </dependency>
       <dependency>

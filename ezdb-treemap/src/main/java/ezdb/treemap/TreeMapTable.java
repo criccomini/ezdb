@@ -5,11 +5,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+
 import ezdb.DbException;
 import ezdb.RangeTable;
+import ezdb.RawTableRow;
 import ezdb.TableIterator;
 import ezdb.TableRow;
-import ezdb.leveldb.EzLevelDbTableRow;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
 
@@ -79,7 +80,7 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
         TableRow<H, R, V> row = null;
 
         if (hasNext()) {
-          row = new EzLevelDbTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
+          row = new RawTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
         }
 
         if (iterator.hasNext()) {
@@ -120,10 +121,10 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
       @Override
       public TableRow<H, R, V> next() {
-        EzLevelDbTableRow<H, R, V> row = null;
+        RawTableRow<H, R, V> row = null;
 
         if (hasNext()) {
-          row = new EzLevelDbTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
+          row = new RawTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
         }
 
         if (iterator.hasNext()) {
@@ -165,10 +166,10 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
       @Override
       public TableRow<H, R, V> next() {
-        EzLevelDbTableRow<H, R, V> row = null;
+        RawTableRow<H, R, V> row = null;
 
         if (hasNext()) {
-          row = new EzLevelDbTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
+          row = new RawTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
         }
 
         if (iterator.hasNext()) {

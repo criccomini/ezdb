@@ -9,6 +9,7 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import ezdb.DbException;
 import ezdb.RangeTable;
+import ezdb.RawTableRow;
 import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.serde.Serde;
@@ -79,7 +80,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
       @Override
       public TableRow<H, R, V> next() {
-        return new EzLevelDbTableRow<H, R, V>(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+        return new RawTableRow<H, R, V>(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
       }
 
       @Override
@@ -111,7 +112,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
       @Override
       public TableRow<H, R, V> next() {
-        return new EzLevelDbTableRow<H, R, V>(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+        return new RawTableRow<H, R, V>(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
       }
 
       @Override
@@ -144,7 +145,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
       @Override
       public TableRow<H, R, V> next() {
-        return new EzLevelDbTableRow<H, R, V>(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+        return new RawTableRow<H, R, V>(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
       }
 
       @Override

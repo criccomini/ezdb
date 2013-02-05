@@ -1,25 +1,24 @@
-package ezdb.leveldb;
+package ezdb;
 
 import java.nio.ByteBuffer;
 import java.util.Map.Entry;
-import ezdb.TableRow;
 import ezdb.serde.Serde;
 
-public class EzLevelDbTableRow<H, R, V> implements TableRow<H, R, V> {
+public class RawTableRow<H, R, V> implements TableRow<H, R, V> {
   private final H hashKey;
   private final R rangeKey;
   private final V value;
 
-  public EzLevelDbTableRow(H hashKey, R rangeKey, V value) {
+  public RawTableRow(H hashKey, R rangeKey, V value) {
     this.hashKey = hashKey;
     this.rangeKey = rangeKey;
     this.value = value;
   }
 
-  public EzLevelDbTableRow(
-      Entry<byte[], byte[]> rawRow,
-      Serde<H> hashKeySerde,
-      Serde<R> rangeKeySerde,
+  public RawTableRow(
+      Entry<byte[], byte[]> rawRow, 
+      Serde<H> hashKeySerde, 
+      Serde<R> rangeKeySerde, 
       Serde<V> valueSerde) {
     // TODO could make serde lazy for a bit of extra speed
     byte[] compoundKeyBytes = rawRow.getKey();
@@ -76,7 +75,7 @@ public class EzLevelDbTableRow<H, R, V> implements TableRow<H, R, V> {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    EzLevelDbTableRow other = (EzLevelDbTableRow) obj;
+    RawTableRow other = (RawTableRow) obj;
     if (hashKey == null) {
       if (other.hashKey != null)
         return false;
