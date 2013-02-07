@@ -116,7 +116,7 @@ EZDB is published to maven central. You can pull it in with:
     <dependency>
       <groupId>com.github.criccomini</groupId>
       <artifactId>ezdb-leveldb</artifactId>
-      <version>0.1.5</version>
+      <version>0.1.6</version>
     </dependency>
 
 ### Java Documentation
