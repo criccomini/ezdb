@@ -87,7 +87,7 @@ EZDB also lets you customize the way that your range keys are sorted for a table
 
 ##### Versioned Values
 
-EZDB also provides some utility classes to let you version your data. EZDB only persists the "latest" version of your data, but it can be useful to tag your data with some version number for future lookups. To user versioning, just wrap your value's serde in a VersionSerde.
+EZDB also provides some utility classes to let you version your data. EZDB only persists the "latest" version of your data, but it can be useful to tag your data with some version number for future lookups. To use versioning, just wrap your value's serde in a VersionSerde.
 
     RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-versioned-values", IntegerSerde.get, StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
 
@@ -105,7 +105,7 @@ This would print obj=3, version=1. The get() method returns a Versioned wrapper 
 
 ### Building EZDB
 
-Building EZDB is built with Maven:
+EZDB is built with Maven:
 
     mvn clean package
 
