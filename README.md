@@ -7,6 +7,7 @@ EZDB provides a nice Java wrapper around LevelDB that provides:
 * Pluggable serializers
 * Pluggable range key sorting
 * Basic versioning for values
+* Choice between native (JNI) and pure-Java LevelDB implementations
 
 ### Using EZDB
 
@@ -103,6 +104,14 @@ You do your lookups as normal.
 
 This would print obj=3, version=1. The get() method returns a Versioned wrapper with your data and version number inside of it.
 
+### Using JNI
+
+By default, EZDB uses a pure-Java port of LevelDB. If you wish to use the JNI-based implementation, you need an extra parameter in the constructor:
+
+    Db ezdb = new EzLevelDb(new File("/tmp"), new EzLevelDbJniFactory());
+
+This class is available in the ezdb-leveldb-jni artifact.
+
 ### Building EZDB
 
 EZDB is built with Maven:
@@ -116,7 +125,7 @@ EZDB is published to maven central. You can pull it in with:
     <dependency>
       <groupId>com.github.criccomini</groupId>
       <artifactId>ezdb-leveldb</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.9</version>
     </dependency>
 
 ### Java Documentation
