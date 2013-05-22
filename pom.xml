@@ -169,7 +169,7 @@
         <executions>
           <execution>
             <id>attach-javadocs</id>
-            <phase>package</phase>
+            <phase>site</phase>
             <goals>
               <goal>aggregate</goal>
             </goals>
