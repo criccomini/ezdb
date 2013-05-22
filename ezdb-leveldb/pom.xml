@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.github.criccomini</groupId>
     <artifactId>ezdb-parent</artifactId>
-    <version>0.1.9</version>
+    <version>0.1.10-SNAPSHOT</version>
   </parent>
 
   <artifactId>ezdb-leveldb</artifactId>
