@@ -25,7 +25,7 @@ The Sonatype to Maven central is set to sync every couple of hours. Here's the J
 
 To release new Javadocs:
 
-    mvn install javadoc:javadoc
+    mvn install javadoc:aggregate -DskipTests
     cp -r target/site/javadoc/apidocs /tmp
     git checkout gh-pages
     git pull
