@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.github.criccomini</groupId>
     <artifactId>ezdb-parent</artifactId>
-    <version>0.1.7-SNAPSHOT</version>
+    <version>0.1.7</version>
   </parent>
 
   <artifactId>ezdb-treemap</artifactId>
