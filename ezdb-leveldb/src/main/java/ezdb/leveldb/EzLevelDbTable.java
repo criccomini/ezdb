@@ -3,7 +3,6 @@ package ezdb.leveldb;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
-import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
@@ -23,7 +22,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
   private final Comparator<byte[]> hashKeyComparator;
   private final Comparator<byte[]> rangeKeyComparator;
 
-  public EzLevelDbTable(File path, Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde, Comparator<byte[]> hashKeyComparator, Comparator<byte[]> rangeKeyComparator) {
+  public EzLevelDbTable(File path, EzLevelDbFactory factory, Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde, Comparator<byte[]> hashKeyComparator, Comparator<byte[]> rangeKeyComparator) {
     this.hashKeySerde = hashKeySerde;
     this.rangeKeySerde = rangeKeySerde;
     this.valueSerde = valueSerde;
@@ -35,7 +34,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
     options.comparator(new EzLevelDbComparator(hashKeyComparator, rangeKeyComparator));
 
     try {
-      this.db = JniDBFactory.factory.open(path, options);
+      this.db = factory.open(path, options);
     } catch (IOException e) {
       throw new DbException(e);
     }

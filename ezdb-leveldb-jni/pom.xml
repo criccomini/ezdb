@@ -9,14 +9,28 @@
     <version>0.1.7-SNAPSHOT</version>
   </parent>
 
-  <artifactId>ezdb-leveldb</artifactId>
-  <name>EZDB LevelDB implementation</name>
+  <artifactId>ezdb-leveldb-jni</artifactId>
+  <name>EZDB LevelDB JNI implementation</name>
   <packaging>jar</packaging>
+
+  <repositories>
+    <repository>
+      <id>fusesource.nexus.snapshot</id>
+      <name>FuseSource Community Snapshot Repository</name>
+      <url>http://repo.fusesource.com/nexus/content/groups/public-snapshots</url>
+    </repository>
+  </repositories>
 
   <dependencies>
     <dependency>
       <groupId>com.github.criccomini</groupId>
-      <artifactId>ezdb-api</artifactId>
+      <artifactId>ezdb-leveldb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.criccomini</groupId>
+      <artifactId>ezdb-leveldb</artifactId>
+      <classifier>tests</classifier>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.github.criccomini</groupId>
@@ -24,9 +38,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.iq80.leveldb</groupId>
-      <artifactId>leveldb</artifactId>
-      <version>0.6</version>
+      <groupId>org.fusesource.leveldbjni</groupId>
+      <artifactId>leveldbjni-all</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

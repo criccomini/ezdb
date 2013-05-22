@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import java.io.File;
 import java.util.Random;
+import org.junit.Before;
 import org.junit.Test;
 import ezdb.Db;
 import ezdb.RangeTable;
@@ -27,9 +28,15 @@ public class TestEzLevelDbTorture {
   public static final int ITERATIONS = 50000;
   public static final String tableName = "torture";
 
+  public Db db;
+
+  @Before
+  public void before() {
+    db = new EzLevelDb(new File("/tmp"));
+  }
+
   @Test
   public void testTortureEzLevelDb() throws InterruptedException {
-    Db db = new EzLevelDb(new File("/tmp"));
     db.deleteTable(tableName);
     Thread[] threads = new Thread[NUM_THREADS];
 

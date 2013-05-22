@@ -19,8 +19,8 @@ import ezdb.serde.VersionedSerde;
 import ezdb.serde.VersionedSerde.Versioned;
 
 public class TestEzLevelDb {
-  private Db ezdb;
-  private RangeTable<Integer, Integer, Integer> table;
+  protected Db ezdb;
+  protected RangeTable<Integer, Integer, Integer> table;
 
   @Test
   public void testNulls() {
