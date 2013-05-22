@@ -29,7 +29,7 @@
     <dependency>
       <groupId>com.github.criccomini</groupId>
       <artifactId>ezdb-leveldb</artifactId>
-      <classifier>tests</classifier>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
