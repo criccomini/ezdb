@@ -6,7 +6,7 @@ To release to Sonatype maven, follow these instructions:
 
 Then run:
 
-    mvn clean deploy release:clean release:prepare release:perform
+    mvn clean deploy release:clean release:prepare-with-pom release:perform
 
 Finally, release the published artifact.
 
