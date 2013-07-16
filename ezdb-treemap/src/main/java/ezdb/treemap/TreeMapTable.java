@@ -209,4 +209,20 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
   @Override
   public void close() {
   }
+
+  	@Override
+	public TableIterator<H, R, V> rangeReverse(H hashKey) {
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public TableIterator<H, R, V> rangeReverse(H hashKey, R fromRangeKey) {
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public TableIterator<H, R, V> rangeReverse(H hashKey, R fromRangeKey,
+			R toRangeKey) {
+		throw new UnsupportedOperationException();
+	}
 }

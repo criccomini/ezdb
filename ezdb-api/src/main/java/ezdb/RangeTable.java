@@ -84,6 +84,53 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
    *         have a range key [fromRangeKey, toRangeKey).
    */
   public TableIterator<H, R, V> range(H hashKey, R fromRangeKey, R toRangeKey);
+  
+  /**
+   * Get all rows with a given hash key in reverse iteration order.
+   * 
+   * @param hashKey
+   *          A key used group rows together.
+   * @return An iterator of all TableRows in this hash key group, ordered by
+   *         their range key.
+   */
+  public TableIterator<H, R, V> rangeReverse(H hashKey);
+
+  /**
+   * Get all rows with a given hash key, and a range key that's smaller than or
+   * equal to the "from" range key provided in reverse iteration order.
+   * 
+   * @param hashKey
+   *          A key used group rows together.
+   * @param fromRangeKey
+   *          The range key to use as the starting point. If an exact match
+   *          doesn't exist for this hash/range pair, the nearest range key that
+   *          is less than this range key will be used as the starting point.
+   * @return An iterator of all remaining TableRows in this hash key group,
+   *         reverse ordered by their range key.
+   */
+  public TableIterator<H, R, V> rangeReverse(H hashKey, R fromRangeKey);
+
+  /**
+   * Get all rows with a given hash key, and a range key that's smaller than or
+   * equal to the "from" range key, and greater than or equal to the "to" range
+   * key in reverse iteration order. 
+   * That is, the "from" range key is inclusive, and the "to" range key is
+   * exclusive.
+   * 
+   * @param hashKey
+   *          A key used group rows together.
+   * @param fromRangeKey
+   *          The range key to use as the starting point. If an exact match
+   *          doesn't exist for this hash/range pair, the nearest range key that
+   *          is less than this range key will be used as the starting point.
+   * @param toRangeKey
+   *          The range key to use as the end point (exclusive). If an exact
+   *          match doesn't exist, the nearest range key that is larger than this
+   *          range key will be used as the end point (inclusive).
+   * @return An iterator in reverse order of all remaining TableRows in this hash key group that
+   *         have a range key [fromRangeKey, toRangeKey).
+   */
+  public TableIterator<H, R, V> rangeReverse(H hashKey, R fromRangeKey, R toRangeKey);
 
   /**
    * Delete a value for a given hash/range pair. If no value exists for a given
