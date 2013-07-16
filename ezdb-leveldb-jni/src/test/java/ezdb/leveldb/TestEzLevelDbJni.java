@@ -29,14 +29,15 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
     Serde<String> hashKeySerde = SerializingSerde.get();
     Serde<Date> hashRangeSerde = SerializingSerde.get();
     Serde<Integer> valueSerde = SerializingSerde.get();
+    ezdb.deleteTable("testInverseOrder");
     final RangeTable<String, Date, Integer> rangeTable = ezdb.getTable("testInverseOrder", hashKeySerde,
         hashRangeSerde, valueSerde);
     final Date now = new Date();
-    final Date oneDate = new Date(now.getTime() + 1);
+    final Date oneDate = new Date(now.getTime() + 10000);
     rangeTable.put("one", oneDate, 1);
-    final Date twoDate = new Date(now.getTime() + 2);
+    final Date twoDate = new Date(now.getTime() + 20000);
     rangeTable.put("one", twoDate, 2);
-    final Date threeDate = new Date(now.getTime() + 3);
+    final Date threeDate = new Date(now.getTime() + 30000);
     rangeTable.put("one", threeDate, 3);
     final TableIterator<String, Date, Integer> range3 = rangeTable.range("one", now);
     Assert.assertEquals(1, (int) range3.next().getValue());
