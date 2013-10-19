@@ -9,7 +9,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 
-import com.sun.xml.internal.ws.encoding.soap.SerializationException;
+import ezdb.DbException;
 
 public class SerializingSerde<E> implements Serde<E> {
 
@@ -43,7 +43,7 @@ public class SerializingSerde<E> implements Serde<E> {
             out.writeObject(obj);
             
         } catch (IOException ex) {
-            throw new SerializationException(ex);
+            throw new DbException(ex);
         } finally {
             try {
                 if (out != null) {
@@ -72,9 +72,9 @@ public class SerializingSerde<E> implements Serde<E> {
             return in.readObject();
             
         } catch (ClassNotFoundException ex) {
-            throw new SerializationException(ex);
+            throw new DbException(ex);
         } catch (IOException ex) {
-            throw new SerializationException(ex);
+            throw new DbException(ex);
         } finally {
             try {
                 if (in != null) {
