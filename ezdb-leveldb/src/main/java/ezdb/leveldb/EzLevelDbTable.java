@@ -442,8 +442,10 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
     @Override
     public void close() {
-      closed = true;
-      delegate.close();
+      if(!closed){
+	    closed = true;
+	    delegate.close();
+      }
     }
 
   }
