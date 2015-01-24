@@ -14,8 +14,16 @@ public class SerdeComparator<O> implements Comparator<byte[]> {
 
 	@Override
 	public final int compare(byte[] o1, byte[] o2) {
-		if(o2 == null || o2.length == 0){
-			//fix buffer underflow
+		boolean o1NullOrEmpty = o1 == null || o1.length == 0;
+		boolean o2NullOrEmpty = o2 == null || o2.length == 0;
+		if (o1NullOrEmpty && o2NullOrEmpty) {
+			return 0;
+		}
+		if (o1NullOrEmpty) {
+			return -1;
+		}
+		if (o2NullOrEmpty) {
+			// fix buffer underflow
 			return 1;
 		}
 		Comparable<Object> co1 = toComparable(serde.fromBytes(o1));
