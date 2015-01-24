@@ -2,7 +2,6 @@ package ezdb.leveldb;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.NoSuchElementException;
