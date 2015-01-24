@@ -111,6 +111,16 @@ public class TestStockData {
 
 		assertIteration(countDates, MIN_DATE, MAX_DATE);
 		assertIteration(countDates, firstDate, lastDate);
+		
+//		Fri Jan 24 23:46:40 UTC 2014
+		TableIterator<String, Date, Integer> range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime());
+		int countBars = 0;
+		while(range.hasNext()){
+			TableRow<String, Date, Integer> next = range.next();
+			System.out.println(next.getValue());
+			countBars++;
+		}
+		Assert.assertEquals(253, countBars);
 	}
 
 	private void assertIteration(int countDates, Date fromDate, Date toDate) {
