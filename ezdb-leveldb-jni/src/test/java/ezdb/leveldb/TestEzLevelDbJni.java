@@ -2,7 +2,9 @@ package ezdb.leveldb;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.NoSuchElementException;
 
 import org.iq80.leveldb.util.FileUtils;
@@ -18,9 +20,9 @@ import ezdb.serde.SerializingSerde;
 
 public class TestEzLevelDbJni extends TestEzLevelDb {
 	private static final String HASHKEY_ONE = "1";
-	private static final Date MAX_DATE = new Date(9999, 1, 1);
-	private static final Date MIN_DATE = new Date(1, 1, 1);
-	private final Date now = new Date(2000, 1, 1);
+	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1).getTime();
+	private static final Date MIN_DATE = new GregorianCalendar(1, 1, 1).getTime();
+	private final Date now = new GregorianCalendar(2000, 1, 1).getTime();
 	private final Date oneDate = new Date(now.getTime() + 100000);
 	private final Date twoDate = new Date(now.getTime() + 200000);
 	private final Date threeDate = new Date(now.getTime() + 300000);
