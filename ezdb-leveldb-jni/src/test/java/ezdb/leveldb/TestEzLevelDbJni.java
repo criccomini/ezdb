@@ -16,13 +16,13 @@ import ezdb.serde.Serde;
 import ezdb.serde.SerializingSerde;
 
 public class TestEzLevelDbJni extends TestEzLevelDb {
-	private static final String HASHKEY = "1";
+	private static final String HASHKEY_ONE = "1";
 	private static final Date MAX_DATE = new Date(9999, 1 ,1);
 	private static final Date MIN_DATE = new Date(1, 1 ,1);
-	final Date now = new Date();
-	final Date oneDate = new Date(now.getTime() + 100000);
-	final Date twoDate = new Date(now.getTime() + 200000);
-	final Date threeDate = new Date(now.getTime() + 300000);
+	private final Date now = new Date();
+	private final Date oneDate = new Date(now.getTime() + 100000);
+	private final Date twoDate = new Date(now.getTime() + 200000);
+	private final Date threeDate = new Date(now.getTime() + 300000);
 
 	@Before
 	public void before() {
@@ -42,16 +42,16 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 		ezdb.deleteTable("testInverseOrder");
 		final RangeTable<String, Date, Integer> rangeTable = ezdb.getTable(
 				"testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
-		//TODO: fix surrounding values!!!
-//		rangeTable.put("0", oneDate, -1);
-//		rangeTable.put("0", twoDate, -2);
-//		rangeTable.put("0", threeDate, -3);
-		rangeTable.put(HASHKEY, oneDate, 1);
-		rangeTable.put(HASHKEY, twoDate, 2);
-		rangeTable.put(HASHKEY, threeDate, 3);
-//		rangeTable.put("1", oneDate, -10);
-//		rangeTable.put("1", twoDate, -20);
-//		rangeTable.put("1", threeDate, -30);
+		
+		rangeTable.put("0", oneDate, -1);
+		rangeTable.put("0", twoDate, -2);
+		rangeTable.put("0", threeDate, -3);
+		rangeTable.put(HASHKEY_ONE, oneDate, 1);
+		rangeTable.put(HASHKEY_ONE, twoDate, 2);
+		rangeTable.put(HASHKEY_ONE, threeDate, 3);
+		rangeTable.put("2", oneDate, -10);
+		rangeTable.put("2", twoDate, -20);
+		rangeTable.put("2", threeDate, -30);
 		
 		System.out.println("range3");
 		range3(rangeTable);
@@ -61,21 +61,18 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 
 		System.out.println("range2");
 		range2(rangeTable);
-
-		System.out.println("range3Reverse");
-		range3Reverse(rangeTable);
-
-		System.out.println("rangeNoneReverse");
-		rangeNoneReverse(rangeTable);
-
-		System.out.println("range2Reverse");
-		range2Reverse(rangeTable);
-
-		System.out.println("range32Reverse");
-		range32Reverse(rangeTable);
-
-		System.out.println("range21Reverse");
-		range21Reverse(rangeTable);
+		
+		System.out.println("range21");
+		range21(rangeTable);
+		
+		System.out.println("range32");
+		range32(rangeTable);
+		
+		System.out.println("range12");
+		range12(rangeTable);
+		
+		System.out.println("range23");
+		range23(rangeTable);
 		
 		System.out.println("rangeMin");
 		rangeMin(rangeTable);
@@ -88,6 +85,27 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 		
 		System.out.println("rangeMaxMin");
 		rangeMaxMin(rangeTable);
+		
+		System.out.println("range12Reverse");
+		range12Reverse(rangeTable);
+
+		System.out.println("range23Reverse");
+		range23Reverse(rangeTable);
+		
+		System.out.println("range3Reverse");
+		range3Reverse(rangeTable);
+		
+		System.out.println("rangeNoneReverse");
+		rangeNoneReverse(rangeTable);
+		
+		System.out.println("range2Reverse");
+		range2Reverse(rangeTable);
+		
+		System.out.println("range32Reverse");
+		range32Reverse(rangeTable);
+		
+		System.out.println("range21Reverse");
+		range21Reverse(rangeTable);
 		
 		System.out.println("rangeMinReverse");
 		rangeMinReverse(rangeTable);
@@ -107,7 +125,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	private void range21Reverse(
 			final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.rangeReverse(HASHKEY, twoDate, oneDate);
+				.rangeReverse(HASHKEY_ONE, twoDate, oneDate);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -122,7 +140,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	private void range32Reverse(
 			final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.rangeReverse(HASHKEY, threeDate, twoDate);
+				.rangeReverse(HASHKEY_ONE, threeDate, twoDate);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -133,11 +151,94 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
+	
+	private void range12Reverse(
+			final RangeTable<String, Date, Integer> rangeTable) {
+		final TableIterator<String, Date, Integer> range = rangeTable
+				.rangeReverse(HASHKEY_ONE, oneDate, twoDate);
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	private void range23Reverse(
+			final RangeTable<String, Date, Integer> rangeTable) {
+		final TableIterator<String, Date, Integer> range = rangeTable
+				.rangeReverse(HASHKEY_ONE, twoDate, threeDate);
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+	
+	private void range21(
+			final RangeTable<String, Date, Integer> rangeTable) {
+		final TableIterator<String, Date, Integer> range = rangeTable
+				.range(HASHKEY_ONE, twoDate, oneDate);
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	private void range32(
+			final RangeTable<String, Date, Integer> rangeTable) {
+		final TableIterator<String, Date, Integer> range = rangeTable
+				.range(HASHKEY_ONE, threeDate, twoDate);
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+	
+	private void range12(
+			final RangeTable<String, Date, Integer> rangeTable) {
+		final TableIterator<String, Date, Integer> range = rangeTable
+				.range(HASHKEY_ONE, oneDate, twoDate);
+		Assert.assertEquals(1, (int) range.next().getValue());
+		Assert.assertEquals(2, (int) range.next().getValue());
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	private void range23(
+			final RangeTable<String, Date, Integer> rangeTable) {
+		final TableIterator<String, Date, Integer> range = rangeTable
+				.range(HASHKEY_ONE, twoDate, threeDate);
+		Assert.assertEquals(2, (int) range.next().getValue());
+		Assert.assertEquals(3, (int) range.next().getValue());
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
 
 	private void range2Reverse(
 			final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.rangeReverse(HASHKEY, twoDate);
+				.rangeReverse(HASHKEY_ONE, twoDate);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -152,7 +253,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	private void rangeNoneReverse(
 			final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> rangeNoneReverse = rangeTable
-				.rangeReverse(HASHKEY);
+				.rangeReverse(HASHKEY_ONE);
 		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
@@ -168,7 +269,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	private void range3Reverse(
 			final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.rangeReverse(HASHKEY, threeDate);
+				.rangeReverse(HASHKEY_ONE, threeDate);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
@@ -183,7 +284,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 
 	private void range2(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable.range(
-				HASHKEY, twoDate);
+				HASHKEY_ONE, twoDate);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -197,7 +298,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 
 	private void rangeNone(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.range(HASHKEY);
+				.range(HASHKEY_ONE);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -212,7 +313,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 
 	private void range3(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable.range(
-				HASHKEY, now);
+				HASHKEY_ONE, now);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -227,7 +328,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	
 	private void rangeMin(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> rangeMin = rangeTable
-				.range(HASHKEY, MIN_DATE);
+				.range(HASHKEY_ONE, MIN_DATE);
 		Assert.assertEquals(1, (int) rangeMin.next().getValue());
 		Assert.assertEquals(2, (int) rangeMin.next().getValue());
 		Assert.assertEquals(3, (int) rangeMin.next().getValue());
@@ -242,7 +343,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	
 	private void rangeMinMax(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.range(HASHKEY, MIN_DATE, MAX_DATE);
+				.range(HASHKEY_ONE, MIN_DATE, MAX_DATE);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -257,7 +358,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	
 	private void rangeMaxMin(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.range(HASHKEY, MAX_DATE, MIN_DATE);
+				.range(HASHKEY_ONE, MAX_DATE, MIN_DATE);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -269,7 +370,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	
 	private void rangeMinReverse(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.rangeReverse(HASHKEY, MIN_DATE);
+				.rangeReverse(HASHKEY_ONE, MIN_DATE);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -281,7 +382,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	
 	private void rangeMinMaxReverse(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.rangeReverse(HASHKEY, MIN_DATE, MAX_DATE);
+				.rangeReverse(HASHKEY_ONE, MIN_DATE, MAX_DATE);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -293,7 +394,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	
 	private void rangeMaxMinReverse(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.rangeReverse(HASHKEY, MAX_DATE, MIN_DATE);
+				.rangeReverse(HASHKEY_ONE, MAX_DATE, MIN_DATE);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
@@ -308,7 +409,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 
 	private void rangeMaxReverse(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.rangeReverse(HASHKEY, MAX_DATE);
+				.rangeReverse(HASHKEY_ONE, MAX_DATE);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
@@ -323,7 +424,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	
 	private void rangeMax(final RangeTable<String, Date, Integer> rangeTable) {
 		final TableIterator<String, Date, Integer> range = rangeTable
-				.range(HASHKEY, MAX_DATE);
+				.range(HASHKEY_ONE, MAX_DATE);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();

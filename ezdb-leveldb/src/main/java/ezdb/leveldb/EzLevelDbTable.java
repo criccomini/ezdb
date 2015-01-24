@@ -10,6 +10,9 @@ import java.util.NoSuchElementException;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
+
+import com.google.common.base.Function;
+
 import ezdb.DbException;
 import ezdb.RangeTable;
 import ezdb.RawTableRow;
@@ -194,10 +197,17 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
 		final DBIterator iterator = db.iterator();
+		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
+			@Override
+			public Boolean apply(CheckKeysRequest input) {
+				return Util.compareKeys(hashKeyComparator, null,
+						input.getKeyBytesFrom(), input.getPeekKey()) == 0;
+			}
+		};
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, null);
 		TableIterator<H, R, V> emptyIterator = reverseSeekToLast(keyBytesFrom,
-				iterator);
+				null, iterator, checkKeys);
 		if (emptyIterator != null) {
 			return emptyIterator;
 		}
@@ -213,12 +223,8 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 							return true;
 						}
 						return iterator.hasPrev()
-								&& checkKeys(iterator.peekPrev());
-					}
-
-					private boolean checkKeys(Entry<byte[], byte[]> peek) {
-						return Util.compareKeys(hashKeyComparator, null,
-								keyBytesFrom, peek.getKey()) == 0;
+								&& checkKeys.apply(new CheckKeysRequest(
+										keyBytesFrom, null, iterator.peekPrev()));
 					}
 
 					private boolean useFixFirst() {
@@ -226,7 +232,8 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 							final Entry<byte[], byte[]> peekNext = iterator
 									.peekNext();
 							if (peekNext != null) {
-								if (checkKeys(peekNext)) {
+								if (checkKeys.apply(new CheckKeysRequest(
+										keyBytesFrom, null, peekNext))) {
 									return true;
 								} else {
 									fixFirst = false;
@@ -269,12 +276,13 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	private TableIterator<H, R, V> reverseSeekToLast(final byte[] keyBytesFrom,
-			final DBIterator iterator) {
+			byte[] keyBytesTo, final DBIterator iterator,
+			Function<CheckKeysRequest, Boolean> checkKeys) {
 		iterator.seek(keyBytesFrom);
 		Entry<byte[], byte[]> last = null;
 		while (iterator.hasNext()
-				&& Util.compareKeys(hashKeyComparator, null, keyBytesFrom,
-						iterator.peekNext().getKey()) == 0) {
+				&& checkKeys.apply(new CheckKeysRequest(keyBytesFrom,
+						keyBytesTo, iterator.peekNext()))) {
 			last = iterator.next();
 		}
 		// if there is no last one, there is nothing at all in the table
@@ -309,6 +317,16 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	public TableIterator<H, R, V> rangeReverse(final H hashKey,
 			final R fromRangeKey) {
 		final DBIterator iterator = db.iterator();
+		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
+			@Override
+			public Boolean apply(CheckKeysRequest input) {
+				return Util.compareKeys(hashKeyComparator, null,
+						input.getKeyBytesFrom(), input.getPeekKey()) == 0
+						&& Util.compareKeys(hashKeyComparator,
+								rangeKeyComparator, input.getKeyBytesFrom(),
+								input.getPeekKey()) >= 0;
+			}
+		};
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom);
@@ -316,7 +334,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 			byte[] keyBytesFromForSeekLast = Util.combine(hashKeySerde,
 					rangeKeySerde, hashKey, null);
 			TableIterator<H, R, V> emptyIterator = reverseSeekToLast(
-					keyBytesFromForSeekLast, iterator);
+					keyBytesFromForSeekLast, null, iterator, checkKeys);
 			if (emptyIterator != null) {
 				return emptyIterator;
 			}
@@ -332,7 +350,8 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 							return true;
 						}
 						return iterator.hasPrev()
-								&& checkKeys(iterator.peekPrev());
+								&& checkKeys.apply(new CheckKeysRequest(
+										keyBytesFrom, null, iterator.peekPrev()));
 					}
 
 					private boolean useFixFirst() {
@@ -340,7 +359,8 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 							final Entry<byte[], byte[]> peekNext = iterator
 									.peekNext();
 							if (peekNext != null) {
-								if (checkKeys(peekNext)) {
+								if (checkKeys.apply(new CheckKeysRequest(
+										keyBytesFrom, null, peekNext))) {
 									return true;
 								} else {
 									fixFirst = false;
@@ -348,11 +368,6 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 							}
 						}
 						return false;
-					}
-
-					private boolean checkKeys(final Entry<byte[], byte[]> peek) {
-						return Util.compareKeys(hashKeyComparator,
-								rangeKeyComparator, keyBytesFrom, peek.getKey()) >= 0;
 					}
 
 					@Override
@@ -390,6 +405,19 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	public TableIterator<H, R, V> rangeReverse(final H hashKey,
 			final R fromRangeKey, final R toRangeKey) {
 		final DBIterator iterator = db.iterator();
+		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
+			@Override
+			public Boolean apply(CheckKeysRequest input) {
+				return Util.compareKeys(hashKeyComparator, null,
+						input.getKeyBytesFrom(), input.getPeekKey()) == 0
+						&& Util.compareKeys(hashKeyComparator,
+								rangeKeyComparator, input.getKeyBytesFrom(),
+								input.getPeekKey()) >= 0
+						&& Util.compareKeys(hashKeyComparator,
+								rangeKeyComparator, input.getKeyBytesTo(),
+								input.getPeekKey()) <= 0;
+			}
+		};
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, fromRangeKey);
 		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde,
@@ -397,9 +425,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		iterator.seek(keyBytesFrom);
 		if (!iterator.hasNext()) {
 			byte[] keyBytesFromForSeekLast = Util.combine(hashKeySerde,
-					rangeKeySerde, hashKey, toRangeKey);
+					rangeKeySerde, hashKey, null);
 			TableIterator<H, R, V> emptyIterator = reverseSeekToLast(
-					keyBytesFromForSeekLast, iterator);
+					keyBytesFromForSeekLast, keyBytesTo, iterator, checkKeys);
 			if (emptyIterator != null) {
 				return emptyIterator;
 			}
@@ -415,15 +443,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 							return true;
 						}
 						return iterator.hasPrev()
-								&& checkKeys(iterator.peekPrev());
-					}
-
-					private boolean checkKeys(Entry<byte[], byte[]> peek) {
-						return Util.compareKeys(hashKeyComparator,
-								rangeKeyComparator, keyBytesFrom, peek.getKey()) >= 0
-								&& Util.compareKeys(hashKeyComparator,
-										rangeKeyComparator, keyBytesTo,
-										peek.getKey()) <= 0;
+								&& checkKeys.apply(new CheckKeysRequest(
+										keyBytesFrom, keyBytesTo, iterator
+												.peekPrev()));
 					}
 
 					private boolean useFixFirst() {
@@ -431,7 +453,8 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 							final Entry<byte[], byte[]> peekNext = iterator
 									.peekNext();
 							if (peekNext != null) {
-								if (checkKeys(peekNext)) {
+								if (checkKeys.apply(new CheckKeysRequest(
+										keyBytesFrom, keyBytesTo, peekNext))) {
 									return true;
 								} else {
 									fixFirst = false;
@@ -540,6 +563,33 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 				closed = true;
 				delegate.close();
 			}
+		}
+
+	}
+
+	private static class CheckKeysRequest {
+
+		private final byte[] keyBytesFrom;
+		private final byte[] keyBytesTo;
+		private final Entry<byte[], byte[]> peek;
+
+		public CheckKeysRequest(byte[] keyBytesFrom, byte[] keyBytesTo,
+				Entry<byte[], byte[]> peek) {
+			this.keyBytesFrom = keyBytesFrom;
+			this.keyBytesTo = keyBytesTo;
+			this.peek = peek;
+		}
+
+		public byte[] getKeyBytesFrom() {
+			return keyBytesFrom;
+		}
+
+		public byte[] getKeyBytesTo() {
+			return keyBytesTo;
+		}
+
+		public byte[] getPeekKey() {
+			return peek.getKey();
 		}
 
 	}
