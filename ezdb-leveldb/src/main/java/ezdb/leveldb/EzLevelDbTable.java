@@ -322,15 +322,15 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public Boolean apply(CheckKeysRequest input) {
 				return Util.compareKeys(hashKeyComparator, null,
 						input.getKeyBytesFrom(), input.getPeekKey()) == 0
-						&& Util.compareKeys(hashKeyComparator,
-								rangeKeyComparator, input.getKeyBytesFrom(),
-								input.getPeekKey()) >= 0;
+						&& (fromRangeKey == null || Util.compareKeys(
+								hashKeyComparator, rangeKeyComparator,
+								input.getKeyBytesFrom(), input.getPeekKey()) >= 0);
 			}
 		};
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom);
-		if (!iterator.hasNext()) {
+		if (!iterator.hasNext() || fromRangeKey == null) {
 			byte[] keyBytesFromForSeekLast = Util.combine(hashKeySerde,
 					rangeKeySerde, hashKey, null);
 			TableIterator<H, R, V> emptyIterator = reverseSeekToLast(
@@ -410,12 +410,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public Boolean apply(CheckKeysRequest input) {
 				return Util.compareKeys(hashKeyComparator, null,
 						input.getKeyBytesFrom(), input.getPeekKey()) == 0
-						&& Util.compareKeys(hashKeyComparator,
-								rangeKeyComparator, input.getKeyBytesFrom(),
-								input.getPeekKey()) >= 0
-						&& Util.compareKeys(hashKeyComparator,
-								rangeKeyComparator, input.getKeyBytesTo(),
-								input.getPeekKey()) <= 0;
+						&& (fromRangeKey == null || Util.compareKeys(
+								hashKeyComparator, rangeKeyComparator,
+								input.getKeyBytesFrom(), input.getPeekKey()) >= 0)
+						&& (toRangeKey == null || Util.compareKeys(
+								hashKeyComparator, rangeKeyComparator,
+								input.getKeyBytesTo(), input.getPeekKey()) <= 0);
 			}
 		};
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
@@ -423,9 +423,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, toRangeKey);
 		iterator.seek(keyBytesFrom);
-		if (!iterator.hasNext()) {
+		if (!iterator.hasNext() || fromRangeKey == null) {
 			byte[] keyBytesFromForSeekLast = Util.combine(hashKeySerde,
-					rangeKeySerde, hashKey, null);
+					rangeKeySerde, hashKey, toRangeKey);
 			TableIterator<H, R, V> emptyIterator = reverseSeekToLast(
 					keyBytesFromForSeekLast, keyBytesTo, iterator, checkKeys);
 			if (emptyIterator != null) {
@@ -593,4 +593,52 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		}
 
 	}
+
+	@Override
+	public V getLatest(H hashKey) {
+		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey);
+		try {
+			if (rangeReverse.hasNext()) {
+				return rangeReverse.next().getValue();
+			} else {
+				final TableIterator<H, R, V> range = range(hashKey);
+				try {
+					if (range.hasNext()) {
+						return range.next().getValue();
+					} else {
+						return (V) null;
+					}
+				} finally {
+					range.close();
+				}
+			}
+		} finally {
+			rangeReverse.close();
+		}
+	}
+
+	@Override
+	public V getLatest(H hashKey, R rangeKey) {
+		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey,
+				rangeKey);
+		try {
+			if (rangeReverse.hasNext()) {
+				return rangeReverse.next().getValue();
+			} else {
+				final TableIterator<H, R, V> range = range(hashKey, rangeKey);
+				try {
+					if (range.hasNext()) {
+						return range.next().getValue();
+					} else {
+						return (V) null;
+					}
+				} finally {
+					range.close();
+				}
+			}
+		} finally {
+			rangeReverse.close();
+		}
+	}
+
 }

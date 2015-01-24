@@ -27,11 +27,11 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	private final Date oneDatePlus = new Date(oneDate.getTime() + 1);
 	private final Date twoDatePlus = new Date(twoDate.getTime() + 1);
 	private final Date threeDatePlus = new Date(threeDate.getTime() + 1);
-	
+
 	private final Date oneDateMinus = new Date(oneDate.getTime() - 1);
 	private final Date twoDateMinus = new Date(twoDate.getTime() - 1);
 	private final Date threeDateMinus = new Date(threeDate.getTime() - 1);
-	
+
 	private RangeTable<String, Date, Integer> reverseRangeTable;
 
 	@Before
@@ -96,7 +96,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range21ReverseMinus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -125,7 +125,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range32ReversePlus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -140,7 +140,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range32ReverseMinus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -221,7 +221,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range12Plus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -235,7 +235,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range12Minus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -264,7 +264,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range23Plus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -278,7 +278,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range23Minus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -307,7 +307,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range2ReversePlus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -322,7 +322,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range2ReverseMinus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -354,6 +354,126 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	}
 
 	@Test
+	public void rangeNullReverse() {
+		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null);
+		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
+		Assert.assertFalse(rangeNoneReverse.hasNext());
+		try {
+			rangeNoneReverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeNullNullReverse() {
+		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null, null);
+		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
+		Assert.assertFalse(rangeNoneReverse.hasNext());
+		try {
+			rangeNoneReverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void range2NullReverse() {
+		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, twoDate, null);
+		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
+		Assert.assertFalse(rangeNoneReverse.hasNext());
+		try {
+			rangeNoneReverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeNull2Reverse() {
+		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null, twoDate);
+		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
+		Assert.assertFalse(rangeNoneReverse.hasNext());
+		try {
+			rangeNoneReverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeMaxNullReverse() {
+		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, MAX_DATE, null);
+		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
+		Assert.assertFalse(rangeNoneReverse.hasNext());
+		try {
+			rangeNoneReverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeNullMaxReverse() {
+		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null, MAX_DATE);
+		Assert.assertFalse(rangeNoneReverse.hasNext());
+		try {
+			rangeNoneReverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeMinNullReverse() {
+		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, MIN_DATE, null);
+		Assert.assertFalse(rangeNoneReverse.hasNext());
+		try {
+			rangeNoneReverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeNullMinReverse() {
+		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null, MIN_DATE);
+		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
+		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
+		Assert.assertFalse(rangeNoneReverse.hasNext());
+		try {
+			rangeNoneReverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
 	public void range3Reverse() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
 				.rangeReverse(HASHKEY_ONE, threeDate);
@@ -368,7 +488,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range3ReversePlus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -384,7 +504,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range3ReverseMinus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -414,7 +534,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range2Plus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -428,7 +548,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range2Minus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -461,6 +581,126 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	}
 
 	@Test
+	public void rangeNull() {
+		final TableIterator<String, Date, Integer> range = reverseRangeTable
+				.range(HASHKEY_ONE, null);
+		Assert.assertEquals(1, (int) range.next().getValue());
+		Assert.assertEquals(2, (int) range.next().getValue());
+		Assert.assertEquals(3, (int) range.next().getValue());
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeNullNull() {
+		final TableIterator<String, Date, Integer> range = reverseRangeTable
+				.range(HASHKEY_ONE, null, null);
+		Assert.assertEquals(1, (int) range.next().getValue());
+		Assert.assertEquals(2, (int) range.next().getValue());
+		Assert.assertEquals(3, (int) range.next().getValue());
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void range2Null() {
+		final TableIterator<String, Date, Integer> range = reverseRangeTable
+				.range(HASHKEY_ONE, twoDate, null);
+		Assert.assertEquals(2, (int) range.next().getValue());
+		Assert.assertEquals(3, (int) range.next().getValue());
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeNull2() {
+		final TableIterator<String, Date, Integer> range = reverseRangeTable
+				.range(HASHKEY_ONE, null, twoDate);
+		Assert.assertEquals(1, (int) range.next().getValue());
+		Assert.assertEquals(2, (int) range.next().getValue());
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeMaxNull() {
+		final TableIterator<String, Date, Integer> range = reverseRangeTable
+				.range(HASHKEY_ONE, MAX_DATE, null);
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeNullMax() {
+		final TableIterator<String, Date, Integer> range = reverseRangeTable
+				.range(HASHKEY_ONE, null, MAX_DATE);
+		Assert.assertEquals(1, (int) range.next().getValue());
+		Assert.assertEquals(2, (int) range.next().getValue());
+		Assert.assertEquals(3, (int) range.next().getValue());
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeMinNull() {
+		final TableIterator<String, Date, Integer> range = reverseRangeTable
+				.range(HASHKEY_ONE, MIN_DATE, null);
+		Assert.assertEquals(1, (int) range.next().getValue());
+		Assert.assertEquals(2, (int) range.next().getValue());
+		Assert.assertEquals(3, (int) range.next().getValue());
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
+	public void rangeNullMin() {
+		final TableIterator<String, Date, Integer> range = reverseRangeTable
+				.range(HASHKEY_ONE, null, MIN_DATE);
+		Assert.assertFalse(range.hasNext());
+		try {
+			range.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+	}
+
+	@Test
 	public void range3() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
 				.range(HASHKEY_ONE, threeDate);
@@ -473,7 +713,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range3Plus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -486,7 +726,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void range3Minus() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -500,7 +740,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void rangeNow() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -516,7 +756,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			Assert.assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void rangeNowReverse() {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable
@@ -644,6 +884,86 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+	}
+
+	@Test
+	public void getNone() {
+		Assert.assertEquals(null, reverseRangeTable.get(HASHKEY_ONE));
+	}
+
+	@Test
+	public void getNull() {
+		Assert.assertEquals(null, reverseRangeTable.get(HASHKEY_ONE, null));
+	}
+
+	@Test
+	public void get2() {
+		Assert.assertEquals((Integer) 2,
+				reverseRangeTable.get(HASHKEY_ONE, twoDate));
+	}
+
+	@Test
+	public void getMin() {
+		Assert.assertEquals(null, reverseRangeTable.get(HASHKEY_ONE, MIN_DATE));
+	}
+
+	@Test
+	public void getMax() {
+		Assert.assertEquals(null, reverseRangeTable.get(HASHKEY_ONE, MAX_DATE));
+	}
+
+	@Test
+	public void get2Plus() {
+		Assert.assertEquals(null,
+				reverseRangeTable.get(HASHKEY_ONE, twoDatePlus));
+	}
+
+	@Test
+	public void get2Minus() {
+		Assert.assertEquals(null,
+				reverseRangeTable.get(HASHKEY_ONE, twoDateMinus));
+	}
+
+	@Test
+	public void getLastNone() {
+		Assert.assertEquals((Integer) 3,
+				reverseRangeTable.getLatest(HASHKEY_ONE));
+	}
+
+	@Test
+	public void getLastNull() {
+		Assert.assertEquals((Integer) 3,
+				reverseRangeTable.getLatest(HASHKEY_ONE, null));
+	}
+
+	@Test
+	public void getLast2() {
+		Assert.assertEquals((Integer) 2,
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDate));
+	}
+
+	@Test
+	public void getLastMin() {
+		Assert.assertEquals((Integer) 1,
+				reverseRangeTable.getLatest(HASHKEY_ONE, MIN_DATE));
+	}
+
+	@Test
+	public void getLastMax() {
+		Assert.assertEquals((Integer) 3,
+				reverseRangeTable.getLatest(HASHKEY_ONE, MAX_DATE));
+	}
+
+	@Test
+	public void getLast2Plus() {
+		Assert.assertEquals((Integer) 2,
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDatePlus));
+	}
+
+	@Test
+	public void getLast2Minus() {
+		Assert.assertEquals((Integer) 1,
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDateMinus));
 	}
 
 }
