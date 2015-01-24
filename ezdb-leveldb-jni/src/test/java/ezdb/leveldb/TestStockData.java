@@ -2,7 +2,6 @@ package ezdb.leveldb;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.DateFormat;
@@ -29,8 +28,6 @@ import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.comparator.SerdeComparator;
 import ezdb.serde.DateSerde;
-import ezdb.serde.IntegerSerde;
-import ezdb.serde.LongSerde;
 import ezdb.serde.Serde;
 import ezdb.serde.SerializingSerde;
 import ezdb.serde.StringSerde;
@@ -117,7 +114,7 @@ public class TestStockData {
 		int countBars = 0;
 		while(range.hasNext()){
 			TableRow<String, Date, Integer> next = range.next();
-			System.out.println(next.getValue());
+//			System.out.println(next.getValue());
 			countBars++;
 		}
 		Assert.assertEquals(253, countBars);
