@@ -4,7 +4,7 @@ To release to Sonatype maven, follow these instructions:
 
 * https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide
 
-Then run:
+Make sure the version listed in the .pom files is a -SNAPSHOT version, then run:
 
     mvn clean deploy release:clean release:prepare release:perform
 
