@@ -1,6 +1,7 @@
 package ezdb.leveldb;
 
-import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.NoSuchElementException;
 
@@ -33,6 +34,9 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	private final Date threeDateMinus = new Date(threeDate.getTime() - 1);
 
 	private RangeTable<String, Date, Integer> reverseRangeTable;
+	private final Serde<String> hashKeySerde = SerializingSerde.get();
+	private final Serde<Date> hashRangeSerde = SerializingSerde.get();
+	private final Serde<Integer> valueSerde = SerializingSerde.get();
 
 	@Before
 	public void before() {
@@ -42,27 +46,22 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get,
 				IntegerSerde.get);
-		Serde<String> hashKeySerde = SerializingSerde.get();
-		Serde<Date> hashRangeSerde = SerializingSerde.get();
-		Serde<Integer> valueSerde = SerializingSerde.get();
 
 		ezdb.deleteTable("testInverseOrder");
 		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde,
 				hashRangeSerde, valueSerde);
-		reverseRangeTable.put("0", oneDate, -1);
-		reverseRangeTable.put("0", twoDate, -2);
-		reverseRangeTable.put("0", threeDate, -3);
 		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
 		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
 		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
-		reverseRangeTable.put("2", oneDate, -10);
-		reverseRangeTable.put("2", twoDate, -20);
-		reverseRangeTable.put("2", threeDate, -30);
 	}
 
 	@Override
 	public void after() {
 		super.after();
+		clearTable();
+	}
+
+	private void clearTable() {
 		reverseRangeTable.close();
 		ezdb.deleteTable("testInverseOrder");
 	}
@@ -964,6 +963,277 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	public void getLast2Minus() {
 		Assert.assertEquals((Integer) 1,
 				reverseRangeTable.getLatest(HASHKEY_ONE, twoDateMinus));
+	}
+
+	@Test
+	public void testVariationsOfDatasetNormal()
+			throws IllegalArgumentException, IllegalAccessException {
+		for (Method m : getClass().getMethods()) {
+			try {
+				if (m.getAnnotation(Test.class) != null
+						&& !m.getName().startsWith("testVariationsOfDataset")) {
+					System.out.println(m.getName());
+					m.invoke(this);
+				}
+			} catch (InvocationTargetException t) {
+				throw new RuntimeException("at: " + m.getName(),
+						t.getTargetException());
+			}
+		}
+	}
+
+	@Test
+	public void testVariationsOfDataset012() throws IllegalArgumentException,
+			IllegalAccessException {
+		clearTable();
+
+		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde,
+				hashRangeSerde, valueSerde);
+		reverseRangeTable.put("0", oneDate, -1);
+		reverseRangeTable.put("0", twoDate, -2);
+		reverseRangeTable.put("0", threeDate, -3);
+		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
+		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
+		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
+		reverseRangeTable.put("2", oneDate, -10);
+		reverseRangeTable.put("2", twoDate, -20);
+		reverseRangeTable.put("2", threeDate, -30);
+
+		testVariationsOfDatasetNormal();
+	}
+
+	@Test
+	public void testVariationsOfDataset01() throws IllegalArgumentException,
+			IllegalAccessException {
+		clearTable();
+
+		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde,
+				hashRangeSerde, valueSerde);
+		reverseRangeTable.put("0", oneDate, -1);
+		reverseRangeTable.put("0", twoDate, -2);
+		reverseRangeTable.put("0", threeDate, -3);
+		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
+		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
+		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
+
+		testVariationsOfDatasetNormal();
+	}
+
+	@Test
+	public void testVariationsOfDataset12() throws IllegalArgumentException,
+			IllegalAccessException {
+		clearTable();
+
+		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde,
+				hashRangeSerde, valueSerde);
+		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
+		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
+		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
+		reverseRangeTable.put("2", oneDate, -10);
+		reverseRangeTable.put("2", twoDate, -20);
+		reverseRangeTable.put("2", threeDate, -30);
+
+		testVariationsOfDatasetNormal();
+	}
+
+	@Test
+	public void testVariationsOfDataset210Reverse()
+			throws IllegalArgumentException, IllegalAccessException {
+		clearTable();
+
+		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde,
+				hashRangeSerde, valueSerde);
+		reverseRangeTable.put("2", threeDate, -30);
+		reverseRangeTable.put("2", twoDate, -20);
+		reverseRangeTable.put("2", oneDate, -10);
+		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
+		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
+		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
+		reverseRangeTable.put("0", threeDate, -3);
+		reverseRangeTable.put("0", twoDate, -2);
+		reverseRangeTable.put("0", oneDate, -1);
+
+		testVariationsOfDatasetNormal();
+	}
+
+	@Test
+	public void testVariationsOfDataset210() throws IllegalArgumentException,
+			IllegalAccessException, InvocationTargetException {
+		clearTable();
+
+		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde,
+				hashRangeSerde, valueSerde);
+		reverseRangeTable.put("2", oneDate, -10);
+		reverseRangeTable.put("2", twoDate, -20);
+		reverseRangeTable.put("2", threeDate, -30);
+		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
+		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
+		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
+		reverseRangeTable.put("0", oneDate, -1);
+		reverseRangeTable.put("0", twoDate, -2);
+		reverseRangeTable.put("0", threeDate, -3);
+
+		testVariationsOfDatasetNormal();
+	}
+
+	@Test
+	public void testInverseOrder() {
+		final TableIterator<String, Date, Integer> range3 = reverseRangeTable
+				.range(HASHKEY_ONE, now);
+		Assert.assertEquals((Integer) 1, range3.next().getValue());
+		Assert.assertEquals((Integer) 2, range3.next().getValue());
+		Assert.assertEquals((Integer) 3, range3.next().getValue());
+		Assert.assertFalse(range3.hasNext());
+		try {
+			range3.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+		range3.close(); // should already be closed but should not cause an
+						// error when calling again
+
+		final TableIterator<String, Date, Integer> rangeNone = reverseRangeTable
+				.range(HASHKEY_ONE);
+		Assert.assertEquals((Integer) 1, rangeNone.next().getValue());
+		Assert.assertEquals((Integer) 2, rangeNone.next().getValue());
+		Assert.assertEquals((Integer) 3, rangeNone.next().getValue());
+		Assert.assertFalse(rangeNone.hasNext());
+		try {
+			rangeNone.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+
+		final TableIterator<String, Date, Integer> rangeMin = reverseRangeTable
+				.range(HASHKEY_ONE, MIN_DATE);
+		Assert.assertEquals((Integer) 1, rangeMin.next().getValue());
+		Assert.assertEquals((Integer) 2, rangeMin.next().getValue());
+		Assert.assertEquals((Integer) 3, rangeMin.next().getValue());
+		Assert.assertFalse(rangeMin.hasNext());
+		try {
+			rangeMin.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+
+		final TableIterator<String, Date, Integer> rangeMax = reverseRangeTable
+				.range(HASHKEY_ONE, MAX_DATE);
+		Assert.assertFalse(rangeMax.hasNext());
+		try {
+			rangeMax.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+
+		final TableIterator<String, Date, Integer> range2 = reverseRangeTable
+				.range(HASHKEY_ONE, twoDate);
+		Assert.assertEquals((Integer) 2, range2.next().getValue());
+		Assert.assertEquals((Integer) 3, range2.next().getValue());
+		Assert.assertFalse(range2.hasNext());
+		try {
+			range2.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+
+		testReverse();
+
+		testGetLatestForRange();
+	}
+
+	private void testGetLatestForRange() {
+		Assert.assertEquals((Integer) 1,
+				reverseRangeTable.getLatest(HASHKEY_ONE, oneDate));
+		Assert.assertEquals((Integer) 2,
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDate));
+		Assert.assertEquals((Integer) 3,
+				reverseRangeTable.getLatest(HASHKEY_ONE, threeDate));
+
+		Assert.assertEquals((Integer) 1,
+				reverseRangeTable.getLatest(HASHKEY_ONE, oneDateMinus));
+		Assert.assertEquals((Integer) 1,
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDateMinus));
+		Assert.assertEquals((Integer) 2,
+				reverseRangeTable.getLatest(HASHKEY_ONE, threeDateMinus));
+		Assert.assertEquals((Integer) 3,
+				reverseRangeTable.getLatest(HASHKEY_ONE, threeDatePlus));
+		Assert.assertEquals(
+				(Integer) 3,
+				reverseRangeTable.getLatest(HASHKEY_ONE,
+						new Date(threeDatePlus.getTime() + 1000)));
+		Assert.assertEquals((Integer) 1,
+				reverseRangeTable.getLatest(HASHKEY_ONE, MIN_DATE));
+		Assert.assertEquals((Integer) 3,
+				reverseRangeTable.getLatest(HASHKEY_ONE, MAX_DATE));
+	}
+
+	private void testReverse() {
+		final TableIterator<String, Date, Integer> range3Reverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, threeDate);
+		Assert.assertEquals((Integer) 3, range3Reverse.next().getValue());
+		Assert.assertEquals((Integer) 2, range3Reverse.next().getValue());
+		Assert.assertEquals((Integer) 1, range3Reverse.next().getValue());
+		Assert.assertFalse(range3Reverse.hasNext());
+		try {
+			range3Reverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+
+		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE);
+		Assert.assertEquals((Integer) 3, rangeNoneReverse.next().getValue());
+		Assert.assertEquals((Integer) 2, rangeNoneReverse.next().getValue());
+		Assert.assertEquals((Integer) 1, rangeNoneReverse.next().getValue());
+		Assert.assertFalse(rangeNoneReverse.hasNext());
+		try {
+			rangeNoneReverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+
+		final TableIterator<String, Date, Integer> range2Reverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, twoDate);
+		Assert.assertEquals((Integer) 2, range2Reverse.next().getValue());
+		Assert.assertEquals((Integer) 1, range2Reverse.next().getValue());
+		Assert.assertFalse(range2Reverse.hasNext());
+		try {
+			range2Reverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+
+		final TableIterator<String, Date, Integer> range32Reverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, threeDate, twoDate);
+		Assert.assertEquals((Integer) 3, range32Reverse.next().getValue());
+		Assert.assertEquals((Integer) 2, range32Reverse.next().getValue());
+		Assert.assertFalse(range32Reverse.hasNext());
+		try {
+			range32Reverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
+
+		final TableIterator<String, Date, Integer> range21Reverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, twoDate, oneDate);
+		Assert.assertEquals((Integer) 2, range21Reverse.next().getValue());
+		Assert.assertEquals((Integer) 1, range21Reverse.next().getValue());
+		Assert.assertFalse(range21Reverse.hasNext());
+		try {
+			range21Reverse.next();
+			Assert.fail("Exception expected!");
+		} catch (final NoSuchElementException e) {
+			Assert.assertNotNull(e);
+		}
 	}
 
 }
