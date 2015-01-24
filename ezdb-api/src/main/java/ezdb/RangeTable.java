@@ -54,8 +54,8 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 
 	/**
 	 * Get the latest value for a given hash/range pair. First it tries to get
-	 * the value that is <= rangeKey, if that fails it returns the value that is
-	 * >= rangeKey. If rangeKey is null, it gets the overall latest.
+	 * the value that is &lt;= rangeKey, if that fails it returns the value that is
+	 * &gt;= rangeKey. If rangeKey is null, it gets the overall latest.
 	 * 
 	 * @param hashKey
 	 *            A key used group rows together.
