@@ -170,7 +170,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 						return iterator.hasNext()
 								&& Util.compareKeys(hashKeyComparator,
 										rangeKeyComparator, keyBytesTo,
-										iterator.peekNext().getKey()) > 0;
+										iterator.peekNext().getKey()) >= 0;
 					}
 
 					@Override

@@ -149,6 +149,9 @@ public class TestEzLevelDb {
 		assertTrue(it.hasNext());
 		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 2, 5),
 				it.next());
+		assertTrue(it.hasNext());
+		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 3, 5),
+				it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}

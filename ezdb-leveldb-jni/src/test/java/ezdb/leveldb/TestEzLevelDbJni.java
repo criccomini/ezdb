@@ -969,11 +969,11 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	@Test
 	public void testVariationsOfDatasetNormal()
 			throws IllegalArgumentException, IllegalAccessException {
-		for (Method m : getClass().getMethods()) {
+		for (Method m : getClass().getDeclaredMethods()) {
 			try {
 				if (m.getAnnotation(Test.class) != null
 						&& !m.getName().startsWith("testVariationsOfDataset")) {
-					System.out.println(m.getName());
+//					System.out.println(m.getName());
 					m.invoke(this);
 				}
 			} catch (InvocationTargetException t) {

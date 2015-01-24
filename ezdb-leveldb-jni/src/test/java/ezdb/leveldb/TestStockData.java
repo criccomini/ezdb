@@ -81,34 +81,52 @@ public class TestStockData {
 		Long prevLongTime = null;
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		int countDates = 0;
+		Date firstDate = null;
+		Date lastDate = null;
 		for (String line : lines) {
 			String[] split = line.split(",");
 			Assert.assertEquals(7, split.length);
 			countDates++;
 			String dateStr = split[0];
 			Date date = df.parse(dateStr);
+			if(firstDate == null){
+				firstDate = date;
+			}
+			lastDate = date;
 			long longTime = date.getTime();
-//			if (prevLongTime != null) {
+			if (prevLongTime != null) {
 //				System.out.println(dateStr + ":"+date + " - "+prevLongTime+"  < " + longTime + " -> "
 //						+ (prevLongTime < longTime));
-//				Assert.assertTrue(prevLongTime < longTime);
-//			}
+				Assert.assertTrue(prevLongTime < longTime);
+			}
 			table.put(MSFT, longTime, countDates);
 			prevLongTime = longTime;
 		}
 		System.out.println(MSFT + " has " + countDates + " bars");
 
+		assertIteration(countDates, MIN_DATE, MAX_DATE);
+		assertIteration(countDates, firstDate, lastDate);
+	}
+
+	private void assertIteration(int countDates, Date fromDate, Date toDate) {
 		TableIterator<String, Long, Integer> range = table.range(MSFT,
-				MIN_DATE.getTime(), MAX_DATE.getTime());
+				fromDate.getTime(), toDate.getTime());
+		int iteratedBars = 0;
+		int prevValue = 0;
 		while (range.hasNext()) {
-			System.out.println(range.next().getValue());
+			Integer value = range.next().getValue();
+//			System.out.println(value);
+			iteratedBars++;
+			Assert.assertTrue(prevValue < value);
+			prevValue = value;
 		}
+		Assert.assertEquals(countDates, iteratedBars);
 
 		Assert.assertEquals((Integer) 1,
-				table.getLatest(MSFT, MIN_DATE.getTime()));
+				table.getLatest(MSFT, fromDate.getTime()));
 
 		Assert.assertEquals((Integer) countDates,
-				table.getLatest(MSFT, MAX_DATE.getTime()));
+				table.getLatest(MSFT, toDate.getTime()));
 	}
 
 }
