@@ -54,8 +54,8 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 
 	/**
 	 * Get the latest value for a given hash/range pair. First it tries to get
-	 * the value that is &lt;= rangeKey, if that fails it returns the value that is
-	 * &gt;= rangeKey. If rangeKey is null, it gets the overall latest.
+	 * the value that is &lt;= rangeKey, if that fails it returns the value that
+	 * is &gt;= rangeKey. If rangeKey is null, it gets the overall latest.
 	 * 
 	 * @param hashKey
 	 *            A key used group rows together.
@@ -66,6 +66,34 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 *         hash/range pair.
 	 */
 	public V getLatest(final H hashKey, final R rangeKey);
+
+	/**
+	 * Get the next value for a given hash/range pair. That is the value that is
+	 * &gt;= rangeKey. If rangeKey is null, this returns the first value overall.
+	 * 
+	 * @param hashKey
+	 *            A key used group rows together.
+	 * @param rangeKey
+	 *            A secondary key used to sort rows within the same hash key
+	 *            group.
+	 * @return The next value, or null if the item does not match the hash/range
+	 *         pair.
+	 */
+	public V getNext(final H hashKey, final R rangeKey);
+
+	/**
+	 * Get the previous value for a given hash/range pair. That is the value that is
+	 * &lt;= rangeKey. If rangeKey is null, this returns the last value overall.
+	 * 
+	 * @param hashKey
+	 *            A key used group rows together.
+	 * @param rangeKey
+	 *            A secondary key used to sort rows within the same hash key
+	 *            group.
+	 * @return The previous value, or null if the item does not match the hash/range
+	 *         pair.
+	 */
+	public V getPrev(final H hashKey, final R rangeKey);
 
 	/**
 	 * Get all rows with a given hash key.

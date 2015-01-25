@@ -160,7 +160,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(H hashKey, R fromRangeKey, R toRangeKey) {
-		if(toRangeKey == null){
+		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
 		final DBIterator iterator = db.iterator();
@@ -326,7 +326,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	public TableIterator<H, R, V> rangeReverse(final H hashKey,
 			final R fromRangeKey) {
-		if(fromRangeKey == null){
+		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
 		final DBIterator iterator = db.iterator();
@@ -422,7 +422,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	public TableIterator<H, R, V> rangeReverse(final H hashKey,
 			final R fromRangeKey, final R toRangeKey) {
-		if(toRangeKey == null){
+		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
 		final DBIterator iterator = db.iterator();
@@ -664,7 +664,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 					if (range.hasNext()) {
 						return range.next().getValue();
 					} else {
-						return (V) null;
+						return null;
 					}
 				} finally {
 					range.close();
@@ -677,7 +677,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public V getLatest(H hashKey, R rangeKey) {
-		if(rangeKey == null){
+		if (rangeKey == null) {
 			return getLatest(hashKey);
 		}
 		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey,
@@ -691,11 +691,40 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 					if (range.hasNext()) {
 						return range.next().getValue();
 					} else {
-						return (V) null;
+						return null;
 					}
 				} finally {
 					range.close();
 				}
+			}
+		} finally {
+			rangeReverse.close();
+		}
+	}
+
+	@Override
+	public V getNext(H hashKey, R rangeKey) {
+		final TableIterator<H, R, V> range = range(hashKey, rangeKey);
+		try {
+			if (range.hasNext()) {
+				return range.next().getValue();
+			} else {
+				return null;
+			}
+		} finally {
+			range.close();
+		}
+	}
+
+	@Override
+	public V getPrev(H hashKey, R rangeKey) {
+		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey,
+				rangeKey);
+		try {
+			if (rangeReverse.hasNext()) {
+				return rangeReverse.next().getValue();
+			} else {
+				return null;
 			}
 		} finally {
 			rangeReverse.close();

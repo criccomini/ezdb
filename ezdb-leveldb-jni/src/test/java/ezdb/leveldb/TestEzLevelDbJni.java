@@ -965,6 +965,78 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 		Assert.assertEquals((Integer) 1,
 				reverseRangeTable.getLatest(HASHKEY_ONE, twoDateMinus));
 	}
+	
+	@Test
+	public void getNext2(){
+		Assert.assertEquals((Integer) 2,
+				reverseRangeTable.getNext(HASHKEY_ONE, twoDate));
+	}
+	
+	@Test
+	public void getNext2Minus(){
+		Assert.assertEquals((Integer) 2,
+				reverseRangeTable.getNext(HASHKEY_ONE, twoDateMinus));
+	}
+	
+	@Test
+	public void getNext2Plus(){
+		Assert.assertEquals((Integer) 3,
+				reverseRangeTable.getNext(HASHKEY_ONE, twoDatePlus));
+	}
+	
+	@Test
+	public void getNextNull(){
+		Assert.assertEquals((Integer) 1,
+				reverseRangeTable.getNext(HASHKEY_ONE, null));
+	}
+	
+	@Test
+	public void getNextMin(){
+		Assert.assertEquals((Integer) 1,
+				reverseRangeTable.getNext(HASHKEY_ONE, MIN_DATE));
+	}
+	
+	@Test
+	public void getNextMax(){
+		Assert.assertEquals(null,
+				reverseRangeTable.getNext(HASHKEY_ONE, MAX_DATE));
+	}
+	
+	@Test
+	public void getPrev2(){
+		Assert.assertEquals((Integer) 2,
+				reverseRangeTable.getPrev(HASHKEY_ONE, twoDate));
+	}
+	
+	@Test
+	public void getPrev2Minus(){
+		Assert.assertEquals((Integer) 1,
+				reverseRangeTable.getPrev(HASHKEY_ONE, twoDateMinus));
+	}
+	
+	@Test
+	public void getPrev2Plus(){
+		Assert.assertEquals((Integer) 2,
+				reverseRangeTable.getPrev(HASHKEY_ONE, twoDatePlus));
+	}
+	
+	@Test
+	public void getPrevNull(){
+		Assert.assertEquals((Integer) 3,
+				reverseRangeTable.getPrev(HASHKEY_ONE, null));
+	}
+	
+	@Test
+	public void getPrevMin(){
+		Assert.assertEquals(null,
+				reverseRangeTable.getPrev(HASHKEY_ONE, MIN_DATE));
+	}
+	
+	@Test
+	public void getPrevMax(){
+		Assert.assertEquals((Integer)3,
+				reverseRangeTable.getPrev(HASHKEY_ONE, MAX_DATE));
+	}
 
 	@Test
 	public void testVariationsOfDatasetNormal()

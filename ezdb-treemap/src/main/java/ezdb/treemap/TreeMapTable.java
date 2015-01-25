@@ -253,4 +253,14 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 	public V getLatest(H hashKey, R rangeKey) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public V getNext(H hashKey, R rangeKey) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public V getPrev(H hashKey, R rangeKey) {
+		throw new UnsupportedOperationException();
+	}
 }

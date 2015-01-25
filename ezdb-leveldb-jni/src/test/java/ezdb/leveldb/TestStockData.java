@@ -168,11 +168,23 @@ public class TestStockData {
 //		System.out.println(left1000Date +" -> "+left900Date);
 		range = table.range(MSFT, left1000Date, left900Date);
 		int curLeftIt = 0;
+		TableRow<String, Date, Integer> prev = null;
 		while (range.hasNext()) {
 			TableRow<String, Date, Integer> next = range.next();
 			curLeftIt++;
 			Assert.assertEquals((Integer) (countDates - 1000 + curLeftIt),
 					next.getValue());
+			if(prev != null){
+				Integer nextFromPrevPlus = table.getNext(MSFT, new Date(prev.getRangeKey().getTime()+1));
+				Assert.assertEquals(next.getValue(), nextFromPrevPlus);
+				Integer prevFromNextMinus = table.getPrev(MSFT, new Date(next.getRangeKey().getTime()-1));
+				Assert.assertEquals(prev.getValue(), prevFromNextMinus);
+			}
+			Integer nextFromNextIsSame = table.getNext(MSFT, new Date(next.getRangeKey().getTime()));
+			Assert.assertEquals(next.getValue(), nextFromNextIsSame);
+			Integer prevFromNextIsSame = table.getPrev(MSFT, new Date(next.getRangeKey().getTime()));
+			Assert.assertEquals(next.getValue(), prevFromNextIsSame);
+			prev = next;
 		}
 		Assert.assertEquals(100, curLeftIt);
 	}
