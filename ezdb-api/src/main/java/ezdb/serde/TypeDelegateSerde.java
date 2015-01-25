@@ -1,7 +1,7 @@
 package ezdb.serde;
 
 import java.io.Serializable;
-import java.sql.Date;
+import java.util.Date;
 import java.util.Calendar;
 
 public final class TypeDelegateSerde<O> implements Serde<O> {
