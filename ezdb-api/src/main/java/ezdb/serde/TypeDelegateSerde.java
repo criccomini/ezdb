@@ -32,7 +32,7 @@ public final class TypeDelegateSerde<O> implements Serde<O> {
 		} else if (Void.class.isAssignableFrom(type)
 				|| void.class.isAssignableFrom(type)) {
 			return VoidSerde.get;
-		} else if (type.isAssignableFrom(Serializable.class)) {
+		} else if (Serializable.class.isAssignableFrom(type)) {
 			// fallback to slower serialization
 			return SerializingSerde.get();
 		} else {
