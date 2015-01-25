@@ -118,6 +118,24 @@ public class TestStockData {
 			countBars++;
 		}
 		Assert.assertEquals(253, countBars);
+		
+		range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime(), null);
+		countBars = 0;
+		while(range.hasNext()){
+			TableRow<String, Date, Integer> next = range.next();
+//			System.out.println(next.getValue());
+			countBars++;
+		}
+		Assert.assertEquals(253, countBars);
+		
+		range = table.range(MSFT, null, new GregorianCalendar(1987, 0, 1).getTime());
+		countBars = 0;
+		while(range.hasNext()){
+			TableRow<String, Date, Integer> next = range.next();
+//			System.out.println(next.getValue());
+			countBars++;
+		}
+		Assert.assertEquals(204, countBars);
 	}
 
 	private void assertIteration(int countDates, Date fromDate, Date toDate) {

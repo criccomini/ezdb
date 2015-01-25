@@ -119,6 +119,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(H hashKey, R fromRangeKey) {
+		if (fromRangeKey == null) {
+			return range(hashKey);
+		}
 		final DBIterator iterator = db.iterator();
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, fromRangeKey);
@@ -157,6 +160,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(H hashKey, R fromRangeKey, R toRangeKey) {
+		if(toRangeKey == null){
+			return range(hashKey, fromRangeKey);
+		}
 		final DBIterator iterator = db.iterator();
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, fromRangeKey);
@@ -320,6 +326,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	public TableIterator<H, R, V> rangeReverse(final H hashKey,
 			final R fromRangeKey) {
+		if(fromRangeKey == null){
+			return rangeReverse(hashKey);
+		}
 		final DBIterator iterator = db.iterator();
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
@@ -413,6 +422,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	public TableIterator<H, R, V> rangeReverse(final H hashKey,
 			final R fromRangeKey, final R toRangeKey) {
+		if(toRangeKey == null){
+			return rangeReverse(hashKey, fromRangeKey);
+		}
 		final DBIterator iterator = db.iterator();
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
@@ -665,6 +677,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public V getLatest(H hashKey, R rangeKey) {
+		if(rangeKey == null){
+			return getLatest(hashKey);
+		}
 		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey,
 				rangeKey);
 		try {
