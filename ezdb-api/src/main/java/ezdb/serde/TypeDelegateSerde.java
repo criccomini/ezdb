@@ -32,13 +32,10 @@ public final class TypeDelegateSerde<O> implements Serde<O> {
 		} else if (Void.class.isAssignableFrom(type)
 				|| void.class.isAssignableFrom(type)) {
 			return VoidSerde.get;
-		} else if (Serializable.class.isAssignableFrom(type)) {
-			// fallback to slower serialization
-			return SerializingSerde.get();
 		} else {
-			// and give up if nothing found
-			throw new IllegalArgumentException("No " + Serde.class
-					+ " delegate available for type: " + type.getName());
+			// fallback to slower serialization
+			// do not check type to gracefully fall back on interface types like List
+			return SerializingSerde.get();
 		}
 	}
 
