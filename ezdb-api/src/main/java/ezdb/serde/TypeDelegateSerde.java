@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Calendar;
 
-public final class TypeDelegateSerde<O> implements Serde<O> {
+public class TypeDelegateSerde<O> implements Serde<O> {
 
 	private final Serde<O> delegate;
 

@@ -2,7 +2,6 @@ package ezdb;
 
 import java.nio.ByteBuffer;
 import java.util.Map.Entry;
-import java.util.function.Function;
 
 import ezdb.serde.Serde;
 
