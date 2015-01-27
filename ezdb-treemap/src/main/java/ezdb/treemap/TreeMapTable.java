@@ -245,22 +245,22 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
-	public V getLatest(H hashKey) {
+	public TableRow<H, R, V> getLatest(H hashKey) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public V getLatest(H hashKey, R rangeKey) {
+	public TableRow<H, R, V> getLatest(H hashKey, R rangeKey) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public V getNext(H hashKey, R rangeKey) {
+	public TableRow<H, R, V> getNext(H hashKey, R rangeKey) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public V getPrev(H hashKey, R rangeKey) {
+	public TableRow<H, R, V> getPrev(H hashKey, R rangeKey) {
 		throw new UnsupportedOperationException();
 	}
 }

@@ -653,16 +653,16 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
-	public V getLatest(H hashKey) {
+	public TableRow<H, R, V> getLatest(H hashKey) {
 		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey);
 		try {
 			if (rangeReverse.hasNext()) {
-				return rangeReverse.next().getValue();
+				return rangeReverse.next();
 			} else {
 				final TableIterator<H, R, V> range = range(hashKey);
 				try {
 					if (range.hasNext()) {
-						return range.next().getValue();
+						return range.next();
 					} else {
 						return null;
 					}
@@ -676,7 +676,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
-	public V getLatest(H hashKey, R rangeKey) {
+	public TableRow<H, R, V> getLatest(H hashKey, R rangeKey) {
 		if (rangeKey == null) {
 			return getLatest(hashKey);
 		}
@@ -684,12 +684,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 				rangeKey);
 		try {
 			if (rangeReverse.hasNext()) {
-				return rangeReverse.next().getValue();
+				return rangeReverse.next();
 			} else {
 				final TableIterator<H, R, V> range = range(hashKey, rangeKey);
 				try {
 					if (range.hasNext()) {
-						return range.next().getValue();
+						return range.next();
 					} else {
 						return null;
 					}
@@ -703,11 +703,11 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
-	public V getNext(H hashKey, R rangeKey) {
+	public TableRow<H, R, V> getNext(H hashKey, R rangeKey) {
 		final TableIterator<H, R, V> range = range(hashKey, rangeKey);
 		try {
 			if (range.hasNext()) {
-				return range.next().getValue();
+				return range.next();
 			} else {
 				return null;
 			}
@@ -717,12 +717,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
-	public V getPrev(H hashKey, R rangeKey) {
+	public TableRow<H, R, V> getPrev(H hashKey, R rangeKey) {
 		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey,
 				rangeKey);
 		try {
 			if (rangeReverse.hasNext()) {
-				return rangeReverse.next().getValue();
+				return rangeReverse.next();
 			} else {
 				return null;
 			}

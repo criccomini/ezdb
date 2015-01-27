@@ -19,8 +19,10 @@ import ezdb.serde.SerializingSerde;
 
 public class TestEzLevelDbJni extends TestEzLevelDb {
 	private static final String HASHKEY_ONE = "1";
-	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1).getTime();
-	private static final Date MIN_DATE = new GregorianCalendar(1, 1, 1).getTime();
+	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1)
+			.getTime();
+	private static final Date MIN_DATE = new GregorianCalendar(1, 1, 1)
+			.getTime();
 	private final Date now = new GregorianCalendar(2000, 1, 1).getTime();
 	private final Date oneDate = new Date(now.getTime() + 100000);
 	private final Date twoDate = new Date(now.getTime() + 200000);
@@ -927,115 +929,117 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 	@Test
 	public void getLastNone() {
 		Assert.assertEquals((Integer) 3,
-				reverseRangeTable.getLatest(HASHKEY_ONE));
+				reverseRangeTable.getLatest(HASHKEY_ONE).getValue());
 	}
 
 	@Test
 	public void getLastNull() {
 		Assert.assertEquals((Integer) 3,
-				reverseRangeTable.getLatest(HASHKEY_ONE, null));
+				reverseRangeTable.getLatest(HASHKEY_ONE, null).getValue());
 	}
 
 	@Test
 	public void getLast2() {
 		Assert.assertEquals((Integer) 2,
-				reverseRangeTable.getLatest(HASHKEY_ONE, twoDate));
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDate).getValue());
 	}
 
 	@Test
 	public void getLastMin() {
 		Assert.assertEquals((Integer) 1,
-				reverseRangeTable.getLatest(HASHKEY_ONE, MIN_DATE));
+				reverseRangeTable.getLatest(HASHKEY_ONE, MIN_DATE).getValue());
 	}
 
 	@Test
 	public void getLastMax() {
 		Assert.assertEquals((Integer) 3,
-				reverseRangeTable.getLatest(HASHKEY_ONE, MAX_DATE));
+				reverseRangeTable.getLatest(HASHKEY_ONE, MAX_DATE).getValue());
 	}
 
 	@Test
 	public void getLast2Plus() {
 		Assert.assertEquals((Integer) 2,
-				reverseRangeTable.getLatest(HASHKEY_ONE, twoDatePlus));
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDatePlus)
+						.getValue());
 	}
 
 	@Test
 	public void getLast2Minus() {
 		Assert.assertEquals((Integer) 1,
-				reverseRangeTable.getLatest(HASHKEY_ONE, twoDateMinus));
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDateMinus)
+						.getValue());
 	}
-	
+
 	@Test
-	public void getNext2(){
+	public void getNext2() {
 		Assert.assertEquals((Integer) 2,
-				reverseRangeTable.getNext(HASHKEY_ONE, twoDate));
+				reverseRangeTable.getNext(HASHKEY_ONE, twoDate).getValue());
 	}
-	
+
 	@Test
-	public void getNext2Minus(){
+	public void getNext2Minus() {
 		Assert.assertEquals((Integer) 2,
-				reverseRangeTable.getNext(HASHKEY_ONE, twoDateMinus));
+				reverseRangeTable.getNext(HASHKEY_ONE, twoDateMinus).getValue());
 	}
-	
+
 	@Test
-	public void getNext2Plus(){
+	public void getNext2Plus() {
 		Assert.assertEquals((Integer) 3,
-				reverseRangeTable.getNext(HASHKEY_ONE, twoDatePlus));
+				reverseRangeTable.getNext(HASHKEY_ONE, twoDatePlus).getValue());
 	}
-	
+
 	@Test
-	public void getNextNull(){
+	public void getNextNull() {
 		Assert.assertEquals((Integer) 1,
-				reverseRangeTable.getNext(HASHKEY_ONE, null));
+				reverseRangeTable.getNext(HASHKEY_ONE, null).getValue());
 	}
-	
+
 	@Test
-	public void getNextMin(){
+	public void getNextMin() {
 		Assert.assertEquals((Integer) 1,
-				reverseRangeTable.getNext(HASHKEY_ONE, MIN_DATE));
+				reverseRangeTable.getNext(HASHKEY_ONE, MIN_DATE).getValue());
 	}
-	
+
 	@Test
-	public void getNextMax(){
+	public void getNextMax() {
 		Assert.assertEquals(null,
 				reverseRangeTable.getNext(HASHKEY_ONE, MAX_DATE));
 	}
-	
+
 	@Test
-	public void getPrev2(){
+	public void getPrev2() {
 		Assert.assertEquals((Integer) 2,
-				reverseRangeTable.getPrev(HASHKEY_ONE, twoDate));
+				reverseRangeTable.getPrev(HASHKEY_ONE, twoDate).getValue());
 	}
-	
+
 	@Test
-	public void getPrev2Minus(){
+	public void getPrev2Minus() {
 		Assert.assertEquals((Integer) 1,
-				reverseRangeTable.getPrev(HASHKEY_ONE, twoDateMinus));
+				reverseRangeTable.getPrev(HASHKEY_ONE, twoDateMinus).getValue());
 	}
-	
+
 	@Test
-	public void getPrev2Plus(){
+	public void getPrev2Plus() {
 		Assert.assertEquals((Integer) 2,
-				reverseRangeTable.getPrev(HASHKEY_ONE, twoDatePlus));
+				reverseRangeTable.getPrev(HASHKEY_ONE, twoDatePlus).getValue());
 	}
-	
+
 	@Test
-	public void getPrevNull(){
+	public void getPrevNull() {
 		Assert.assertEquals((Integer) 3,
-				reverseRangeTable.getPrev(HASHKEY_ONE, null));
+				reverseRangeTable.getPrev(HASHKEY_ONE, null).getValue());
 	}
-	
+
 	@Test
-	public void getPrevMin(){
+	public void getPrevMin() {
 		Assert.assertEquals(null,
 				reverseRangeTable.getPrev(HASHKEY_ONE, MIN_DATE));
 	}
-	
+
 	@Test
-	public void getPrevMax(){
-		Assert.assertEquals((Integer)3,
-				reverseRangeTable.getPrev(HASHKEY_ONE, MAX_DATE));
+	public void getPrevMax() {
+		Assert.assertEquals((Integer) 3,
+				reverseRangeTable.getPrev(HASHKEY_ONE, MAX_DATE).getValue());
 	}
 
 	@Test
@@ -1045,7 +1049,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 			try {
 				if (m.getAnnotation(Test.class) != null
 						&& !m.getName().startsWith("testVariationsOfDataset")) {
-//					System.out.println(m.getName());
+					// System.out.println(m.getName());
 					m.invoke(this);
 				}
 			} catch (InvocationTargetException t) {
@@ -1221,28 +1225,32 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 
 	private void testGetLatestForRange() {
 		Assert.assertEquals((Integer) 1,
-				reverseRangeTable.getLatest(HASHKEY_ONE, oneDate));
+				reverseRangeTable.getLatest(HASHKEY_ONE, oneDate).getValue());
 		Assert.assertEquals((Integer) 2,
-				reverseRangeTable.getLatest(HASHKEY_ONE, twoDate));
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDate).getValue());
 		Assert.assertEquals((Integer) 3,
-				reverseRangeTable.getLatest(HASHKEY_ONE, threeDate));
+				reverseRangeTable.getLatest(HASHKEY_ONE, threeDate).getValue());
 
 		Assert.assertEquals((Integer) 1,
-				reverseRangeTable.getLatest(HASHKEY_ONE, oneDateMinus));
+				reverseRangeTable.getLatest(HASHKEY_ONE, oneDateMinus)
+						.getValue());
 		Assert.assertEquals((Integer) 1,
-				reverseRangeTable.getLatest(HASHKEY_ONE, twoDateMinus));
+				reverseRangeTable.getLatest(HASHKEY_ONE, twoDateMinus)
+						.getValue());
 		Assert.assertEquals((Integer) 2,
-				reverseRangeTable.getLatest(HASHKEY_ONE, threeDateMinus));
+				reverseRangeTable.getLatest(HASHKEY_ONE, threeDateMinus)
+						.getValue());
 		Assert.assertEquals((Integer) 3,
-				reverseRangeTable.getLatest(HASHKEY_ONE, threeDatePlus));
+				reverseRangeTable.getLatest(HASHKEY_ONE, threeDatePlus)
+						.getValue());
 		Assert.assertEquals(
 				(Integer) 3,
 				reverseRangeTable.getLatest(HASHKEY_ONE,
-						new Date(threeDatePlus.getTime() + 1000)));
+						new Date(threeDatePlus.getTime() + 1000)).getValue());
 		Assert.assertEquals((Integer) 1,
-				reverseRangeTable.getLatest(HASHKEY_ONE, MIN_DATE));
+				reverseRangeTable.getLatest(HASHKEY_ONE, MIN_DATE).getValue());
 		Assert.assertEquals((Integer) 3,
-				reverseRangeTable.getLatest(HASHKEY_ONE, MAX_DATE));
+				reverseRangeTable.getLatest(HASHKEY_ONE, MAX_DATE).getValue());
 	}
 
 	private void testReverse() {

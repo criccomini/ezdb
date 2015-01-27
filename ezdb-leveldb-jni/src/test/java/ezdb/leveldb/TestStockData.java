@@ -161,9 +161,9 @@ public class TestStockData {
 		}
 		Assert.assertEquals(countDates, iteratedBars);
 
-		Assert.assertEquals((Integer) 1, table.getLatest(MSFT, fromDate));
+		Assert.assertEquals((Integer) 1, table.getLatest(MSFT, fromDate).getValue());
 
-		Assert.assertEquals((Integer) countDates, table.getLatest(MSFT, toDate));
+		Assert.assertEquals((Integer) countDates, table.getLatest(MSFT, toDate).getValue());
 
 //		System.out.println(left1000Date +" -> "+left900Date);
 		range = table.range(MSFT, left1000Date, left900Date);
@@ -175,14 +175,14 @@ public class TestStockData {
 			Assert.assertEquals((Integer) (countDates - 1000 + curLeftIt),
 					next.getValue());
 			if(prev != null){
-				Integer nextFromPrevPlus = table.getNext(MSFT, new Date(prev.getRangeKey().getTime()+1));
+				Integer nextFromPrevPlus = table.getNext(MSFT, new Date(prev.getRangeKey().getTime()+1)).getValue();
 				Assert.assertEquals(next.getValue(), nextFromPrevPlus);
-				Integer prevFromNextMinus = table.getPrev(MSFT, new Date(next.getRangeKey().getTime()-1));
+				Integer prevFromNextMinus = table.getPrev(MSFT, new Date(next.getRangeKey().getTime()-1)).getValue();
 				Assert.assertEquals(prev.getValue(), prevFromNextMinus);
 			}
-			Integer nextFromNextIsSame = table.getNext(MSFT, new Date(next.getRangeKey().getTime()));
+			Integer nextFromNextIsSame = table.getNext(MSFT, new Date(next.getRangeKey().getTime())).getValue();
 			Assert.assertEquals(next.getValue(), nextFromNextIsSame);
-			Integer prevFromNextIsSame = table.getPrev(MSFT, new Date(next.getRangeKey().getTime()));
+			Integer prevFromNextIsSame = table.getPrev(MSFT, new Date(next.getRangeKey().getTime())).getValue();
 			Assert.assertEquals(next.getValue(), prevFromNextIsSame);
 			prev = next;
 		}

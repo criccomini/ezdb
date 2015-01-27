@@ -50,7 +50,7 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 *            A key used group rows together.
 	 * @return The latest value, or null if the item does not match the hash.
 	 */
-	public V getLatest(final H hashKey);
+	public TableRow<H, R, V> getLatest(final H hashKey);
 
 	/**
 	 * Get the latest value for a given hash/range pair. First it tries to get
@@ -65,7 +65,7 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 * @return The latest value, or null if the item does not match the
 	 *         hash/range pair.
 	 */
-	public V getLatest(final H hashKey, final R rangeKey);
+	public TableRow<H, R, V> getLatest(final H hashKey, final R rangeKey);
 
 	/**
 	 * Get the next value for a given hash/range pair. That is the value that is
@@ -79,7 +79,7 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 * @return The next value, or null if the item does not match the hash/range
 	 *         pair.
 	 */
-	public V getNext(final H hashKey, final R rangeKey);
+	public TableRow<H, R, V> getNext(final H hashKey, final R rangeKey);
 
 	/**
 	 * Get the previous value for a given hash/range pair. That is the value that is
@@ -93,7 +93,7 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 * @return The previous value, or null if the item does not match the hash/range
 	 *         pair.
 	 */
-	public V getPrev(final H hashKey, final R rangeKey);
+	public TableRow<H, R, V> getPrev(final H hashKey, final R rangeKey);
 
 	/**
 	 * Get all rows with a given hash key.
