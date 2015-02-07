@@ -1,5 +1,8 @@
 package ezdb;
 
+import ezdb.batch.Batch;
+import ezdb.batch.RangeBatch;
+
 /**
  * A key/value table.
  * 
@@ -44,4 +47,12 @@ public interface Table<H, V> {
    * Close any open resources associated with this table.
    */
   public void close();
+  
+  /**
+   * With this it is possible to do bulk/batch puts and deletes.
+   * 
+   * @return a new batch enabled transaction object
+   */
+  public Batch<H, V> newBatch();
+  
 }

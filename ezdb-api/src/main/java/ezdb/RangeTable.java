@@ -1,5 +1,8 @@
 package ezdb;
 
+import ezdb.batch.Batch;
+import ezdb.batch.RangeBatch;
+
 /**
  * A hash/range table that supports bucketing rows together by hash key, and
  * doing range queries within the buckets. Rows are uniquely identified by
@@ -69,7 +72,8 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 
 	/**
 	 * Get the next value for a given hash/range pair. That is the value that is
-	 * &gt;= rangeKey. If rangeKey is null, this returns the first value overall.
+	 * &gt;= rangeKey. If rangeKey is null, this returns the first value
+	 * overall.
 	 * 
 	 * @param hashKey
 	 *            A key used group rows together.
@@ -82,16 +86,17 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	public TableRow<H, R, V> getNext(final H hashKey, final R rangeKey);
 
 	/**
-	 * Get the previous value for a given hash/range pair. That is the value that is
-	 * &lt;= rangeKey. If rangeKey is null, this returns the last value overall.
+	 * Get the previous value for a given hash/range pair. That is the value
+	 * that is &lt;= rangeKey. If rangeKey is null, this returns the last value
+	 * overall.
 	 * 
 	 * @param hashKey
 	 *            A key used group rows together.
 	 * @param rangeKey
 	 *            A secondary key used to sort rows within the same hash key
 	 *            group.
-	 * @return The previous value, or null if the item does not match the hash/range
-	 *         pair.
+	 * @return The previous value, or null if the item does not match the
+	 *         hash/range pair.
 	 */
 	public TableRow<H, R, V> getPrev(final H hashKey, final R rangeKey);
 
@@ -125,7 +130,7 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 * Get all rows with a given hash key, and a range key that's greater than
 	 * or equal to the "from" range key, and less than or equal to the "to"
 	 * range key. That is, the "from" range key is inclusive, and the "to" range
-	 * key is exclusive.
+	 * key is inclusive.
 	 * 
 	 * @param hashKey
 	 *            A key used group rows together.
@@ -135,7 +140,7 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 *            that is larger than this range key will be used as the
 	 *            starting point.
 	 * @param toRangeKey
-	 *            The range key to use as the end point (exclusive). If an exact
+	 *            The range key to use as the end point (inclusive). If an exact
 	 *            match doesn't exist, the nearest range key that is less than
 	 *            this range key will be used as the end point (inclusive).
 	 * @return An iterator of all remaining TableRows in this hash key group
@@ -173,7 +178,7 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 * Get all rows with a given hash key, and a range key that's smaller than
 	 * or equal to the "from" range key, and greater than or equal to the "to"
 	 * range key in reverse iteration order. That is, the "from" range key is
-	 * inclusive, and the "to" range key is exclusive.
+	 * inclusive, and the "to" range key is inclusive.
 	 * 
 	 * @param hashKey
 	 *            A key used group rows together.
@@ -183,7 +188,7 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 *            that is less than this range key will be used as the starting
 	 *            point.
 	 * @param toRangeKey
-	 *            The range key to use as the end point (exclusive). If an exact
+	 *            The range key to use as the end point (inclusive). If an exact
 	 *            match doesn't exist, the nearest range key that is larger than
 	 *            this range key will be used as the end point (inclusive).
 	 * @return An iterator in reverse order of all remaining TableRows in this
@@ -203,5 +208,31 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 *            group.
 	 */
 	public void delete(H hashKey, R rangeKey);
+
+	/**
+	 * With this it is possible to do bulk/batch puts and deletes.
+	 * 
+	 * @return a new batch enabled transaction object
+	 */
+	public RangeBatch<H, R, V> newRangeBatch();
+	
+	/**
+	 * Compacts the given range, if all keys are null, everything is compacted.
+	 * 
+	 * @param fromHashKey
+	 *            A key used group rows together.
+	 * @param fromRangeKey
+	 *            The range key to use as the starting point. If an exact match
+	 *            doesn't exist for this hash/range pair, the nearest range key
+	 *            that is less than this range key will be used as the starting
+	 *            point.
+	 * @param toHashKey
+	 *            A key used group rows together.
+	 * @param toRangeKey
+	 *            The range key to use as the end point (inclusive). If an exact
+	 *            match doesn't exist, the nearest range key that is larger than
+	 *            this range key will be used as the end point (inclusive).
+	 */
+	public void compactRange(H fromHashKey, R fromRangeKey, H toHashKey, R toRangeKey);
 
 }

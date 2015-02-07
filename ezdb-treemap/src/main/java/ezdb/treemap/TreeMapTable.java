@@ -11,6 +11,8 @@ import ezdb.RangeTable;
 import ezdb.RawTableRow;
 import ezdb.TableIterator;
 import ezdb.TableRow;
+import ezdb.batch.Batch;
+import ezdb.batch.RangeBatch;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
 
@@ -263,4 +265,21 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 	public TableRow<H, R, V> getPrev(H hashKey, R rangeKey) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public Batch<H, V> newBatch() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public RangeBatch<H, R, V> newRangeBatch() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void compactRange(H fromHashKey, R fromRangeKey, H toHashKey,
+			R toRangeKey) {
+		throw new UnsupportedOperationException();
+	}
+
 }
