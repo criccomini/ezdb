@@ -276,25 +276,4 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		throw new UnsupportedOperationException();
 	}
 
-	@Override
-	public void compactRange(H fromHashKey, R fromRangeKey, H toHashKey,
-			R toRangeKey) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void compactRange(H fromHashKey, H toHashKey) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void suspendCompactions() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void resumeCompactions() {
-		throw new UnsupportedOperationException();
-	}
-
 }
