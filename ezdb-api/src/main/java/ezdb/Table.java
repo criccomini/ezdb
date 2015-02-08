@@ -55,4 +55,24 @@ public interface Table<H, V> {
    */
   public Batch<H, V> newBatch();
   
+  /**
+	 * Compacts the given range, if all keys are null, everything is compacted.
+	 * 
+	 * @param fromHashKey
+	 *            A key used group rows together.
+	 * @param toHashKey
+	 *            A key used group rows together.
+	 */
+	public void compactRange(H fromHashKey,H toHashKey);
+
+	/**
+	 * Pauses the background thread for compactions.
+	 */
+	void suspendCompactions();
+
+	/**
+	 * Resumes the background thread for compactions.
+	 */
+	void resumeCompactions();
+  
 }

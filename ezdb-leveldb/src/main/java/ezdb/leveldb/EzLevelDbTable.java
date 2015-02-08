@@ -744,12 +744,31 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public void compactRange(H fromHashKey, H toHashKey) {
+		compactRange(fromHashKey, null, toHashKey, null);
+	}
+	
+	@Override
 	public void compactRange(H fromHashKey, R fromRangeKey, H toHashKey, R toRangeKey) {
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				fromHashKey, fromRangeKey);
 		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde,
 				toHashKey, toRangeKey);
 		db.compactRange(keyBytesFrom, keyBytesTo);
+	}
+	
+	@Override
+	public void suspendCompactions(){
+		try {
+			db.suspendCompactions();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+	}
+	
+	@Override
+	public void resumeCompactions(){
+		db.resumeCompactions();
 	}
 
 }

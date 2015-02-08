@@ -235,4 +235,5 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 */
 	public void compactRange(H fromHashKey, R fromRangeKey, H toHashKey, R toRangeKey);
 
+
 }
