@@ -19,9 +19,11 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	private Serde<H> hashKeySerde;
 	private Serde<R> rangeKeySerde;
 	private Serde<V> valueSerde;
+	private WriteOptions writeOptions;
 
 	public EzRocksDbBatch(RocksDB db, Serde<H> hashKeySerde, Serde<R> rangeKeySerde,
 			Serde<V> valueSerde) {
+		this.writeOptions = new WriteOptions();
 		this.db = db;
 		this.writeBatch = new WriteBatch();
 		this.hashKeySerde = hashKeySerde;
@@ -42,7 +44,7 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	@Override
 	public void flush() {
 		try {
-			db.write(new WriteOptions(), writeBatch);
+			db.write(writeOptions, writeBatch);
 		} catch (RocksDBException e) {
 			throw new DbException(e);
 		}
@@ -50,7 +52,8 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	@Override
 	public void close() throws IOException {
-		writeBatch.dispose();;
+		writeBatch.dispose();
+		writeOptions.dispose();
 	}
 
 	@Override

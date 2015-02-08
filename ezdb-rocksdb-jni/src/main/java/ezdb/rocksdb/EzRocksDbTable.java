@@ -7,10 +7,10 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 
+import org.rocksdb.CompressionType;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
-import org.rocksdb.RocksIterator;
 
 import ezdb.DbException;
 import ezdb.RangeTable;
@@ -31,6 +31,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	private final Serde<V> valueSerde;
 	private final Comparator<byte[]> hashKeyComparator;
 	private final Comparator<byte[]> rangeKeyComparator;
+	private final Options options;
 
 	public EzRocksDbTable(File path, EzRocksDbFactory factory,
 			Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde,
@@ -42,7 +43,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
 
-		Options options = new Options();
+		this.options = new Options();
+		//lz4 outperforms snappy in throughput
+		options.setCompressionType(CompressionType.LZ4_COMPRESSION);
+		//use all available resourced to improve insert time
+		options.setMaxBackgroundCompactions(Runtime.getRuntime().availableProcessors());
+		
 		options.setCreateIfMissing(true);
 		options.setComparator(new EzRocksDbComparator(hashKeyComparator,
 				rangeKeyComparator));
@@ -553,6 +559,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	public void close() {
 		try {
 			this.db.close();
+			this.options.dispose();
 		} catch (Exception e) {
 			throw new DbException(e);
 		}
