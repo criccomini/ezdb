@@ -18,6 +18,8 @@ import ezdb.RangeTable;
 import ezdb.RawTableRow;
 import ezdb.TableIterator;
 import ezdb.TableRow;
+import ezdb.batch.Batch;
+import ezdb.batch.RangeBatch;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
 
@@ -61,12 +63,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		db.put(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
 				valueSerde.toBytes(value));
 	}
-
+	
 	@Override
 	public V get(H hashKey) {
 		return get(hashKey, null);
 	}
-
+	
 	@Override
 	public V get(H hashKey, R rangeKey) {
 		byte[] valueBytes = db.get(Util.combine(hashKeySerde, rangeKeySerde,
@@ -729,6 +731,25 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		} finally {
 			rangeReverse.close();
 		}
+	}
+
+	@Override
+	public Batch<H, V> newBatch() {
+		return newRangeBatch();
+	}
+
+	@Override
+	public RangeBatch<H, R, V> newRangeBatch() {
+		return new EzLevelDbBatch<H, R, V>(db, hashKeySerde, rangeKeySerde, valueSerde);
+	}
+
+	@Override
+	public void compactRange(H fromHashKey, R fromRangeKey, H toHashKey, R toRangeKey) {
+		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
+				fromHashKey, fromRangeKey);
+		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde,
+				toHashKey, toRangeKey);
+		db.compactRange(keyBytesFrom, keyBytesTo);
 	}
 
 }
