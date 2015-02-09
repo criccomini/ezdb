@@ -44,15 +44,20 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		this.rangeKeyComparator = rangeKeyComparator;
 
 		this.options = new Options();
+		
 		//lz4 outperforms snappy in throughput
 		options.setCompressionType(CompressionType.LZ4_COMPRESSION);
-		//use all available resourced to improve insert time
+		options.optimizeLevelStyleCompaction();
+		
+		//use all available resources to improve insert time
+		options.getEnv().setBackgroundThreads(Runtime.getRuntime().availableProcessors());
 		options.setMaxBackgroundCompactions(Runtime.getRuntime().availableProcessors());
+		options.setMaxBackgroundFlushes(Runtime.getRuntime().availableProcessors());
 		
 		options.setCreateIfMissing(true);
 		options.setComparator(new EzRocksDbComparator(hashKeyComparator,
 				rangeKeyComparator));
-
+		
 		try {
 			this.db = factory.open(path, options);
 		} catch (IOException e) {
