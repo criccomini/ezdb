@@ -51,10 +51,10 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		options.optimizeLevelStyleCompaction();
 		
 		//use all available resources to improve insert time
-		options.getEnv().setBackgroundThreads(Runtime.getRuntime().availableProcessors(), RocksEnv.FLUSH_POOL);
+		options.getEnv().setBackgroundThreads(1, RocksEnv.FLUSH_POOL);
 		options.getEnv().setBackgroundThreads(Runtime.getRuntime().availableProcessors(), RocksEnv.COMPACTION_POOL);
 		options.setMaxBackgroundCompactions(Runtime.getRuntime().availableProcessors());
-		options.setMaxBackgroundFlushes(Runtime.getRuntime().availableProcessors());
+		options.setMaxBackgroundFlushes(1);
 		
 		options.setCreateIfMissing(true);
 		options.setComparator(new EzRocksDbComparator(hashKeyComparator,
