@@ -2,6 +2,7 @@ package ezdb.rocksdb;
 
 import java.io.IOException;
 
+import org.rocksdb.FlushOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.WriteBatch;
