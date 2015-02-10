@@ -39,6 +39,10 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.github.criccomini</groupId>
+			<artifactId>ezdb-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.criccomini</groupId>
 			<artifactId>ezdb-treemap</artifactId>
 			<scope>test</scope>
 		</dependency>
