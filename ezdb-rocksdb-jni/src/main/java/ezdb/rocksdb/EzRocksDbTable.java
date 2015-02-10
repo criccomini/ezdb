@@ -11,6 +11,7 @@ import org.rocksdb.CompressionType;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.RocksEnv;
 
 import ezdb.DbException;
 import ezdb.RangeTable;
@@ -50,7 +51,8 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		options.optimizeLevelStyleCompaction();
 		
 		//use all available resources to improve insert time
-		options.getEnv().setBackgroundThreads(Runtime.getRuntime().availableProcessors());
+		options.getEnv().setBackgroundThreads(Runtime.getRuntime().availableProcessors(), RocksEnv.FLUSH_POOL);
+		options.getEnv().setBackgroundThreads(Runtime.getRuntime().availableProcessors(), RocksEnv.COMPACTION_POOL);
 		options.setMaxBackgroundCompactions(Runtime.getRuntime().availableProcessors());
 		options.setMaxBackgroundFlushes(Runtime.getRuntime().availableProcessors());
 		
