@@ -46,16 +46,6 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 		this.options = new Options();
 		
-		//lz4 outperforms snappy in throughput
-		options.setCompressionType(CompressionType.LZ4_COMPRESSION);
-		options.optimizeLevelStyleCompaction();
-		
-		//use all available resources to improve insert time
-		options.getEnv().setBackgroundThreads(Runtime.getRuntime().availableProcessors(), RocksEnv.FLUSH_POOL);
-		options.getEnv().setBackgroundThreads(Runtime.getRuntime().availableProcessors(), RocksEnv.COMPACTION_POOL);
-		options.setMaxBackgroundCompactions(Runtime.getRuntime().availableProcessors());
-		options.setMaxBackgroundFlushes(Runtime.getRuntime().availableProcessors());
-		
 		options.setCreateIfMissing(true);
 		options.setComparator(new EzRocksDbComparator(hashKeyComparator,
 				rangeKeyComparator));
