@@ -1,17 +1,17 @@
-package ezdb.leveldb;
+package ezdb.rocksdb;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
 
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBIterator;
-import org.iq80.leveldb.Options;
-
-import com.google.common.base.Function;
+import org.rocksdb.CompressionType;
+import org.rocksdb.Options;
+import org.rocksdb.RocksDB;
+import org.rocksdb.RocksDBException;
+import org.rocksdb.RocksEnv;
 
 import ezdb.DbException;
 import ezdb.RangeTable;
@@ -20,18 +20,21 @@ import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.batch.Batch;
 import ezdb.batch.RangeBatch;
+import ezdb.rocksdb.util.DBIterator;
+import ezdb.rocksdb.util.RocksDBJniDBIterator;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
 
-public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
-	private final DB db;
+public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
+	private final RocksDB db;
 	private final Serde<H> hashKeySerde;
 	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
 	private final Comparator<byte[]> hashKeyComparator;
 	private final Comparator<byte[]> rangeKeyComparator;
+	private final Options options;
 
-	public EzLevelDbTable(File path, EzLevelDbFactory factory,
+	public EzRocksDbTable(File path, EzRocksDbFactory factory,
 			Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde,
 			Comparator<byte[]> hashKeyComparator,
 			Comparator<byte[]> rangeKeyComparator) {
@@ -41,11 +44,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
 
-		Options options = new Options();
-		options.createIfMissing(true);
-		options.comparator(new EzLevelDbComparator(hashKeyComparator,
+		this.options = new Options();
+		
+		options.setCreateIfMissing(true);
+		options.setComparator(new EzRocksDbComparator(hashKeyComparator,
 				rangeKeyComparator));
-
+		
 		try {
 			this.db = factory.open(path, options);
 		} catch (IOException e) {
@@ -60,19 +64,28 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void put(H hashKey, R rangeKey, V value) {
-		db.put(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
-				valueSerde.toBytes(value));
+		try {
+			db.put(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
+					valueSerde.toBytes(value));
+		} catch (RocksDBException e) {
+			throw new DbException(e);
+		}
 	}
-	
+
 	@Override
 	public V get(H hashKey) {
 		return get(hashKey, null);
 	}
-	
+
 	@Override
 	public V get(H hashKey, R rangeKey) {
-		byte[] valueBytes = db.get(Util.combine(hashKeySerde, rangeKeySerde,
-				hashKey, rangeKey));
+		byte[] valueBytes;
+		try {
+			valueBytes = db.get(Util.combine(hashKeySerde, rangeKeySerde,
+					hashKey, rangeKey));
+		} catch (RocksDBException e) {
+			throw new DbException(e);
+		}
 
 		if (valueBytes == null) {
 			return null;
@@ -83,7 +96,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(H hashKey) {
-		final DBIterator iterator = db.iterator();
+		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, null);
 		iterator.seek(keyBytesFrom);
@@ -124,7 +137,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return range(hashKey);
 		}
-		final DBIterator iterator = db.iterator();
+		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom);
@@ -165,7 +178,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = db.iterator();
+		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
 				hashKey, fromRangeKey);
 		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde,
@@ -204,7 +217,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
-		final DBIterator iterator = db.iterator();
+		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
 			public Boolean apply(CheckKeysRequest input) {
@@ -331,7 +344,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
-		final DBIterator iterator = db.iterator();
+		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
 			public Boolean apply(CheckKeysRequest input) {
@@ -427,7 +440,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = db.iterator();
+		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
 			public Boolean apply(CheckKeysRequest input) {
@@ -531,14 +544,19 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void delete(H hashKey, R rangeKey) {
-		this.db.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
-				rangeKey));
+		try {
+			this.db.remove(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
+					rangeKey));
+		} catch (RocksDBException e) {
+			throw new DbException(e);
+		}
 	}
 
 	@Override
 	public void close() {
 		try {
 			this.db.close();
+			this.options.dispose();
 		} catch (Exception e) {
 			throw new DbException(e);
 		}
@@ -740,7 +758,8 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public RangeBatch<H, R, V> newRangeBatch() {
-		return new EzLevelDbBatch<H, R, V>(db, hashKeySerde, rangeKeySerde, valueSerde);
+		return new EzRocksDbBatch<H, R, V>(db, hashKeySerde, rangeKeySerde,
+				valueSerde);
 	}
 
 }

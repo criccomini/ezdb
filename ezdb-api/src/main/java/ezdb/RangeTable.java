@@ -216,23 +216,5 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	 */
 	public RangeBatch<H, R, V> newRangeBatch();
 	
-	/**
-	 * Compacts the given range, if all keys are null, everything is compacted.
-	 * 
-	 * @param fromHashKey
-	 *            A key used group rows together.
-	 * @param fromRangeKey
-	 *            The range key to use as the starting point. If an exact match
-	 *            doesn't exist for this hash/range pair, the nearest range key
-	 *            that is less than this range key will be used as the starting
-	 *            point.
-	 * @param toHashKey
-	 *            A key used group rows together.
-	 * @param toRangeKey
-	 *            The range key to use as the end point (inclusive). If an exact
-	 *            match doesn't exist, the nearest range key that is larger than
-	 *            this range key will be used as the end point (inclusive).
-	 */
-	public void compactRange(H fromHashKey, R fromRangeKey, H toHashKey, R toRangeKey);
 
 }
