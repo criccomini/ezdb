@@ -275,5 +275,32 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 	public RangeBatch<H, R, V> newRangeBatch() {
 		throw new UnsupportedOperationException();
 	}
+	
+	@Override
+	public void deleteRange(H hashKey) {
+		TableIterator<H, R, V> range = range(hashKey);
+		while(range.hasNext()){
+			TableRow<H, R, V> next = range.next();
+			delete(next.getHashKey(), next.getRangeKey());
+		}
+	}
+	
+	@Override
+	public void deleteRange(H hashKey, R fromRangeKey) {
+		TableIterator<H, R, V> range = range(hashKey, fromRangeKey);
+		while(range.hasNext()){
+			TableRow<H, R, V> next = range.next();
+			delete(next.getHashKey(), next.getRangeKey());
+		}
+	}
+	
+	@Override
+	public void deleteRange(H hashKey, R fromRangeKey, R toRangeKey) {
+		TableIterator<H, R, V> range = range(hashKey, fromRangeKey, toRangeKey);
+		while(range.hasNext()){
+			TableRow<H, R, V> next = range.next();
+			delete(next.getHashKey(), next.getRangeKey());
+		}
+	}
 
 }
