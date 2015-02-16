@@ -1041,6 +1041,16 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 		Assert.assertEquals((Integer) 3,
 				reverseRangeTable.getPrev(HASHKEY_ONE, MAX_DATE).getValue());
 	}
+	
+	@Test
+	public void deleteRange(){
+		TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE);
+		Assert.assertTrue(range.hasNext());
+		range.close();
+		reverseRangeTable.deleteRange(HASHKEY_ONE);
+		range = reverseRangeTable.range(HASHKEY_ONE);
+		Assert.assertFalse(range.hasNext());
+	}
 
 	@Test
 	public void testVariationsOfDatasetNormal()
@@ -1048,7 +1058,7 @@ public class TestEzLevelDbJni extends TestEzLevelDb {
 		for (Method m : getClass().getDeclaredMethods()) {
 			try {
 				if (m.getAnnotation(Test.class) != null
-						&& !m.getName().startsWith("testVariationsOfDataset")) {
+						&& !m.getName().startsWith("testVariationsOfDataset") && !m.getName().startsWith("deleteRange")) {
 					// System.out.println(m.getName());
 					m.invoke(this);
 				}

@@ -742,5 +742,41 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	public RangeBatch<H, R, V> newRangeBatch() {
 		return new EzLevelDbBatch<H, R, V>(db, hashKeySerde, rangeKeySerde, valueSerde);
 	}
+	
+	@Override
+	public void deleteRange(H hashKey) {
+		TableIterator<H, R, V> range = range(hashKey);
+		internalDeleteRange(range);
+	}
+
+	@Override
+	public void deleteRange(H hashKey, R fromRangeKey) {
+		TableIterator<H, R, V> range = range(hashKey, fromRangeKey);
+		internalDeleteRange(range);
+	}
+
+
+	@Override
+	public void deleteRange(H hashKey, R fromRangeKey, R toRangeKey) {
+		TableIterator<H, R, V> range = range(hashKey, fromRangeKey, toRangeKey);
+		internalDeleteRange(range);
+	}
+	
+	private void internalDeleteRange(TableIterator<H, R, V> range) {
+		RangeBatch<H, R, V> batch = newRangeBatch();
+		try {
+			while (range.hasNext()) {
+				TableRow<H, R, V> next = range.next();
+				batch.delete(next.getHashKey(), next.getRangeKey());
+			}
+			batch.flush();
+		} finally {
+			try {
+				batch.close();
+			} catch (IOException e) {
+				throw new DbException(e);
+			}
+		}
+	}
 
 }

@@ -210,11 +210,52 @@ public interface RangeTable<H, R, V> extends Table<H, V> {
 	public void delete(H hashKey, R rangeKey);
 
 	/**
+	 * Deletes all rows with a given hash key.
+	 * 
+	 * @param hashKey
+	 *            A key used group rows together.
+	 */
+	public void deleteRange(H hashKey);
+
+	/**
+	 * Deletes all rows with a given hash key, and a range key that's greater than
+	 * or equal to the "from" range key provided.
+	 * 
+	 * @param hashKey
+	 *            A key used group rows together.
+	 * @param fromRangeKey
+	 *            The range key to use as the starting point. If an exact match
+	 *            doesn't exist for this hash/range pair, the nearest range key
+	 *            that is larger than this range key will be used as the
+	 *            starting point.
+	 */
+	public void deleteRange(H hashKey, R fromRangeKey);
+
+	/**
+	 * Deletes all rows with a given hash key, and a range key that's greater than
+	 * or equal to the "from" range key, and less than or equal to the "to"
+	 * range key. That is, the "from" range key is inclusive, and the "to" range
+	 * key is inclusive.
+	 * 
+	 * @param hashKey
+	 *            A key used group rows together.
+	 * @param fromRangeKey
+	 *            The range key to use as the starting point. If an exact match
+	 *            doesn't exist for this hash/range pair, the nearest range key
+	 *            that is larger than this range key will be used as the
+	 *            starting point.
+	 * @param toRangeKey
+	 *            The range key to use as the end point (inclusive). If an exact
+	 *            match doesn't exist, the nearest range key that is less than
+	 *            this range key will be used as the end point (inclusive).
+	 */
+	public void deleteRange(H hashKey, R fromRangeKey, R toRangeKey);
+
+	/**
 	 * With this it is possible to do bulk/batch puts and deletes.
 	 * 
 	 * @return a new batch enabled transaction object
 	 */
 	public RangeBatch<H, R, V> newRangeBatch();
-	
 
 }
