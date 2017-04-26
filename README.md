@@ -130,7 +130,7 @@ EZDB releases are published to maven central. You can pull them in with:
 
 You can get current snapshots from this maven repository:
 ```
-http://invesdwin.de/artifactory/invesdwin-oss
+http://invesdwin.de/artifactory/invesdwin-oss-remote
 ```
 
 Dependency declaration:
