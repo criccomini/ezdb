@@ -138,7 +138,7 @@ Dependency declaration:
 <dependency>
 	<groupId>com.github.criccomini</groupId>
 	<artifactId>ezdb-leveldb</artifactId>
-	<version>0.1.12-SNAPSHOT</version>
+	<version>0.1.12</version>
 </dependency>
 ```
 
