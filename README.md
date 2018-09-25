@@ -120,15 +120,7 @@ EZDB is built with Maven:
 
 ### Using EZDB
 
-EZDB releases are published to maven central. You can pull them in with:
-
-    <dependency>
-      <groupId>com.github.criccomini</groupId>
-      <artifactId>ezdb-leveldb</artifactId>
-      <version>0.1.9</version>
-    </dependency>
-
-You can get current snapshots from this maven repository:
+You can get current releases from this maven repository:
 ```
 http://invesdwin.de/artifactory/invesdwin-oss-remote
 ```
