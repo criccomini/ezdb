@@ -8,7 +8,7 @@
 
 	<groupId>com.github.criccomini</groupId>
 	<artifactId>ezdb-parent</artifactId>
-	<version>0.1.14-SNAPSHOT</version>
+	<version>0.1.13-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>EZDB Parent</name>
 	<description>
@@ -71,23 +71,23 @@
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-api</artifactId>
-				<version>0.1.14-SNAPSHOT</version>
+				<version>0.1.13-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-leveldb</artifactId>
-				<version>0.1.14-SNAPSHOT</version>
+				<version>0.1.13-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-leveldb</artifactId>
 				<type>test-jar</type>
-				<version>0.1.14-SNAPSHOT</version>
+				<version>0.1.13-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-treemap</artifactId>
-				<version>0.1.14-SNAPSHOT</version>
+				<version>0.1.13-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>org.fusesource.leveldbjni</groupId>
