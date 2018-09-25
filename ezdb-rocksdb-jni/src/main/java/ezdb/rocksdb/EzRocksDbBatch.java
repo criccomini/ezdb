@@ -2,7 +2,6 @@ package ezdb.rocksdb;
 
 import java.io.IOException;
 
-import org.rocksdb.FlushOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.WriteBatch;
@@ -53,21 +52,29 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	@Override
 	public void close() throws IOException {
-		writeBatch.dispose();
-		writeOptions.dispose();
+		writeBatch.close();
+		writeOptions.close();
 	}
 
 	@Override
 	public void put(H hashKey, R rangeKey, V value) {
-		writeBatch.put(
-				Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
-				valueSerde.toBytes(value));
+		try {
+			writeBatch.put(
+					Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
+					valueSerde.toBytes(value));
+		} catch (RocksDBException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public void delete(H hashKey, R rangeKey) {
-		writeBatch.remove(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
-				rangeKey));
+		try {
+			writeBatch.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
+					rangeKey));
+		} catch (RocksDBException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }
