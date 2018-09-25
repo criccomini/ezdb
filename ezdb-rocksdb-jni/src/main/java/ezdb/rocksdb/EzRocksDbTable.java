@@ -545,7 +545,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public void delete(H hashKey, R rangeKey) {
 		try {
-			this.db.remove(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
+			this.db.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
 					rangeKey));
 		} catch (RocksDBException e) {
 			throw new DbException(e);
@@ -556,7 +556,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	public void close() {
 		try {
 			this.db.close();
-			this.options.dispose();
+			this.options.close();
 		} catch (Exception e) {
 			throw new DbException(e);
 		}

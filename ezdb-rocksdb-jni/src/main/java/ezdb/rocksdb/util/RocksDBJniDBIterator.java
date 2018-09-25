@@ -50,7 +50,7 @@ public class RocksDBJniDBIterator implements DBIterator {
 	}
 
 	public void close() {
-		iterator.dispose();
+		iterator.close();
 	}
 
 	public void remove() {
