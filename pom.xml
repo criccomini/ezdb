@@ -73,23 +73,23 @@
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-api</artifactId>
-				<version>0.1.12-SNAPSHOT</version>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-leveldb</artifactId>
-				<version>0.1.12-SNAPSHOT</version>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-leveldb</artifactId>
 				<type>test-jar</type>
-				<version>0.1.12-SNAPSHOT</version>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-treemap</artifactId>
-				<version>0.1.12-SNAPSHOT</version>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.fusesource.leveldbjni</groupId>
