@@ -49,7 +49,7 @@
 
 	<scm>
 		<url>https://github.com/criccomini/ezdb.git</url>
-		<connection>scm:git:https://github.com/criccomini/ezdb.git.git</connection>
+		<connection>scm:git:https://github.com/criccomini/ezdb.git</connection>
 		<tag>HEAD</tag>
 	</scm>
 
