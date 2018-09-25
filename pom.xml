@@ -48,9 +48,9 @@
 	</licenses>
 
 	<scm>
-		<connection>scm:git:git://github.com/criccomini/ezdb.git</connection>
-		<developerConnection>scm:git:git@github.com:criccomini/ezdb.git</developerConnection>
-		<url>http://github.com/criccomini/ezdb</url>
+		<url>https://github.com/criccomini/ezdb.git</url>
+		<connection>scm:git:https://github.com/criccomini/ezdb.git.git</connection>
+		<tag>HEAD</tag>
 	</scm>
 
 	<issueManagement>
