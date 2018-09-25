@@ -12,14 +12,6 @@
   <name>EZDB LevelDB JNI implementation</name>
   <packaging>jar</packaging>
 
-  <repositories>
-    <repository>
-      <id>fusesource.nexus.snapshot</id>
-      <name>FuseSource Community Snapshot Repository</name>
-      <url>http://repo.fusesource.com/nexus/content/groups/public-snapshots</url>
-    </repository>
-  </repositories>
-
   <dependencies>
     <dependency>
       <groupId>com.github.criccomini</groupId>
