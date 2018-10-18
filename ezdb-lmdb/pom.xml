@@ -8,7 +8,7 @@
 		<version>0.1.13-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>ezdb-rocksdb-jni</artifactId>
+	<artifactId>ezdb-lmdb</artifactId>
 	<name>EZDB RocksDB JNI implementation</name>
 	<packaging>jar</packaging>
 
@@ -23,8 +23,8 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.rocksdb</groupId>
-			<artifactId>rocksdbjni</artifactId>
+			<groupId>org.lmdbjava</groupId>
+			<artifactId>lmdbjava</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
