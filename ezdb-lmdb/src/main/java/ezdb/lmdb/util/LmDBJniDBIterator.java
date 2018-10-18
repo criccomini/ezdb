@@ -33,14 +33,18 @@ package ezdb.lmdb.util;
 
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.lmdbjava.Cursor;
-import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Dbi;
-import org.lmdbjava.SeekOp;
-import org.rocksdb.RocksIterator;
+import org.lmdbjava.Env;
+import org.lmdbjava.GetOp;
+import org.lmdbjava.Txn;
+
+import ezdb.lmdb.EzLmDbComparator;
 
 //implementation taken from leveldbjni
 /**
@@ -48,18 +52,24 @@ import org.rocksdb.RocksIterator;
  */
 public class LmDBJniDBIterator implements DBIterator {
 
+	private final Env<ByteBuffer> env;
 	private final Dbi<ByteBuffer> dbi;
-	private CursorIterator<ByteBuffer> iterator;
+	private final Comparator<byte[]> hashKeyComparator;
+	private final Txn<ByteBuffer> txn;
+	private final Cursor<ByteBuffer> cursor;
+	private boolean valid = false;
 
-	public LmDBJniDBIterator(Dbi<ByteBuffer> dbi) {
+	public LmDBJniDBIterator(Env<ByteBuffer> env, Dbi<ByteBuffer> dbi, Comparator<byte[]> hashKeyComparator) {
+		this.env = env;
 		this.dbi = dbi;
+		this.txn = env.txnRead();
+		this.cursor = dbi.openCursor(txn);
+		this.hashKeyComparator = hashKeyComparator;
 	}
 
 	public void close() {
-		if(iterator != null) {
-		iterator.close();
-		iterator = null;
-		}
+		cursor.close();
+		txn.close();
 	}
 
 	public void remove() {
@@ -67,68 +77,76 @@ public class LmDBJniDBIterator implements DBIterator {
 	}
 
 	public void seek(byte[] key) {
-		dbi.ite
-		iterator.seek(SeekOp.);
+		valid = cursor.get(DirectBuffers.wrap(key), GetOp.MDB_SET_RANGE);
+		if(!valid) {
+			seekToLast();
+		}else if(hashKeyComparator.compare(key, DirectBuffers.array(cursor.key())) < 0) {
+			//we went higher than expected, go one lower
+			valid = cursor.prev();
+			if(!valid) {
+				seekToLast();
+				
+			}
+		}
 	}
 
 	public void seekToFirst() {
-		iterator.seek(SeekOp.MDB_FIRST);
+		valid = cursor.first();
 	}
 
 	public void seekToLast() {
-		iterator.seek(SeekOp.MDB_LAST);
+		valid = cursor.last();
 	}
 
 	public Map.Entry<byte[], byte[]> peekNext() {
-		iterator.
-		if (!iterator.isValid()) {
+		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		return new AbstractMap.SimpleImmutableEntry<byte[], byte[]>(
-				iterator.key(), iterator.value());
+		return new AbstractMap.SimpleImmutableEntry<byte[], byte[]>(DirectBuffers.array(cursor.key()),
+				DirectBuffers.array(cursor.val()));
 	}
 
 	public boolean hasNext() {
-		return iterator.isValid();
+		return valid;
 	}
 
 	public Map.Entry<byte[], byte[]> next() {
 		Map.Entry<byte[], byte[]> rc = peekNext();
-		iterator.next();
+		valid = cursor.next();
 		return rc;
 	}
 
 	public boolean hasPrev() {
-		if (!iterator.isValid())
+		if (!valid)
 			return false;
-		iterator.prev();
+		valid = cursor.prev();
 		try {
-			return iterator.isValid();
+			return valid;
 		} finally {
-			if (iterator.isValid()) {
-				iterator.next();
+			if (valid) {
+				valid = cursor.next();
 			} else {
-				iterator.seekToFirst();
+				seekToFirst();
 			}
 		}
 	}
 
 	public Map.Entry<byte[], byte[]> peekPrev() {
-		iterator.prev();
+		valid = cursor.prev();
 		try {
 			return peekNext();
 		} finally {
-			if (iterator.isValid()) {
-				iterator.next();
+			if (valid) {
+				valid = cursor.next();
 			} else {
-				iterator.seekToFirst();
+				seekToFirst();
 			}
 		}
 	}
 
 	public Map.Entry<byte[], byte[]> prev() {
 		Map.Entry<byte[], byte[]> rc = peekPrev();
-		iterator.prev();
+		valid = cursor.prev();
 		return rc;
 	}
 

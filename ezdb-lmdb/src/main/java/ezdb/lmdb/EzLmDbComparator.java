@@ -3,6 +3,7 @@ package ezdb.lmdb;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 
+import ezdb.lmdb.util.DirectBuffers;
 import ezdb.util.Util;
 
 /**
@@ -25,7 +26,7 @@ public class EzLmDbComparator implements Comparator<ByteBuffer> {
 	
 	@Override
 	public int compare(ByteBuffer a, ByteBuffer b) {
-		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, a.array(), b.array());
+		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, DirectBuffers.array(a), DirectBuffers.array(b));
 	}
 
 }

@@ -15,7 +15,7 @@ import ezdb.lmdb.util.FileUtils;
 public class EzLmDbJniFactory implements EzLmDbFactory {
 	@Override
 	public Env<ByteBuffer> create(File path, EnvFlags... envFlags) throws IOException {
-		Env<ByteBuffer> env = Env.create().setMaxDbs(1).setMapSize(10485760).open(path.getAbsoluteFile(), envFlags);
+		Env<ByteBuffer> env = Env.create().setMaxDbs(1).setMapSize(10485760).setMaxReaders(Integer.MAX_VALUE).open(path.getAbsoluteFile(), envFlags);
 		return env;
 	}
 	@Override

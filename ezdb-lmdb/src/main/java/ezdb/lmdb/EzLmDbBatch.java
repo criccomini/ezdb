@@ -4,30 +4,29 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.lmdbjava.Dbi;
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksDBException;
-import org.rocksdb.WriteBatch;
-import org.rocksdb.WriteOptions;
+import org.lmdbjava.Env;
+import org.lmdbjava.Txn;
 
 import ezdb.DbException;
 import ezdb.batch.RangeBatch;
+import ezdb.lmdb.util.DirectBuffers;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
 
 public class EzLmDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
+	private final Env<ByteBuffer> env;
 	private final Dbi<ByteBuffer> db;
-	private final WriteBatch writeBatch;
+	private final Txn<ByteBuffer> txn;
 	private Serde<H> hashKeySerde;
 	private Serde<R> rangeKeySerde;
 	private Serde<V> valueSerde;
-	private WriteOptions writeOptions;
 
-	public EzLmDbBatch(Dbi<ByteBuffer> db, Serde<H> hashKeySerde, Serde<R> rangeKeySerde,
+	public EzLmDbBatch(Env<ByteBuffer> env, Dbi<ByteBuffer> db, Serde<H> hashKeySerde, Serde<R> rangeKeySerde,
 			Serde<V> valueSerde) {
-		this.writeOptions = new WriteOptions();
+		this.env = env;
 		this.db = db;
-		this.writeBatch = new WriteBatch();
+		this.txn = env.txnWrite();
 		this.hashKeySerde = hashKeySerde;
 		this.rangeKeySerde = rangeKeySerde;
 		this.valueSerde = valueSerde;
@@ -45,38 +44,24 @@ public class EzLmDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	@Override
 	public void flush() {
-		try {
-			db.write(writeOptions, writeBatch);
-		} catch (RocksDBException e) {
-			throw new DbException(e);
-		}
+		txn.commit();
 	}
 
 	@Override
 	public void close() throws IOException {
-		writeBatch.close();
-		writeOptions.close();
+		flush();
+		txn.close();
 	}
 
 	@Override
 	public void put(H hashKey, R rangeKey, V value) {
-		try {
-			writeBatch.put(
-					Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
-					valueSerde.toBytes(value));
-		} catch (RocksDBException e) {
-			throw new RuntimeException(e);
-		}
+		db.put(txn, DirectBuffers.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)),
+				DirectBuffers.wrap(valueSerde.toBytes(value)));
 	}
 
 	@Override
 	public void delete(H hashKey, R rangeKey) {
-		try {
-			writeBatch.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
-					rangeKey));
-		} catch (RocksDBException e) {
-			throw new RuntimeException(e);
-		}
+		db.delete(txn, DirectBuffers.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)));
 	}
 
 }

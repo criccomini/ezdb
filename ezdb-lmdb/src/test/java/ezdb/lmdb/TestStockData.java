@@ -75,7 +75,7 @@ public class TestStockData {
 	@Test
 	public void testStockData() throws IOException, ParseException {
 		FileInputStream in = new FileInputStream(new File(
-				"./src/test/java/ezdb/rocksdb/" + MSFT + ".txt"));
+				"./src/test/java/ezdb/lmdb/" + MSFT + ".txt"));
 		List<String> lines = CharStreams.readLines(new InputStreamReader(in));
 		lines.remove(0);
 		lines.remove(0);

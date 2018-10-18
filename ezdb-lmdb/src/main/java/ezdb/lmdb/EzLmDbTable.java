@@ -22,6 +22,7 @@ import ezdb.TableRow;
 import ezdb.batch.Batch;
 import ezdb.batch.RangeBatch;
 import ezdb.lmdb.util.DBIterator;
+import ezdb.lmdb.util.DirectBuffers;
 import ezdb.lmdb.util.LmDBJniDBIterator;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
@@ -63,14 +64,8 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void put(H hashKey, R rangeKey, V value) {
-		Txn<ByteBuffer> txn = env.txnWrite();
-		try {
-			db.put(txn, ByteBuffer.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)),
-					ByteBuffer.wrap(valueSerde.toBytes(value)));
-		} finally {
-			txn.commit();
-			txn.close();
-		}
+		db.put(DirectBuffers.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)),
+				DirectBuffers.wrap(valueSerde.toBytes(value)));
 	}
 
 	@Override
@@ -83,13 +78,13 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		Txn<ByteBuffer> txn = env.txnRead();
 		try {
 			ByteBuffer valueBytes = db.get(txn,
-					ByteBuffer.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)));
+					DirectBuffers.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)));
 
 			if (valueBytes == null) {
 				return null;
 			}
 
-			return valueSerde.fromBytes(valueBytes.array());
+			return valueSerde.fromBytes(DirectBuffers.array(valueBytes));
 		} finally {
 			txn.close();
 		}
@@ -97,7 +92,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(H hashKey) {
-		final DBIterator iterator = new LmDBJniDBIterator(db.newIterator());
+		final DBIterator iterator = new LmDBJniDBIterator(env, db, hashKeyComparator);
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
 		iterator.seek(keyBytesFrom);
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
@@ -133,7 +128,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return range(hashKey);
 		}
-		final DBIterator iterator = new LmDBJniDBIterator(db.newIterator());
+		final DBIterator iterator = new LmDBJniDBIterator(env, db, hashKeyComparator);
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom);
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
@@ -169,7 +164,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = new LmDBJniDBIterator(db.newIterator());
+		final DBIterator iterator = new LmDBJniDBIterator(env, db, hashKeyComparator);
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
 		iterator.seek(keyBytesFrom);
@@ -202,7 +197,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
-		final DBIterator iterator = new LmDBJniDBIterator(db.newIterator());
+		final DBIterator iterator = new LmDBJniDBIterator(env, db, hashKeyComparator);
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
 			public Boolean apply(CheckKeysRequest input) {
@@ -312,7 +307,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
-		final DBIterator iterator = new LmDBJniDBIterator(db.newIterator());
+		final DBIterator iterator = new LmDBJniDBIterator(env, db, hashKeyComparator);
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
 			public Boolean apply(CheckKeysRequest input) {
@@ -391,7 +386,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = new LmDBJniDBIterator(db.newIterator());
+		final DBIterator iterator = new LmDBJniDBIterator(env, db, hashKeyComparator);
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
 			public Boolean apply(CheckKeysRequest input) {
@@ -476,13 +471,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void delete(H hashKey, R rangeKey) {
-		Txn<ByteBuffer> txn = env.txnRead();
-		try {
-			this.db.delete(txn, ByteBuffer.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)));
-		} finally {
-			txn.commit();
-			txn.close();
-		}
+		this.db.delete(DirectBuffers.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)));
 	}
 
 	@Override
@@ -681,7 +670,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public RangeBatch<H, R, V> newRangeBatch() {
-		return new EzLmDbBatch<H, R, V>(db, hashKeySerde, rangeKeySerde, valueSerde);
+		return new EzLmDbBatch<H, R, V>(env, db, hashKeySerde, rangeKeySerde, valueSerde);
 	}
 
 	@Override
