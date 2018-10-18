@@ -8,8 +8,8 @@
 		<version>0.1.13-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>ezdb-lmdb</artifactId>
-	<name>EZDB RocksDB JNI implementation</name>
+	<artifactId>ezdb-lmdb-jnr</artifactId>
+	<name>EZDB LMDB JNR implementation</name>
 	<packaging>jar</packaging>
 
 	<dependencies>

@@ -1,4 +1,4 @@
-package ezdb.lmdb;
+package ezdb.mdbx;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,16 +22,16 @@ import ezdb.serde.Serde;
  * @author criccomini
  * 
  */
-public class EzLmDb implements Db {
+public class EzMdbxDb implements Db {
   private final File root;
   private final Map<String, RangeTable<?, ?, ?>> cache;
-  private final EzLmDbFactory factory;
+  private final EzMdbxDbFactory factory;
 
-  public EzLmDb(File root) {
-    this(root, new EzLmDbJniFactory());
+  public EzMdbxDb(File root) {
+    this(root, new EzMdbxDbJniFactory());
   }
 
-  public EzLmDb(File root, EzLmDbFactory factory) {
+  public EzMdbxDb(File root, EzMdbxDbFactory factory) {
     this.root = root;
     this.factory = factory;
     this.cache = new HashMap<String, RangeTable<?, ?, ?>>();
@@ -66,7 +66,7 @@ public class EzLmDb implements Db {
       RangeTable<?, ?, ?> table = cache.get(tableName);
 
       if (table == null) {
-        table = new EzLmDbTable<H, R, V>(new File(root, tableName), factory, hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
+        table = new EzMdbxDbTable<H, R, V>(new File(root, tableName), factory, hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
         cache.put(tableName, table);
       }
 

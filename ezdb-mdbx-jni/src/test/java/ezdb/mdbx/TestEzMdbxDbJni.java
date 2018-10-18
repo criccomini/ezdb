@@ -1,4 +1,4 @@
-package ezdb.lmdb;
+package ezdb.mdbx;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,14 +12,14 @@ import org.junit.Test;
 
 import ezdb.RangeTable;
 import ezdb.TableIterator;
-import ezdb.lmdb.EzLmDb;
-import ezdb.lmdb.EzLmDbJniFactory;
-import ezdb.lmdb.util.FileUtils;
+import ezdb.mdbx.EzMdbxDb;
+import ezdb.mdbx.EzMdbxDbJniFactory;
+import ezdb.mdbx.util.FileUtils;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.Serde;
 import ezdb.serde.SerializingSerde;
 
-public class TestEzLmDbJni extends TestEzLmDb {
+public class TestEzMdbxDbJni extends TestEzMdbxDb {
 	private static final String HASHKEY_ONE = "1";
 	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1)
 			.getTime();
@@ -47,7 +47,7 @@ public class TestEzLmDbJni extends TestEzLmDb {
 	public void before() {
 		FileUtils.deleteRecursively(ROOT);
 		ROOT.mkdirs();
-		ezdb = new EzLmDb(ROOT, new EzLmDbJniFactory());
+		ezdb = new EzMdbxDb(ROOT, new EzMdbxDbJniFactory());
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get,
 				IntegerSerde.get);

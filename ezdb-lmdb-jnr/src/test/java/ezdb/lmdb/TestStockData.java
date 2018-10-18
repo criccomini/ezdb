@@ -27,7 +27,7 @@ import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.comparator.SerdeComparator;
 import ezdb.lmdb.EzLmDb;
-import ezdb.lmdb.EzLmDbJniFactory;
+import ezdb.lmdb.EzLmDbJnrFactory;
 import ezdb.lmdb.util.FileUtils;
 import ezdb.serde.DateSerde;
 import ezdb.serde.Serde;
@@ -59,7 +59,7 @@ public class TestStockData {
 	public void before() {
 		FileUtils.deleteRecursively(ROOT);
 		ROOT.mkdirs();
-		ezdb = new EzLmDb(ROOT, new EzLmDbJniFactory());
+		ezdb = new EzLmDb(ROOT, new EzLmDbJnrFactory());
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", hashKeySerde, hashRangeSerde, valueSerde,
 				hashKeyComparator, rangeKeyComparator);

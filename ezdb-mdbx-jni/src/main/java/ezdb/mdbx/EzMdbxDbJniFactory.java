@@ -1,4 +1,4 @@
-package ezdb.lmdb;
+package ezdb.mdbx;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,16 +10,16 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 
-import ezdb.lmdb.util.FileUtils;
+import ezdb.mdbx.util.FileUtils;
 
-public class EzLmDbJniFactory implements EzLmDbFactory {
+public class EzMdbxDbJniFactory implements EzMdbxDbFactory {
 	@Override
 	public Env<ByteBuffer> create(File path, EnvFlags... envFlags) throws IOException {
 		Env<ByteBuffer> env = Env.create().setMaxDbs(1).setMapSize(10485760).setMaxReaders(Integer.MAX_VALUE).open(path.getAbsoluteFile(), envFlags);
 		return env;
 	}
 	@Override
-	public Dbi<ByteBuffer> open(String tableName, Env<ByteBuffer> env, EzLmDbComparator comparator, DbiFlags... dbiFlags) throws IOException {
+	public Dbi<ByteBuffer> open(String tableName, Env<ByteBuffer> env, EzMdbxDbComparator comparator, DbiFlags... dbiFlags) throws IOException {
 		Dbi<ByteBuffer> dbi = env.openDbi(tableName, comparator, dbiFlags);
 		return dbi;
 	}
