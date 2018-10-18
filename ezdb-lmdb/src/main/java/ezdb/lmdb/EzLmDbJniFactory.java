@@ -19,8 +19,8 @@ public class EzLmDbJniFactory implements EzLmDbFactory {
 		return env;
 	}
 	@Override
-	public Dbi<ByteBuffer> open(Env<ByteBuffer> env, EzLmDbComparator comparator, DbiFlags... dbiFlags) throws IOException {
-		Dbi<ByteBuffer> dbi = env.openDbi("lmdb.bin", comparator, dbiFlags);
+	public Dbi<ByteBuffer> open(String tableName, Env<ByteBuffer> env, EzLmDbComparator comparator, DbiFlags... dbiFlags) throws IOException {
+		Dbi<ByteBuffer> dbi = env.openDbi(tableName, comparator, dbiFlags);
 		return dbi;
 	}
 

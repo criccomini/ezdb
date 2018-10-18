@@ -6,8 +6,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.rocksdb.Options;
-
 import ezdb.Db;
 import ezdb.DbException;
 import ezdb.RangeTable;
@@ -44,7 +42,7 @@ public class EzLmDb implements Db {
     try {
       synchronized (cache) {
         cache.remove(tableName);
-        factory.destroy(getFile(tableName), new Options());
+        factory.destroy(getFile(tableName));
       }
     } catch (IOException e) {
       throw new DbException(e);

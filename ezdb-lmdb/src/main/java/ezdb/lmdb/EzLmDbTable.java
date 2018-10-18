@@ -44,13 +44,13 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		this.rangeKeyComparator = rangeKeyComparator;
 
 		try {
-			this.env = factory.create(path, EnvFlags.MDB_NOTLS);
+			this.env = factory.create(path.getParentFile(), EnvFlags.MDB_NOTLS);
 		} catch (IOException e) {
 			throw new DbException(e);
 		}
 		EzLmDbComparator comparator = new EzLmDbComparator(hashKeyComparator, rangeKeyComparator);
 		try {
-			this.db = factory.open(env, comparator, DbiFlags.MDB_CREATE);
+			this.db = factory.open(path.getName(), env, comparator, DbiFlags.MDB_CREATE);
 		} catch (IOException e) {
 			throw new DbException(e);
 		}
@@ -65,7 +65,8 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	public void put(H hashKey, R rangeKey, V value) {
 		Txn<ByteBuffer> txn = env.txnWrite();
 		try {
-			db.put(txn, ByteBuffer.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)), ByteBuffer.wrap(valueSerde.toBytes(value)));
+			db.put(txn, ByteBuffer.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)),
+					ByteBuffer.wrap(valueSerde.toBytes(value)));
 		} finally {
 			txn.commit();
 			txn.close();
@@ -81,12 +82,13 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	public V get(H hashKey, R rangeKey) {
 		Txn<ByteBuffer> txn = env.txnRead();
 		try {
-			ByteBuffer valueBytes = db.get(txn, ByteBuffer.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)));
-	
+			ByteBuffer valueBytes = db.get(txn,
+					ByteBuffer.wrap(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey)));
+
 			if (valueBytes == null) {
 				return null;
 			}
-	
+
 			return valueSerde.fromBytes(valueBytes.array());
 		} finally {
 			txn.close();

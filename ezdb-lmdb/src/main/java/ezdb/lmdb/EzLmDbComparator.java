@@ -3,9 +3,6 @@ package ezdb.lmdb;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 
-import org.rocksdb.ComparatorOptions;
-import org.rocksdb.Slice;
-
 import ezdb.util.Util;
 
 /**
