@@ -24,7 +24,6 @@
 		<module>ezdb-leveldb-jni</module>
 		<module>ezdb-rocksdb-jni</module>
 		<module>ezdb-lmdb-jnr</module>
-		<module>ezdb-mdbx-jni</module>
 		<module>ezdb-treemap</module>
 	</modules>
 
@@ -117,11 +116,6 @@
 				<groupId>org.lmdbjava</groupId>
 				<artifactId>lmdbjava</artifactId>
 				<version>0.6.1</version>
-			</dependency>
-			<dependency>
-				<groupId>org.fusesource.lmdbjni</groupId>
-				<artifactId>mdbxjni-all</artifactId>
-				<version>99-master-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.guava</groupId>
