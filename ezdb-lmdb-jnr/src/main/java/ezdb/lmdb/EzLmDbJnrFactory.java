@@ -8,6 +8,7 @@ import java.util.Comparator;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
+import org.lmdbjava.Env.Builder;
 import org.lmdbjava.EnvFlags;
 
 import ezdb.lmdb.util.FileUtils;
@@ -15,20 +16,29 @@ import ezdb.lmdb.util.FileUtils;
 public class EzLmDbJnrFactory implements EzLmDbFactory {
 	@Override
 	public Env<ByteBuffer> create(File path, EnvFlags... envFlags) throws IOException {
-		Env<ByteBuffer> env = Env.create().setMaxDbs(1).setMapSize(10485760).setMaxReaders(Integer.MAX_VALUE).open(path.getAbsoluteFile(), envFlags);
+		Env<ByteBuffer> env = newEnv().open(path.getAbsoluteFile(), envFlags);
 		return env;
 	}
+
+	protected Builder<ByteBuffer> newEnv() {
+		return Env.create().setMaxDbs(1).setMapSize(newMapSize()).setMaxReaders(Integer.MAX_VALUE);
+	}
+
+	protected long newMapSize() {
+		return Integer.MAX_VALUE;
+	}
+
 	@Override
-	public Dbi<ByteBuffer> open(String tableName, Env<ByteBuffer> env, EzLmDbComparator comparator, DbiFlags... dbiFlags) throws IOException {
+	public Dbi<ByteBuffer> open(String tableName, Env<ByteBuffer> env, EzLmDbComparator comparator,
+			DbiFlags... dbiFlags) throws IOException {
 		Dbi<ByteBuffer> dbi = env.openDbi(tableName, comparator, dbiFlags);
 		return dbi;
 	}
 
 	@Override
 	public void destroy(File path) throws IOException {
-		//implementation taken from java port of leveldb
+		// implementation taken from java port of leveldb
 		FileUtils.deleteRecursively(path);
 	}
-
 
 }

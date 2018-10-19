@@ -3,9 +3,15 @@ package ezdb.lmdb;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Random;
 import org.junit.Before;
 import org.junit.Test;
+import org.lmdbjava.Env;
+import org.lmdbjava.EnvFlags;
+import org.lmdbjava.Env.Builder;
+
 import ezdb.Db;
 import ezdb.RangeTable;
 import ezdb.TableIterator;

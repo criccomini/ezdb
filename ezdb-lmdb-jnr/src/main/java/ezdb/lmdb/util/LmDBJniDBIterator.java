@@ -78,16 +78,6 @@ public class LmDBJniDBIterator implements DBIterator {
 
 	public void seek(byte[] key) {
 		valid = cursor.get(DirectBuffers.wrap(key), GetOp.MDB_SET_RANGE);
-		if(!valid) {
-			seekToLast();
-		}else if(hashKeyComparator.compare(key, DirectBuffers.array(cursor.key())) < 0) {
-			//we went higher than expected, go one lower
-			valid = cursor.prev();
-			if(!valid) {
-				seekToLast();
-				
-			}
-		}
 	}
 
 	public void seekToFirst() {
