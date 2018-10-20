@@ -21,11 +21,7 @@ public class EzRocksDbJniFactory implements EzRocksDbFactory {
 
 	@Override
 	public void destroy(File path, Options options) throws IOException {
-		//implementation taken from java port of leveldb
-		try {
-			RocksDB.destroyDB(path.getAbsolutePath(), options);
-		} catch (RocksDBException e) {
-			throw new IOException(e);
-		}
+		// implementation taken from java port of leveldb
+		FileUtils.deleteRecursively(path);
 	}
 }
