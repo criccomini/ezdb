@@ -230,6 +230,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null,
 				null, keyBytesFrom, null, iterator, checkKeys);
 		if (emptyIterator != null) {
+			iterator.close();
 			return emptyIterator;
 		}
 
@@ -367,6 +368,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 					null, null, keyBytesFromForSeekLast, null, iterator,
 					checkKeys);
 			if (emptyIterator != null) {
+				iterator.close();
 				return emptyIterator;
 			}
 		}
@@ -468,6 +470,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 					null, toRangeKey, keyBytesFromForSeekLast, keyBytesTo,
 					iterator, checkKeys);
 			if (emptyIterator != null) {
+				iterator.close();
 				return emptyIterator;
 			}
 		}

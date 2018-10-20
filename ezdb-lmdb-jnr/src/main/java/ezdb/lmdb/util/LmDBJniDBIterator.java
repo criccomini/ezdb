@@ -51,7 +51,7 @@ import ezdb.lmdb.EzLmDbComparator;
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 public class LmDBJniDBIterator implements DBIterator {
-
+	
 	private final Env<ByteBuffer> env;
 	private final Dbi<ByteBuffer> dbi;
 	private final Comparator<byte[]> hashKeyComparator;
