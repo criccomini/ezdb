@@ -69,7 +69,13 @@ public class LmDBJniDBIterator implements DBIterator {
 
 	public void close() {
 		cursor.close();
-		txn.close();
+		txn.close(); 
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		close();
 	}
 
 	public void remove() {

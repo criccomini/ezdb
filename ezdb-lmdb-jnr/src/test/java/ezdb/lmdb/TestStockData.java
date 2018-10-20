@@ -119,6 +119,7 @@ public class TestStockData {
 //			System.out.println(next.getValue());
 			countBars++;
 		}
+		range.close();
 		Assert.assertEquals(253, countBars);
 		
 		range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime(), null);
@@ -128,6 +129,7 @@ public class TestStockData {
 //			System.out.println(next.getValue());
 			countBars++;
 		}
+		range.close();
 		Assert.assertEquals(253, countBars);
 		
 		range = table.range(MSFT, null, new GregorianCalendar(1987, 0, 1).getTime());
@@ -137,6 +139,7 @@ public class TestStockData {
 //			System.out.println(next.getValue());
 			countBars++;
 		}
+		range.close();
 		Assert.assertEquals(204, countBars);
 	}
 
@@ -161,6 +164,7 @@ public class TestStockData {
 				left900Date = next.getRangeKey();
 			}
 		}
+		range.close();
 		Assert.assertEquals(countDates, iteratedBars);
 
 		Assert.assertEquals((Integer) 1, table.getLatest(MSFT, fromDate).getValue());
@@ -188,6 +192,7 @@ public class TestStockData {
 			Assert.assertEquals(next.getValue(), prevFromNextIsSame);
 			prev = next;
 		}
+		range.close();
 		Assert.assertEquals(100, curLeftIt);
 	}
 
