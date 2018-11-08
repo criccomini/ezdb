@@ -45,7 +45,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		this.rangeKeyComparator = rangeKeyComparator;
 
 		try {
-			this.env = factory.create(path.getParentFile(), EnvFlags.MDB_NOTLS, EnvFlags.MDB_WRITEMAP, EnvFlags.MDB_NOMEMINIT, EnvFlags.MDB_NOSYNC, EnvFlags.MDB_NOMETASYNC, EnvFlags.MDB_MAPASYNC);
+			this.env = factory.create(path.getParentFile(), EnvFlags.MDB_NOTLS, EnvFlags.MDB_WRITEMAP, EnvFlags.MDB_NOMEMINIT, EnvFlags.MDB_NOSYNC, EnvFlags.MDB_NOMETASYNC);
 		} catch (IOException e) {
 			throw new DbException(e);
 		}

@@ -9,7 +9,6 @@ public final class DirectBuffers {
 	private DirectBuffers() {
 	}
 
-
 	public static ByteBuffer wrap(byte[] bytes) {
 		ByteBuffer directBuffer = ByteBuffer.allocateDirect(bytes.length);
 		directBuffer.put(bytes);
@@ -18,10 +17,12 @@ public final class DirectBuffers {
 	}
 
 	public static byte[] array(ByteBuffer buffer) {
-		byte[] bytes = new byte[buffer.remaining()];
-		buffer.get(bytes);
-		buffer.rewind();
-		return bytes;
+		synchronized (buffer) {
+			byte[] bytes = new byte[buffer.remaining()];
+			buffer.get(bytes);
+			buffer.rewind();
+			return bytes;
+		}
 	}
 
 }
