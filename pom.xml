@@ -110,7 +110,7 @@
 			<dependency>
 				<groupId>org.rocksdb</groupId>
 				<artifactId>rocksdbjni</artifactId>
-				<version>5.14.2</version>
+				<version>6.0.1</version>
 			</dependency>
 			<dependency>
 				<groupId>org.lmdbjava</groupId>
