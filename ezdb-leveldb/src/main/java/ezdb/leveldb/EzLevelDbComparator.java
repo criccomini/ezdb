@@ -34,7 +34,7 @@ public class EzLevelDbComparator implements DBComparator {
 
   @Override
   public byte[] findShortestSeparator(byte[] start, byte[] limit) {
-    return null;
+    return start;
   }
 
   @Override
