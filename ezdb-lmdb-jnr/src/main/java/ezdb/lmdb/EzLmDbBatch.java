@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
+import org.lmdbjava.Txn.NotReadyException;
 
 import ezdb.DbException;
 import ezdb.batch.RangeBatch;
@@ -44,7 +45,11 @@ public class EzLmDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	@Override
 	public void flush() {
-		txn.commit();
+		try {
+			txn.commit();
+		} catch (NotReadyException e) {
+			// ignore
+		}
 	}
 
 	@Override
