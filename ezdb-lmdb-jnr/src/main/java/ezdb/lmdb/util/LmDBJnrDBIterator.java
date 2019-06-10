@@ -50,7 +50,7 @@ import ezdb.lmdb.EzLmDbComparator;
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class LmDBJniDBIterator implements DBIterator {
+public class LmDBJnrDBIterator implements DBIterator {
 	
 	private final Env<ByteBuffer> env;
 	private final Dbi<ByteBuffer> dbi;
@@ -58,7 +58,7 @@ public class LmDBJniDBIterator implements DBIterator {
 	private final Cursor<ByteBuffer> cursor;
 	private boolean valid = false;
 
-	public LmDBJniDBIterator(Env<ByteBuffer> env, Dbi<ByteBuffer> dbi) {
+	public LmDBJnrDBIterator(Env<ByteBuffer> env, Dbi<ByteBuffer> dbi) {
 		this.env = env;
 		this.dbi = dbi;
 		this.txn = env.txnRead();

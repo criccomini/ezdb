@@ -23,7 +23,7 @@ import ezdb.batch.Batch;
 import ezdb.batch.RangeBatch;
 import ezdb.lmdb.util.DBIterator;
 import ezdb.lmdb.util.DirectBuffers;
-import ezdb.lmdb.util.LmDBJniDBIterator;
+import ezdb.lmdb.util.LmDBJnrDBIterator;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
 
@@ -92,7 +92,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(H hashKey) {
-		final DBIterator iterator = new LmDBJniDBIterator(env, db);
+		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
 		iterator.seek(keyBytesFrom);
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
@@ -128,7 +128,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return range(hashKey);
 		}
-		final DBIterator iterator = new LmDBJniDBIterator(env, db);
+		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom);
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
@@ -164,7 +164,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = new LmDBJniDBIterator(env, db);
+		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
 		iterator.seek(keyBytesFrom);
@@ -197,7 +197,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
-		final DBIterator iterator = new LmDBJniDBIterator(env, db);
+		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
 			public Boolean apply(CheckKeysRequest input) {
@@ -308,7 +308,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
-		final DBIterator iterator = new LmDBJniDBIterator(env, db);
+		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
 			public Boolean apply(CheckKeysRequest input) {
@@ -388,7 +388,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = new LmDBJniDBIterator(env, db);
+		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
 			public Boolean apply(CheckKeysRequest input) {
