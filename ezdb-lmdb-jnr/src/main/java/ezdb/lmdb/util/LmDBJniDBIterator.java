@@ -54,17 +54,15 @@ public class LmDBJniDBIterator implements DBIterator {
 	
 	private final Env<ByteBuffer> env;
 	private final Dbi<ByteBuffer> dbi;
-	private final Comparator<byte[]> hashKeyComparator;
 	private final Txn<ByteBuffer> txn;
 	private final Cursor<ByteBuffer> cursor;
 	private boolean valid = false;
 
-	public LmDBJniDBIterator(Env<ByteBuffer> env, Dbi<ByteBuffer> dbi, Comparator<byte[]> hashKeyComparator) {
+	public LmDBJniDBIterator(Env<ByteBuffer> env, Dbi<ByteBuffer> dbi) {
 		this.env = env;
 		this.dbi = dbi;
 		this.txn = env.txnRead();
 		this.cursor = dbi.openCursor(txn);
-		this.hashKeyComparator = hashKeyComparator;
 	}
 
 	public void close() {
