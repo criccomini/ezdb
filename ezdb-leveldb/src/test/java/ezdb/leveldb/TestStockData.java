@@ -57,10 +57,14 @@ public class TestStockData {
 	public void before() {
 		FileUtils.deleteRecursively(ROOT);
 		ROOT.mkdirs();
-		ezdb = new EzLevelDb(ROOT, new EzLevelDbJniFactory());
+		ezdb = new EzLevelDb(ROOT, newFactory());
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", hashKeySerde, hashRangeSerde, valueSerde,
 				hashKeyComparator, rangeKeyComparator);
+	}
+
+	protected EzLevelDbFactory newFactory() {
+		return new EzLevelDbJavaFactory();
 	}
 
 	@After

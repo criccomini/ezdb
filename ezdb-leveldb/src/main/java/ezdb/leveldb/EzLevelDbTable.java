@@ -217,11 +217,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null,
 				null, keyBytesFrom, null, iterator, checkKeys);
 		if (emptyIterator != null) {
-			try {
-				iterator.close();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+			iterator.close();
 			return emptyIterator;
 		}
 
@@ -359,11 +355,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 					null, null, keyBytesFromForSeekLast, null, iterator,
 					checkKeys);
 			if (emptyIterator != null) {
-				try {
-					iterator.close();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
+				iterator.close();
 				return emptyIterator;
 			}
 		}
@@ -465,11 +457,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 					null, toRangeKey, keyBytesFromForSeekLast, keyBytesTo,
 					iterator, checkKeys);
 			if (emptyIterator != null) {
-				try {
-					iterator.close();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
+				iterator.close();
 				return emptyIterator;
 			}
 		}

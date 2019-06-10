@@ -1,9 +1,10 @@
 package ezdb.leveldb;
 
-public class TestEzLevelDbJniTorture extends TestEzLevelDbTorture {
-	
+public class TestStockDataJni extends TestStockData {
+
 	@Override
 	protected EzLevelDbFactory newFactory() {
 		return new EzLevelDbJniFactory();
 	}
+	
 }

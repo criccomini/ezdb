@@ -23,7 +23,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.iq80.leveldb</groupId>
+      <groupId>io.github.pcmind</groupId>
       <artifactId>leveldb</artifactId>
     </dependency>
     <dependency>
