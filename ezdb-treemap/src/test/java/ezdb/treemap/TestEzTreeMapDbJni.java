@@ -8,13 +8,16 @@ import java.util.NoSuchElementException;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ezdb.RangeTable;
 import ezdb.TableIterator;
+import ezdb.serde.DateSerde;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.Serde;
 import ezdb.serde.SerializingSerde;
+import ezdb.serde.StringSerde;
 
 public class TestEzTreeMapDbJni extends TestEzTreeMapDb {
 	private static final String HASHKEY_ONE = "1";
@@ -36,8 +39,8 @@ public class TestEzTreeMapDbJni extends TestEzTreeMapDb {
 	private final Date threeDateMinus = new Date(threeDate.getTime() - 1);
 
 	private RangeTable<String, Date, Integer> reverseRangeTable;
-	private final Serde<String> hashKeySerde = SerializingSerde.get();
-	private final Serde<Date> hashRangeSerde = SerializingSerde.get();
+	private final Serde<String> hashKeySerde = StringSerde.get;
+	private final Serde<Date> hashRangeSerde = DateSerde.get;
 	private final Serde<Integer> valueSerde = SerializingSerde.get();
 
 	@Before
