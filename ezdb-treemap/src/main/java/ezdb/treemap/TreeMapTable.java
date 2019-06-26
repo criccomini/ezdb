@@ -7,9 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NoSuchElementException;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
-import ezdb.DbException;
 import ezdb.EmptyTableIterator;
 import ezdb.RangeTable;
 import ezdb.RawTableRow;
@@ -35,7 +34,7 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		this.valueSerde = valueSerde;
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
-		this.map = new TreeMap<byte[], byte[]>(new Comparator<byte[]>() {
+		this.map = new ConcurrentSkipListMap<byte[], byte[]>(new Comparator<byte[]>() {
 			@Override
 			public int compare(byte[] k1, byte[] k2) {
 				return Util.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
