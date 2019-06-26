@@ -383,6 +383,14 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableRow<H, R, V> getLatest(H hashKey, R rangeKey) {
+		if(rangeKey == null) {
+			Entry<byte[], byte[]> lastEntry = map.lastEntry();
+			if (lastEntry != null) {
+				return new RawTableRow<H, R, V>(lastEntry, hashKeySerde, rangeKeySerde, valueSerde);
+			}else {
+				return null;
+			}
+		}
 		final byte[] keyBytes = Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 		final Entry<byte[], byte[]> floorEntry = map.floorEntry(keyBytes);
 		if (floorEntry != null) {
