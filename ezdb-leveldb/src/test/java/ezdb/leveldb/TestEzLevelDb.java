@@ -351,7 +351,6 @@ public class TestEzLevelDb {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDatePlus,
 				oneDatePlus);
 		Assert.assertEquals(2, (int) range.next().getValue());
-		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -395,7 +394,6 @@ public class TestEzLevelDb {
 		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, threeDatePlus,
 				twoDatePlus);
 		Assert.assertEquals(3, (int) range.next().getValue());
-		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();

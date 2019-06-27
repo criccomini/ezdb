@@ -49,7 +49,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		options.setCreateIfMissing(true);
 		options.setComparator(new EzRocksDbComparator(hashKeyComparator,
 				rangeKeyComparator));
-
+		
 		try {
 			this.db = factory.open(path, options);
 		} catch (IOException e) {
@@ -275,8 +275,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 									iterator.peekNext(), hashKeySerde,
 									rangeKeySerde, valueSerde);
 						}
-						return new RawTableRow<H, R, V>(iterator.prev(),
-								hashKeySerde, rangeKeySerde, valueSerde);
+						if(hasNext()) {
+							return new RawTableRow<H, R, V>(iterator.prev(),
+									hashKeySerde, rangeKeySerde, valueSerde);
+						}else {
+							throw new NoSuchElementException();
+						}
 					}
 
 					@Override
@@ -413,8 +417,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 									iterator.peekNext(), hashKeySerde,
 									rangeKeySerde, valueSerde);
 						}
-						return new RawTableRow<H, R, V>(iterator.prev(),
-								hashKeySerde, rangeKeySerde, valueSerde);
+						if(hasNext()) {
+							return new RawTableRow<H, R, V>(iterator.prev(),
+									hashKeySerde, rangeKeySerde, valueSerde);
+						}else {
+							throw new NoSuchElementException();
+						}
 					}
 
 					@Override
@@ -516,8 +524,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 									iterator.peekNext(), hashKeySerde,
 									rangeKeySerde, valueSerde);
 						}
-						return new RawTableRow<H, R, V>(iterator.prev(),
-								hashKeySerde, rangeKeySerde, valueSerde);
+						if(hasNext()) {
+							return new RawTableRow<H, R, V>(iterator.prev(),
+									hashKeySerde, rangeKeySerde, valueSerde);
+						}else {
+							throw new NoSuchElementException();
+						}
 					}
 
 					@Override

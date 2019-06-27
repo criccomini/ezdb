@@ -262,8 +262,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 									iterator.peekNext(), hashKeySerde,
 									rangeKeySerde, valueSerde);
 						}
-						return new RawTableRow<H, R, V>(iterator.prev(),
-								hashKeySerde, rangeKeySerde, valueSerde);
+						if(hasNext()) {
+							return new RawTableRow<H, R, V>(iterator.prev(),
+									hashKeySerde, rangeKeySerde, valueSerde);
+						}else {
+							throw new NoSuchElementException();
+						}
 					}
 
 					@Override
@@ -400,8 +404,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 									iterator.peekNext(), hashKeySerde,
 									rangeKeySerde, valueSerde);
 						}
-						return new RawTableRow<H, R, V>(iterator.prev(),
-								hashKeySerde, rangeKeySerde, valueSerde);
+						if(hasNext()) {
+							return new RawTableRow<H, R, V>(iterator.prev(),
+									hashKeySerde, rangeKeySerde, valueSerde);
+						}else {
+							throw new NoSuchElementException();
+						}
 					}
 
 					@Override
@@ -503,8 +511,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 									iterator.peekNext(), hashKeySerde,
 									rangeKeySerde, valueSerde);
 						}
-						return new RawTableRow<H, R, V>(iterator.prev(),
-								hashKeySerde, rangeKeySerde, valueSerde);
+						if(hasNext()) {
+							return new RawTableRow<H, R, V>(iterator.prev(),
+									hashKeySerde, rangeKeySerde, valueSerde);
+						}else {
+							throw new NoSuchElementException();
+						}
 					}
 
 					@Override

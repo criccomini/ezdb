@@ -25,7 +25,7 @@ import ezdb.treemap.TreeMapTable;
  */
 public class TestEzRocksDbJniTorture {
   public static final int NUM_THREADS = 10;
-  public static final int ITERATIONS = 50000;
+  public static final int ITERATIONS = 10000;
   public static final String tableName = "torture";
 
   public Db db;

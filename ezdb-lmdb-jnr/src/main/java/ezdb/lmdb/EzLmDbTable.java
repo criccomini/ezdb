@@ -245,7 +245,12 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 					fixFirst = false;
 					return new RawTableRow<H, R, V>(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
 				}
-				return new RawTableRow<H, R, V>(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+				if(hasNext()) {
+					return new RawTableRow<H, R, V>(iterator.prev(),
+							hashKeySerde, rangeKeySerde, valueSerde);
+				}else {
+					throw new NoSuchElementException();
+				}
 			}
 
 			@Override
@@ -362,7 +367,12 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 					fixFirst = false;
 					return new RawTableRow<H, R, V>(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
 				}
-				return new RawTableRow<H, R, V>(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+				if(hasNext()) {
+					return new RawTableRow<H, R, V>(iterator.prev(),
+							hashKeySerde, rangeKeySerde, valueSerde);
+				}else {
+					throw new NoSuchElementException();
+				}
 			}
 
 			@Override
@@ -445,7 +455,12 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 					fixFirst = false;
 					return new RawTableRow<H, R, V>(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
 				}
-				return new RawTableRow<H, R, V>(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+				if(hasNext()) {
+					return new RawTableRow<H, R, V>(iterator.prev(),
+							hashKeySerde, rangeKeySerde, valueSerde);
+				}else {
+					throw new NoSuchElementException();
+				}
 			}
 
 			@Override
