@@ -26,7 +26,7 @@ import ezdb.serde.VersionedSerde.Versioned;
 
 public class TestEzLmDb {
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLmDb.class.getSimpleName());
-	protected Db ezdb;
+	protected Db<byte[]> ezdb;
 	protected RangeTable<Integer, Integer, Integer> table;
 
 	@Test

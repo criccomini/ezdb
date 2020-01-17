@@ -1,13 +1,10 @@
-package ezdb.treemap;
+package ezdb.treemap.bytes;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
 import ezdb.Db;
-import ezdb.DbException;
 import ezdb.RangeTable;
 import ezdb.Table;
 import ezdb.comparator.LexicographicalComparator;
@@ -22,10 +19,10 @@ import ezdb.serde.Serde;
  * @author criccomini
  * 
  */
-public class EzTreeMapDb implements Db {
+public class EzBytesTreeMapDb implements Db<byte[]> {
   private final Map<String, RangeTable<?, ?, ?>> cache;
 
-  public EzTreeMapDb() {
+  public EzBytesTreeMapDb() {
     this.cache = new HashMap<String, RangeTable<?, ?, ?>>();
   }
 
@@ -53,7 +50,7 @@ public class EzTreeMapDb implements Db {
       RangeTable<?, ?, ?> table = cache.get(tableName);
 
       if (table == null) {
-        table = new TreeMapTable<H, R, V>(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
+        table = new BytesTreeMapTable<H, R, V>(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
         cache.put(tableName, table);
       }
 

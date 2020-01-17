@@ -1,4 +1,4 @@
-package ezdb.treemap;
+package ezdb.treemap.object;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,6 +23,7 @@ import ezdb.Db;
 import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.TableRow;
+import ezdb.comparator.ComparableComparator;
 import ezdb.comparator.SerdeComparator;
 import ezdb.serde.DateSerde;
 import ezdb.serde.Serde;
@@ -33,45 +34,28 @@ import junit.framework.Assert;
 public class TestStockData {
 
 	private static final String MSFT = "MSFT";
-	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1)
-			.getTime();
-	private static final Date MIN_DATE = new GregorianCalendar(1, 1, 1)
-			.getTime();
+	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1).getTime();
+	private static final Date MIN_DATE = new GregorianCalendar(1, 1, 1).getTime();
 
-	private final Serde<String> hashKeySerde = StringSerde.get;
-	private final Serde<Date> hashRangeSerde = DateSerde.get;
-	private final Serde<Integer> valueSerde = SerializingSerde.get();
-
-	protected static final File ROOT = FileUtils
-			.createTempDir(TestEzTreeMapDb.class.getSimpleName());
-	protected Db ezdb;
+	protected Db<Object> ezdb;
 	protected RangeTable<String, Date, Integer> table;
-	private Comparator<byte[]> hashKeyComparator = new SerdeComparator<String>(
-			hashKeySerde);
-	private Comparator<byte[]> rangeKeyComparator = new SerdeComparator<Date>(
-			hashRangeSerde);
 
 	@Before
 	public void before() {
-		FileUtils.deleteRecursively(ROOT);
-		ROOT.mkdirs();
-		ezdb = new EzTreeMapDb();
+		ezdb = new EzObjectTreeMapDb();
 		ezdb.deleteTable("test");
-		table = ezdb.getTable("test", hashKeySerde, hashRangeSerde, valueSerde,
-				hashKeyComparator, rangeKeyComparator);
+		table = ezdb.getTable("test", null, null, null, ComparableComparator.get(), ComparableComparator.get());
 	}
 
 	@After
 	public void after() {
 		table.close();
 		ezdb.deleteTable("test");
-		FileUtils.deleteRecursively(ROOT);
 	}
 
 	@Test
 	public void testStockData() throws IOException, ParseException {
-		FileInputStream in = new FileInputStream(new File(
-				"./src/test/java/ezdb/treemap/" + MSFT + ".txt"));
+		FileInputStream in = new FileInputStream(new File("./src/test/java/ezdb/treemap/object/" + MSFT + ".txt"));
 		List<String> lines = CharStreams.readLines(new InputStreamReader(in));
 		lines.remove(0);
 		lines.remove(0);
@@ -95,7 +79,7 @@ public class TestStockData {
 			long longTime = date.getTime();
 			if (prevLongTime != null) {
 				// System.out.println(dateStr + ":"+date +
-				// " - "+prevLongTime+"  < " + longTime + " -> "
+				// " - "+prevLongTime+" < " + longTime + " -> "
 				// + (prevLongTime < longTime));
 				Assert.assertTrue(prevLongTime < longTime);
 			}
@@ -106,29 +90,29 @@ public class TestStockData {
 
 		assertIteration(countDates, MIN_DATE, MAX_DATE);
 		assertIteration(countDates, firstDate, lastDate);
-		
+
 //		Fri Jan 24 23:46:40 UTC 2014
 		TableIterator<String, Date, Integer> range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime());
 		int countBars = 0;
-		while(range.hasNext()){
+		while (range.hasNext()) {
 			TableRow<String, Date, Integer> next = range.next();
 //			System.out.println(next.getValue());
 			countBars++;
 		}
 		Assert.assertEquals(253, countBars);
-		
+
 		range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime(), null);
 		countBars = 0;
-		while(range.hasNext()){
+		while (range.hasNext()) {
 			TableRow<String, Date, Integer> next = range.next();
 //			System.out.println(next.getValue());
 			countBars++;
 		}
 		Assert.assertEquals(253, countBars);
-		
+
 		range = table.range(MSFT, null, new GregorianCalendar(1987, 0, 1).getTime());
 		countBars = 0;
-		while(range.hasNext()){
+		while (range.hasNext()) {
 			TableRow<String, Date, Integer> next = range.next();
 //			System.out.println(next.getValue());
 			countBars++;
@@ -137,8 +121,7 @@ public class TestStockData {
 	}
 
 	private void assertIteration(int countDates, Date fromDate, Date toDate) {
-		TableIterator<String, Date, Integer> range = table.range(MSFT,
-				fromDate, toDate);
+		TableIterator<String, Date, Integer> range = table.range(MSFT, fromDate, toDate);
 		int iteratedBars = 0;
 		int prevValue = 0;
 		Date left1000Date = null;
@@ -170,12 +153,11 @@ public class TestStockData {
 		while (range.hasNext()) {
 			TableRow<String, Date, Integer> next = range.next();
 			curLeftIt++;
-			Assert.assertEquals((Integer) (countDates - 1000 + curLeftIt),
-					next.getValue());
-			if(prev != null){
-				Integer nextFromPrevPlus = table.getNext(MSFT, new Date(prev.getRangeKey().getTime()+1)).getValue();
+			Assert.assertEquals((Integer) (countDates - 1000 + curLeftIt), next.getValue());
+			if (prev != null) {
+				Integer nextFromPrevPlus = table.getNext(MSFT, new Date(prev.getRangeKey().getTime() + 1)).getValue();
 				Assert.assertEquals(next.getValue(), nextFromPrevPlus);
-				Integer prevFromNextMinus = table.getPrev(MSFT, new Date(next.getRangeKey().getTime()-1)).getValue();
+				Integer prevFromNextMinus = table.getPrev(MSFT, new Date(next.getRangeKey().getTime() - 1)).getValue();
 				Assert.assertEquals(prev.getValue(), prevFromNextMinus);
 			}
 			Integer nextFromNextIsSame = table.getNext(MSFT, new Date(next.getRangeKey().getTime())).getValue();

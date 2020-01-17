@@ -1,4 +1,4 @@
-package ezdb.rocksdb;
+package ezdb.treemap.bytes;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,8 +13,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,11 +24,12 @@ import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.comparator.SerdeComparator;
-import ezdb.rocksdb.util.FileUtils;
 import ezdb.serde.DateSerde;
 import ezdb.serde.Serde;
 import ezdb.serde.SerializingSerde;
 import ezdb.serde.StringSerde;
+import ezdb.treemap.bytes.EzBytesTreeMapDb;
+import junit.framework.Assert;
 
 public class TestStockData {
 
@@ -44,8 +43,6 @@ public class TestStockData {
 	private final Serde<Date> hashRangeSerde = DateSerde.get;
 	private final Serde<Integer> valueSerde = SerializingSerde.get();
 
-	protected static final File ROOT = FileUtils
-			.createTempDir(TestEzRocksDb.class.getSimpleName());
 	protected Db<byte[]> ezdb;
 	protected RangeTable<String, Date, Integer> table;
 	private Comparator<byte[]> hashKeyComparator = new SerdeComparator<String>(
@@ -55,9 +52,7 @@ public class TestStockData {
 
 	@Before
 	public void before() {
-		FileUtils.deleteRecursively(ROOT);
-		ROOT.mkdirs();
-		ezdb = new EzRocksDb(ROOT, new EzRocksDbJniFactory());
+		ezdb = new EzBytesTreeMapDb();
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", hashKeySerde, hashRangeSerde, valueSerde,
 				hashKeyComparator, rangeKeyComparator);
@@ -67,13 +62,12 @@ public class TestStockData {
 	public void after() {
 		table.close();
 		ezdb.deleteTable("test");
-		FileUtils.deleteRecursively(ROOT);
 	}
 
 	@Test
 	public void testStockData() throws IOException, ParseException {
 		FileInputStream in = new FileInputStream(new File(
-				"./src/test/java/ezdb/rocksdb/" + MSFT + ".txt"));
+				"./src/test/java/ezdb/treemap/bytes/" + MSFT + ".txt"));
 		List<String> lines = CharStreams.readLines(new InputStreamReader(in));
 		lines.remove(0);
 		lines.remove(0);

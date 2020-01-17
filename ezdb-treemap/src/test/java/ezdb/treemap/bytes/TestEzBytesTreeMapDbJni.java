@@ -1,4 +1,4 @@
-package ezdb.treemap;
+package ezdb.treemap.bytes;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -18,8 +18,9 @@ import ezdb.serde.IntegerSerde;
 import ezdb.serde.Serde;
 import ezdb.serde.SerializingSerde;
 import ezdb.serde.StringSerde;
+import ezdb.treemap.bytes.EzBytesTreeMapDb;
 
-public class TestEzTreeMapDbJni extends TestEzTreeMapDb {
+public class TestEzBytesTreeMapDbJni extends TestEzBytesTreeMapDb {
 	private static final String HASHKEY_ONE = "1";
 	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1)
 			.getTime();
@@ -45,7 +46,7 @@ public class TestEzTreeMapDbJni extends TestEzTreeMapDb {
 
 	@Before
 	public void before() {
-		ezdb = new EzTreeMapDb();
+		ezdb = new EzBytesTreeMapDb();
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get,
 				IntegerSerde.get);

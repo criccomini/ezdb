@@ -1,11 +1,7 @@
-package ezdb.treemap;
+package ezdb.treemap.object;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.util.Comparator;
 
 import org.junit.After;
 import org.junit.Before;
@@ -13,17 +9,17 @@ import org.junit.Test;
 
 import ezdb.Db;
 import ezdb.RangeTable;
-import ezdb.RawTableRow;
 import ezdb.Table;
 import ezdb.TableIterator;
-import ezdb.comparator.LexicographicalComparator;
+import ezdb.comparator.ComparableComparator;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.StringSerde;
 import ezdb.serde.VersionedSerde;
 import ezdb.serde.VersionedSerde.Versioned;
+import ezdb.util.ObjectTableRow;
 
-public class TestEzTreeMapDb {
-	protected Db ezdb;
+public class TestEzObjectTreeMapDb {
+	protected Db<Object> ezdb;
 	protected RangeTable<Integer, Integer, Integer> table;
 
 	@Test
@@ -40,8 +36,7 @@ public class TestEzTreeMapDb {
 
 	@Test
 	public void testPutGetH() {
-		Table<Integer, Integer> table = ezdb.getTable("test-simple",
-				IntegerSerde.get, IntegerSerde.get);
+		Table<Integer, Integer> table = ezdb.getTable("test-simple", IntegerSerde.get, IntegerSerde.get);
 		table.put(1, 1);
 		assertEquals(new Integer(1), table.get(1));
 		table.put(1, 2);
@@ -67,11 +62,9 @@ public class TestEzTreeMapDb {
 		table.put(2, 1, 4);
 		it.close();
 		it = table.range(1);
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, null, 2),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 1, 4),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}
@@ -82,40 +75,32 @@ public class TestEzTreeMapDb {
 		table.put(1, 1, 4);
 		TableIterator<Integer, Integer, Integer> it = table.range(1, null);
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, null, 2),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 1, 4),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		it = table.range(1, 1);
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 1, 4),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		table.put(1, 2, 5);
 		table.put(2, 2, 5);
 		it.close();
 		it = table.range(1, 1);
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 1, 4),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 2, 5),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 2, 5), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		it = table.range(1, null);
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, null, 2),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 1, 4),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 2, 5),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 2, 5), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}
@@ -126,31 +111,25 @@ public class TestEzTreeMapDb {
 		table.put(1, 1, 4);
 		TableIterator<Integer, Integer, Integer> it = table.range(1, null, 2);
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, null, 2),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 1, 4),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		it = table.range(1, 1, 2);
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 1, 4),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		table.put(1, 2, 5);
 		table.put(1, 3, 5);
 		it.close();
 		it = table.range(1, 1, 3);
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 1, 4),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 2, 5),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 2, 5), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 3, 5),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 3, 5), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}
@@ -177,9 +156,8 @@ public class TestEzTreeMapDb {
 	@Test
 	public void testSortedStrings() {
 		ezdb.deleteTable("test-range-strings");
-		RangeTable<Integer, String, Integer> table = ezdb.getTable(
-				"test-range-strings", IntegerSerde.get, StringSerde.get,
-				IntegerSerde.get);
+		RangeTable<Integer, String, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get,
+				StringSerde.get, IntegerSerde.get);
 
 		table.put(1213, "20120102-foo", 1);
 		table.put(1213, "20120102-bar", 2);
@@ -190,15 +168,12 @@ public class TestEzTreeMapDb {
 		table.put(1214, "20120102-bar", 2);
 		table.put(1213, 12345678);
 
-		TableIterator<Integer, String, Integer> it = table.range(1213,
-				"20120102", "20120103");
+		TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
 
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, String, Integer>(1213,
-				"20120102-bar", 2), it.next());
+		assertEquals(new ObjectTableRow<Integer, String, Integer>(1213, "20120102-bar", 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, String, Integer>(1213,
-				"20120102-foo", 1), it.next());
+		assertEquals(new ObjectTableRow<Integer, String, Integer>(1213, "20120102-foo", 1), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		assertEquals(new Integer(12345678), table.get(1213));
@@ -207,16 +182,11 @@ public class TestEzTreeMapDb {
 
 	@Test
 	public void testCustomRangeComparator() {
-		RangeTable<Integer, Integer, Integer> table = ezdb.getTable(
-				"test-custom-range-comparator", IntegerSerde.get,
-				IntegerSerde.get, IntegerSerde.get,
-				new LexicographicalComparator(), new Comparator<byte[]>() {
-					// Let's do things in reverse lexicographical order.
+		RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator", IntegerSerde.get,
+				IntegerSerde.get, IntegerSerde.get, new ComparableComparator(), new ComparableComparator() {
 					@Override
-					public int compare(byte[] o1, byte[] o2) {
-						return -1
-								* ByteBuffer.wrap(o1).compareTo(
-										ByteBuffer.wrap(o2));
+					public int compare(Object o1, Object o2) {
+						return super.compare(o1, o2) * -1;
 					}
 				});
 
@@ -227,14 +197,11 @@ public class TestEzTreeMapDb {
 		TableIterator<Integer, Integer, Integer> it = table.range(1, 3);
 
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 3, 3),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 3, 3), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 2, 2),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 2, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 1, 1),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 1), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		table.close();
@@ -243,9 +210,8 @@ public class TestEzTreeMapDb {
 	@Test
 	public void testVersionedSortedStrings() {
 		ezdb.deleteTable("test-range-strings");
-		RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable(
-				"test-range-strings", IntegerSerde.get, StringSerde.get,
-				new VersionedSerde<Integer>(IntegerSerde.get));
+		RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-range-strings", IntegerSerde.get,
+				StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
 
 		table.put(1213, "20120102-foo", new Versioned<Integer>(1, 0));
 		table.put(1213, "20120102-bar", new Versioned<Integer>(2, 0));
@@ -257,21 +223,18 @@ public class TestEzTreeMapDb {
 		table.put(1214, "20120102-bar", new Versioned<Integer>(2, 0));
 		table.put(1213, new Versioned<Integer>(12345678, 0));
 
-		assertEquals(new Versioned<Integer>(1, 0),
-				table.get(1213, "20120102-foo"));
-		assertEquals(new Versioned<Integer>(3, 1),
-				table.get(1213, "20120102-bar"));
+		assertEquals(new Versioned<Integer>(1, 0), table.get(1213, "20120102-foo"));
+		assertEquals(new Versioned<Integer>(3, 1), table.get(1213, "20120102-bar"));
 		assertEquals(new Versioned<Integer>(12345678, 0), table.get(1213));
 
-		TableIterator<Integer, String, Versioned<Integer>> it = table.range(
-				1213, "20120102", "20120103");
+		TableIterator<Integer, String, Versioned<Integer>> it = table.range(1213, "20120102", "20120103");
 
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, String, Versioned<Integer>>(1213,
-				"20120102-bar", new Versioned<Integer>(3, 1)), it.next());
+		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-bar",
+				new Versioned<Integer>(3, 1)), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, String, Versioned<Integer>>(1213,
-				"20120102-foo", new Versioned<Integer>(1, 0)), it.next());
+		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-foo",
+				new Versioned<Integer>(1, 0)), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		assertEquals(new Versioned<Integer>(12345678, 0), table.get(1213));
@@ -280,14 +243,15 @@ public class TestEzTreeMapDb {
 		// keys
 		it = table.range(1213);
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, String, Versioned<Integer>>(1213,
-				null, new Versioned<Integer>(12345678, 0)), it.next());
+		assertEquals(
+				new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, null, new Versioned<Integer>(12345678, 0)),
+				it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, String, Versioned<Integer>>(1213,
-				"20120101-foo", new Versioned<Integer>(3, 0)), it.next());
+		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, "20120101-foo",
+				new Versioned<Integer>(3, 0)), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new RawTableRow<Integer, String, Versioned<Integer>>(1213,
-				"20120102-bar", new Versioned<Integer>(3, 1)), it.next());
+		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-bar",
+				new Versioned<Integer>(3, 1)), it.next());
 		// trust that everything works from here on out
 		while (it.hasNext()) {
 			assertEquals(new Integer(1213), it.next().getHashKey());
@@ -298,7 +262,7 @@ public class TestEzTreeMapDb {
 
 	@Before
 	public void before() {
-		ezdb = new EzTreeMapDb();
+		ezdb = new EzObjectTreeMapDb();
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get,
 				IntegerSerde.get);

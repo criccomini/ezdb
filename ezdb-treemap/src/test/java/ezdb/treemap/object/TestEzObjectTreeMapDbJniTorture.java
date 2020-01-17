@@ -1,17 +1,18 @@
-package ezdb.leveldb;
+package ezdb.treemap.object;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import java.io.File;
+
+import java.util.Comparator;
 import java.util.Random;
+
 import org.junit.Before;
 import org.junit.Test;
+
 import ezdb.Db;
 import ezdb.RangeTable;
 import ezdb.TableIterator;
-import ezdb.comparator.LexicographicalComparator;
-import ezdb.serde.IntegerSerde;
-import ezdb.treemap.bytes.BytesTreeMapTable;
+import ezdb.comparator.ComparableComparator;
 
 /**
  * This is a little test that mostly just compares random behavior between a
@@ -23,20 +24,16 @@ import ezdb.treemap.bytes.BytesTreeMapTable;
  * @author criccomini
  * 
  */
-public class TestEzLevelDbTorture {
+public class TestEzObjectTreeMapDbJniTorture {
 	public static final int NUM_THREADS = 10;
-	public static final int ITERATIONS = 50000;
+	public static final int ITERATIONS = 300000;
 	public static final String tableName = "torture";
 
-	public Db<byte[]> db;
+	public Db<Object> db;
 
 	@Before
 	public void before() {
-		db = new EzLevelDb(new File("/tmp"), newFactory());
-	}
-
-	protected EzLevelDbFactory newFactory() {
-		return new EzLevelDbJavaFactory();
+		db = new EzObjectTreeMapDb();
 	}
 
 	@Test
@@ -56,20 +53,19 @@ public class TestEzLevelDbTorture {
 
 	public static class TortureRunnable implements Runnable {
 		private int offset;
-		private Db<byte[]> db;
+		private Db<Object> db;
 
-		public TortureRunnable(int threadId, Db<byte[]> db) {
+		public TortureRunnable(int threadId, Db<Object> db) {
 			this.offset = threadId * 1000;
 			this.db = db;
 		}
 
 		public void run() {
 			Random rand = new Random();
-			RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, IntegerSerde.get, IntegerSerde.get,
-					IntegerSerde.get);
-			RangeTable<Integer, Integer, Integer> mockTable = new BytesTreeMapTable<Integer, Integer, Integer>(
-					IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, LexicographicalComparator.get,
-					LexicographicalComparator.get);
+			RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, null, null, null);
+			Comparator<Integer> integerComparator = ComparableComparator.get();
+			RangeTable<Integer, Integer, Integer> mockTable = new ObjectTreeMapTable<Integer, Integer, Integer>(
+					integerComparator, integerComparator);
 			long tables = 0, deletes = 0, writes = 0, reads = 0, rangeH = 0, rangeHF = 0, rangeHFT = 0;
 			long start = System.currentTimeMillis();
 
@@ -141,15 +137,17 @@ public class TestEzLevelDbTorture {
 
 			long seconds = (System.currentTimeMillis() - start) / 1000;
 
-			StringBuffer out = new StringBuffer().append("[").append(Thread.currentThread().getName())
-					.append("] table creations: ").append(tables / seconds).append("/s, deletes: ")
-					.append(deletes / seconds).append("/s, writes: ").append(writes / seconds).append("/s, reads: ")
-					.append(reads / seconds).append("/s, range(hash): ").append(rangeH / seconds)
-					.append("/s, range(hash, from): ").append(rangeHF / seconds).append("/s, range(hash, from, to): ")
-					.append(rangeHFT / seconds).append("/s, total reads: ")
-					.append((reads + rangeH + rangeHF + rangeHFT) / seconds).append("/s");
+			if (seconds > 0) {
+				StringBuffer out = new StringBuffer().append("[").append(Thread.currentThread().getName())
+						.append("] table creations: ").append(tables / seconds).append("/s, deletes: ")
+						.append(deletes / seconds).append("/s, writes: ").append(writes / seconds).append("/s, reads: ")
+						.append(reads / seconds).append("/s, range(hash): ").append(rangeH / seconds)
+						.append("/s, range(hash, from): ").append(rangeHF / seconds)
+						.append("/s, range(hash, from, to): ").append(rangeHFT / seconds).append("/s, total reads: ")
+						.append((reads + rangeH + rangeHF + rangeHFT) / seconds).append("/s");
 
-			System.out.println(out.toString());
+				System.out.println(out.toString());
+			}
 		}
 	}
 }

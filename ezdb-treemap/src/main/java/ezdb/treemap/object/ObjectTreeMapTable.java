@@ -1,4 +1,4 @@
-package ezdb.treemap;
+package ezdb.treemap.object;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -11,32 +11,25 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 import ezdb.EmptyTableIterator;
 import ezdb.RangeTable;
-import ezdb.RawTableRow;
 import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.batch.Batch;
 import ezdb.batch.RangeBatch;
-import ezdb.serde.Serde;
+import ezdb.util.ObjectTableKey;
+import ezdb.util.ObjectTableRow;
 import ezdb.util.Util;
 
-public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
-	private final Serde<H> hashKeySerde;
-	private final Serde<R> rangeKeySerde;
-	private final Serde<V> valueSerde;
-	private final NavigableMap<byte[], byte[]> map;
-	private final Comparator<byte[]> hashKeyComparator;
-	private final Comparator<byte[]> rangeKeyComparator;
+public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
+	private final NavigableMap<ObjectTableKey<H, R>, V> map;
+	private final Comparator<H> hashKeyComparator;
+	private final Comparator<R> rangeKeyComparator;
 
-	public TreeMapTable(Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde,
-			final Comparator<byte[]> hashKeyComparator, final Comparator<byte[]> rangeKeyComparator) {
-		this.hashKeySerde = hashKeySerde;
-		this.rangeKeySerde = rangeKeySerde;
-		this.valueSerde = valueSerde;
+	public ObjectTreeMapTable(final Comparator<H> hashKeyComparator, final Comparator<R> rangeKeyComparator) {
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
-		this.map = new ConcurrentSkipListMap<byte[], byte[]>(new Comparator<byte[]>() {
+		this.map = new ConcurrentSkipListMap<ObjectTableKey<H, R>, V>(new Comparator<ObjectTableKey<H, R>>() {
 			@Override
-			public int compare(byte[] k1, byte[] k2) {
+			public int compare(ObjectTableKey<H, R> k1, ObjectTableKey<H, R> k2) {
 				return Util.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
 			}
 		});
@@ -54,24 +47,21 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void put(H hashKey, R rangeKey, V value) {
-		map.put(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey), valueSerde.toBytes(value));
+		map.put(Util.combine(hashKey, rangeKey), value);
 	}
 
 	@Override
 	public V get(H hashKey, R rangeKey) {
-		byte[] valueBytes = map.get(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
-		if (valueBytes != null) {
-			return valueSerde.fromBytes(valueBytes);
-		}
-		return null;
+		V value = map.get(Util.combine(hashKey, rangeKey));
+		return value;
 	}
 
 	@Override
 	public TableIterator<H, R, V> range(H hashKey) {
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
-		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.tailMap(keyBytesFrom).entrySet().iterator();
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null);
+		final Iterator<Entry<ObjectTableKey<H, R>, V>> iterator = map.tailMap(keyBytesFrom).entrySet().iterator();
 		return new TableIterator<H, R, V>() {
-			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
+			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			@Override
 			public boolean hasNext() {
@@ -83,7 +73,7 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 				TableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new RawTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = new ObjectTableRow<H, R, V>(next);
 				}
 
 				if (iterator.hasNext()) {
@@ -120,10 +110,10 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return range(hashKey);
 		}
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.tailMap(keyBytesFrom).entrySet().iterator();
+		final ObjectTableKey<H, R>  keyBytesFrom = Util.combine(hashKey, fromRangeKey);
+		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = map.tailMap(keyBytesFrom).entrySet().iterator();
 		return new TableIterator<H, R, V>() {
-			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
+			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			@Override
 			public boolean hasNext() {
@@ -132,10 +122,10 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public TableRow<H, R, V> next() {
-				RawTableRow<H, R, V> row = null;
+				ObjectTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new RawTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = new ObjectTableRow<H, R, V>(next);
 				}
 
 				if (iterator.hasNext()) {
@@ -172,16 +162,16 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
+		final ObjectTableKey<H, R> keyBytesTo = Util.combine(hashKey, toRangeKey);
 		if (fromRangeKey != null
 				&& Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, keyBytesTo) > 0) {
 			return EmptyTableIterator.get();
 		}
-		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.subMap(keyBytesFrom, true, keyBytesTo, true).entrySet()
+		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = map.subMap(keyBytesFrom, true, keyBytesTo, true).entrySet()
 				.iterator();
 		return new TableIterator<H, R, V>() {
-			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
+			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			@Override
 			public boolean hasNext() {
@@ -191,10 +181,10 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public TableRow<H, R, V> next() {
-				RawTableRow<H, R, V> row = null;
+				ObjectTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new RawTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = new ObjectTableRow<H, R, V>(next);
 				}
 
 				if (iterator.hasNext()) {
@@ -233,7 +223,7 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void delete(H hashKey, R rangeKey) {
-		map.remove(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
+		map.remove(Util.combine(hashKey, rangeKey));
 	}
 
 	@Override
@@ -242,11 +232,11 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> rangeReverse(H hashKey) {
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
-		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.descendingMap().headMap(keyBytesFrom).entrySet()
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null);
+		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = map.descendingMap().headMap(keyBytesFrom).entrySet()
 				.iterator();
 		return new TableIterator<H, R, V>() {
-			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
+			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			{
 				while (next != null && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, next.getKey()) != 0
@@ -265,7 +255,7 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 				TableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new RawTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = new ObjectTableRow<H, R, V>(next);
 				}
 
 				if (iterator.hasNext()) {
@@ -302,11 +292,11 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.descendingMap().tailMap(keyBytesFrom).entrySet()
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
+		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = map.descendingMap().tailMap(keyBytesFrom).entrySet()
 				.iterator();
 		return new TableIterator<H, R, V>() {
-			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
+			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			{
 				while (next != null && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, next.getKey()) != 0
@@ -322,10 +312,10 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public TableRow<H, R, V> next() {
-				RawTableRow<H, R, V> row = null;
+				ObjectTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new RawTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = new ObjectTableRow<H, R, V>(next);
 				}
 
 				if (iterator.hasNext()) {
@@ -362,20 +352,20 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
+		final ObjectTableKey<H, R> keyBytesTo = Util.combine(hashKey, toRangeKey);
 		if (fromRangeKey != null
 				&& Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, keyBytesTo) < 0) {
 			return EmptyTableIterator.get();
 		}
-		final Iterator<Map.Entry<byte[], byte[]>> iterator;
+		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator;
 		if (fromRangeKey != null) {
 			iterator = map.descendingMap().tailMap(keyBytesFrom).entrySet().iterator();
 		} else {
 			iterator = map.descendingMap().headMap(keyBytesFrom).entrySet().iterator();
 		}
 		return new TableIterator<H, R, V>() {
-			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
+			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			{
 				while (next != null && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, next.getKey()) != 0
@@ -392,10 +382,10 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public TableRow<H, R, V> next() {
-				RawTableRow<H, R, V> row = null;
+				ObjectTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new RawTableRow<H, R, V>(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = new ObjectTableRow<H, R, V>(next);
 				}
 
 				if (iterator.hasNext()) {
@@ -445,11 +435,11 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey, rangeKey);
 		if (rangeReverse.hasNext()) {
 			return rangeReverse.next();
-		}else {
+		} else {
 			TableIterator<H, R, V> range = range(hashKey);
 			if (range.hasNext()) {
 				return range.next();
-			}else {
+			} else {
 				return null;
 			}
 		}
@@ -487,12 +477,12 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public void put(H hashKey, V value) {
-				TreeMapTable.this.put(hashKey, value);
+				ObjectTreeMapTable.this.put(hashKey, value);
 			}
 
 			@Override
 			public void delete(H hashKey) {
-				TreeMapTable.this.delete(hashKey);
+				ObjectTreeMapTable.this.delete(hashKey);
 			}
 
 			@Override
@@ -511,12 +501,12 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public void put(H hashKey, V value) {
-				TreeMapTable.this.put(hashKey, value);
+				ObjectTreeMapTable.this.put(hashKey, value);
 			}
 
 			@Override
 			public void delete(H hashKey) {
-				TreeMapTable.this.delete(hashKey);
+				ObjectTreeMapTable.this.delete(hashKey);
 			}
 
 			@Override
@@ -525,12 +515,12 @@ public class TreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public void put(H hashKey, R rangeKey, V value) {
-				TreeMapTable.this.put(hashKey, rangeKey, value);
+				ObjectTreeMapTable.this.put(hashKey, rangeKey, value);
 			}
 
 			@Override
 			public void delete(H hashKey, R rangeKey) {
-				TreeMapTable.this.delete(hashKey, rangeKey);
+				ObjectTreeMapTable.this.delete(hashKey, rangeKey);
 			}
 		};
 	}

@@ -22,7 +22,7 @@ import ezdb.serde.Serde;
  * @author criccomini
  * 
  */
-public class EzLevelDb implements Db {
+public class EzLevelDb implements Db<byte[]> {
   private final File root;
   private final Map<String, RangeTable<?, ?, ?>> cache;
   private final EzLevelDbFactory factory;

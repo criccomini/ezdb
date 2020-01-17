@@ -1,4 +1,4 @@
-package ezdb.rocksdb;
+package ezdb.treemap.bytes;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -17,14 +17,13 @@ import ezdb.RawTableRow;
 import ezdb.Table;
 import ezdb.TableIterator;
 import ezdb.comparator.LexicographicalComparator;
-import ezdb.rocksdb.util.FileUtils;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.StringSerde;
 import ezdb.serde.VersionedSerde;
 import ezdb.serde.VersionedSerde.Versioned;
+import ezdb.treemap.bytes.EzBytesTreeMapDb;
 
-public class TestEzRocksDb {
-	protected static final File ROOT = FileUtils.createTempDir(TestEzRocksDb.class.getSimpleName());
+public class TestEzBytesTreeMapDb {
 	protected Db<byte[]> ezdb;
 	protected RangeTable<Integer, Integer, Integer> table;
 
@@ -300,9 +299,7 @@ public class TestEzRocksDb {
 
 	@Before
 	public void before() {
-		FileUtils.deleteRecursively(ROOT);
-		ROOT.mkdirs();
-		ezdb = new EzRocksDb(ROOT);
+		ezdb = new EzBytesTreeMapDb();
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get,
 				IntegerSerde.get);
@@ -316,6 +313,5 @@ public class TestEzRocksDb {
 		ezdb.deleteTable("test-range-strings");
 		ezdb.deleteTable("test-custom-range-comparator");
 		ezdb.deleteTable("test-table-does-not-exist");
-		FileUtils.deleteRecursively(ROOT);
 	}
 }

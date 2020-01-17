@@ -9,7 +9,7 @@ import ezdb.serde.Serde;
  * 
  * @author criccomini
  */
-public interface Db {
+public interface Db<S> {
   /**
    * Get a simple key/value table with the specified name and serdes. If the
    * table does not exist, it should be created. If the table exists, it should
@@ -82,8 +82,8 @@ public interface Db {
       Serde<H> hashKeySerde,
       Serde<R> rangeKeySerde,
       Serde<V> valueSerde,
-      Comparator<byte[]> hashKeyComparator,
-      Comparator<byte[]> rangeKeyComparator);
+      Comparator<S> hashKeyComparator,
+      Comparator<S> rangeKeyComparator);
 
   /**
    * Delete a table from disk and memory.

@@ -1,4 +1,4 @@
-package ezdb.treemap;
+package ezdb.treemap.bytes;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -11,7 +11,8 @@ import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.comparator.LexicographicalComparator;
 import ezdb.serde.IntegerSerde;
-import ezdb.treemap.TreeMapTable;
+import ezdb.treemap.bytes.EzBytesTreeMapDb;
+import ezdb.treemap.bytes.BytesTreeMapTable;
 
 /**
  * This is a little test that mostly just compares random behavior between a
@@ -23,16 +24,16 @@ import ezdb.treemap.TreeMapTable;
  * @author criccomini
  * 
  */
-public class TestEzTreeMapDbJniTorture {
+public class TestEzBytesTreeMapDbJniTorture {
 	public static final int NUM_THREADS = 10;
 	public static final int ITERATIONS = 300000;
 	public static final String tableName = "torture";
 
-	public Db db;
+	public Db<byte[]> db;
 
 	@Before
 	public void before() {
-		db = new EzTreeMapDb();
+		db = new EzBytesTreeMapDb();
 	}
 
 	@Test
@@ -52,9 +53,9 @@ public class TestEzTreeMapDbJniTorture {
 
 	public static class TortureRunnable implements Runnable {
 		private int offset;
-		private Db db;
+		private Db<byte[]> db;
 
-		public TortureRunnable(int threadId, Db db) {
+		public TortureRunnable(int threadId, Db<byte[]> db) {
 			this.offset = threadId * 1000;
 			this.db = db;
 		}
@@ -63,7 +64,7 @@ public class TestEzTreeMapDbJniTorture {
 			Random rand = new Random();
 			RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, IntegerSerde.get, IntegerSerde.get,
 					IntegerSerde.get);
-			RangeTable<Integer, Integer, Integer> mockTable = new TreeMapTable<Integer, Integer, Integer>(
+			RangeTable<Integer, Integer, Integer> mockTable = new BytesTreeMapTable<Integer, Integer, Integer>(
 					IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, LexicographicalComparator.get,
 					LexicographicalComparator.get);
 			long tables = 0, deletes = 0, writes = 0, reads = 0, rangeH = 0, rangeHF = 0, rangeHFT = 0;

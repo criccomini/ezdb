@@ -24,7 +24,7 @@ import ezdb.serde.Serde;
  * @author criccomini
  * 
  */
-public class EzRocksDb implements Db {
+public class EzRocksDb implements Db<byte[]> {
   private final File root;
   private final Map<String, RangeTable<?, ?, ?>> cache;
   private final EzRocksDbFactory factory;

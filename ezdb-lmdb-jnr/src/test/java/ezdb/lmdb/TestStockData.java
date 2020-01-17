@@ -48,7 +48,7 @@ public class TestStockData {
 
 	protected static final File ROOT = FileUtils
 			.createTempDir(TestEzLmDb.class.getSimpleName());
-	protected Db ezdb;
+	protected Db<byte[]> ezdb;
 	protected RangeTable<String, Date, Integer> table;
 	private Comparator<byte[]> hashKeyComparator = new SerdeComparator<String>(
 			hashKeySerde);
