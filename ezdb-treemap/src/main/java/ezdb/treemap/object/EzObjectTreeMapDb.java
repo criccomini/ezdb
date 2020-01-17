@@ -11,14 +11,6 @@ import ezdb.comparator.ComparableComparator;
 import ezdb.serde.ByteSerde;
 import ezdb.serde.Serde;
 
-/**
- * An implementation of Db that uses LevelDb tables to persist data. Each
- * "table" is just a LevelDB database persisted as a subdirectory inside of
- * EzLevelDb's root.
- * 
- * @author criccomini
- * 
- */
 public class EzObjectTreeMapDb implements Db<Object> {
 	private final Map<String, RangeTable<?, ?, ?>> cache;
 
