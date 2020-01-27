@@ -104,6 +104,48 @@ public class TestEzLevelDb {
 	}
 
 	@Test
+	public void testRangeH0() {
+		TableIterator<Integer, Integer, Integer> it = table.range(1);
+		table.put(11, 2);
+		table.put(11, 1, 4);
+		table.put(21, 1, 4);
+		it.close();
+		it = table.range(11, 0);
+		assertEquals(new RawTableRow<Integer, Integer, Integer>(11, 1, 4), it.next());
+		assertTrue(!it.hasNext());
+		it.close();
+	}
+	
+	
+	@Test
+	public void testRangeReverseH() {
+		TableIterator<Integer, Integer, Integer> it = table.rangeReverse(1);
+		table.put(11, 2);
+		table.put(11, 1, 4);
+		table.put(21, 1, 4);
+		it.close();
+		it = table.rangeReverse(11);
+		assertEquals(new RawTableRow<Integer, Integer, Integer>(11, 1, 4), it.next());
+		assertTrue(it.hasNext());
+		assertEquals(new RawTableRow<Integer, Integer, Integer>(11, null, 2), it.next());
+		assertTrue(!it.hasNext());
+		it.close();
+	}
+	
+	@Test
+	public void testRangeReverseH0() {
+		TableIterator<Integer, Integer, Integer> it = table.rangeReverse(1);
+		table.put(11, 2);
+		table.put(11, 1, 4);
+		table.put(21, 1, 4);
+		it.close();
+		it = table.rangeReverse(11, 0);
+		assertEquals(new RawTableRow<Integer, Integer, Integer>(11, null, 2), it.next());
+		assertTrue(!it.hasNext());
+		it.close();
+	}
+	
+	@Test
 	public void testRangeHR() {
 		table.put(1, 2);
 		table.put(1, 1, 4);
@@ -1258,8 +1300,8 @@ public class TestEzLevelDb {
 		for (Method m : getClass().getMethods()) {
 			try {
 				if (m.getAnnotation(Test.class) != null && !m.getName().startsWith("testVariationsOfDataset")
-						&& !m.getName().startsWith("deleteRange") && !m.getName().equals("testRangeHRR")) {
-					// System.out.println(m.getName());
+						&& !m.getName().startsWith("deleteRange") && !m.getName().equals("testRangeHRR") && !m.getName().contains("Reverse")) {
+					//System.out.println(m.getName());
 					m.invoke(this);
 				}
 			} catch (InvocationTargetException t) {
