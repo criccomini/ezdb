@@ -362,7 +362,9 @@ public class TestEzBytesTreeMapDb {
 	}
 
 	private void clearTable() {
-		reverseRangeTable.close();
+		if(reverseRangeTable != null) {
+			reverseRangeTable.close();
+		}
 		ezdb.deleteTable("testInverseOrder");
 	}
 
