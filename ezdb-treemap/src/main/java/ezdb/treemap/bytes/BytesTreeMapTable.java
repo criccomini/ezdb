@@ -68,7 +68,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public TableIterator<H, R, V> range(H hashKey) {
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
-		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.tailMap(keyBytesFrom).entrySet().iterator();
+		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.tailMap(keyBytesFrom, true).entrySet().iterator();
 		return new TableIterator<H, R, V>() {
 			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
 
@@ -120,7 +120,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 			return range(hashKey);
 		}
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.tailMap(keyBytesFrom).entrySet().iterator();
+		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.tailMap(keyBytesFrom, true).entrySet().iterator();
 		return new TableIterator<H, R, V>() {
 			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
 
@@ -242,7 +242,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public TableIterator<H, R, V> rangeReverse(H hashKey) {
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
-		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.descendingMap().headMap(keyBytesFrom).entrySet()
+		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.descendingMap().headMap(keyBytesFrom, true).entrySet()
 				.iterator();
 		return new TableIterator<H, R, V>() {
 			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
@@ -302,7 +302,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 			return rangeReverse(hashKey);
 		}
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.descendingMap().tailMap(keyBytesFrom).entrySet()
+		final Iterator<Map.Entry<byte[], byte[]>> iterator = map.descendingMap().tailMap(keyBytesFrom, true).entrySet()
 				.iterator();
 		return new TableIterator<H, R, V>() {
 			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;
@@ -369,9 +369,9 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		}
 		final Iterator<Map.Entry<byte[], byte[]>> iterator;
 		if (fromRangeKey != null) {
-			iterator = map.descendingMap().tailMap(keyBytesFrom).entrySet().iterator();
+			iterator = map.descendingMap().tailMap(keyBytesFrom, true).entrySet().iterator();
 		} else {
-			iterator = map.descendingMap().headMap(keyBytesFrom).entrySet().iterator();
+			iterator = map.descendingMap().headMap(keyBytesFrom, true).entrySet().iterator();
 		}
 		return new TableIterator<H, R, V>() {
 			Map.Entry<byte[], byte[]> next = (iterator.hasNext()) ? iterator.next() : null;

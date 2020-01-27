@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import ezdb.EmptyTableIterator;
@@ -59,7 +60,7 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public TableIterator<H, R, V> range(H hashKey) {
 		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null);
-		final Iterator<Entry<ObjectTableKey<H, R>, V>> iterator = map.tailMap(keyBytesFrom).entrySet().iterator();
+		final Iterator<Entry<ObjectTableKey<H, R>, V>> iterator = map.tailMap(keyBytesFrom, true).entrySet().iterator();
 		return new TableIterator<H, R, V>() {
 			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
@@ -111,7 +112,7 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 			return range(hashKey);
 		}
 		final ObjectTableKey<H, R>  keyBytesFrom = Util.combine(hashKey, fromRangeKey);
-		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = map.tailMap(keyBytesFrom).entrySet().iterator();
+		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = map.tailMap(keyBytesFrom, true).entrySet().iterator();
 		return new TableIterator<H, R, V>() {
 			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
@@ -233,7 +234,8 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public TableIterator<H, R, V> rangeReverse(H hashKey) {
 		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null);
-		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = map.descendingMap().headMap(keyBytesFrom).entrySet()
+		Set<Entry<ObjectTableKey<H, R>, V>> headMapEntries = map.descendingMap().headMap(keyBytesFrom, true).entrySet();
+		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = headMapEntries
 				.iterator();
 		return new TableIterator<H, R, V>() {
 			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
@@ -293,7 +295,7 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 			return rangeReverse(hashKey);
 		}
 		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
-		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = map.descendingMap().tailMap(keyBytesFrom).entrySet()
+		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = map.descendingMap().tailMap(keyBytesFrom, true).entrySet()
 				.iterator();
 		return new TableIterator<H, R, V>() {
 			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
@@ -360,9 +362,9 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		}
 		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator;
 		if (fromRangeKey != null) {
-			iterator = map.descendingMap().tailMap(keyBytesFrom).entrySet().iterator();
+			iterator = map.descendingMap().tailMap(keyBytesFrom, true).entrySet().iterator();
 		} else {
-			iterator = map.descendingMap().headMap(keyBytesFrom).entrySet().iterator();
+			iterator = map.descendingMap().headMap(keyBytesFrom, true).entrySet().iterator();
 		}
 		return new TableIterator<H, R, V>() {
 			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
