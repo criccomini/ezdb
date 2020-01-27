@@ -30,9 +30,6 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		this.map = new ConcurrentSkipListMap<ObjectTableKey<H, R>, V>(new Comparator<ObjectTableKey<H, R>>() {
 			@Override
 			public int compare(ObjectTableKey<H, R> k1, ObjectTableKey<H, R> k2) {
-				if(k1.toString().startsWith("ObjectTableKey [hashKey=JFOREX_EURUSD_Ask_Renko[_Time[1 HOUR]_atr(20)]")) {
-					System.out.println(k1+ " "+k1);
-				}
 				return Util.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
 			}
 		});
@@ -245,7 +242,6 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 				while (next != null && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, next.getKey()) != 0
 						&& iterator.hasNext()) {
 					next = iterator.next();
-					System.out.println(next);
 				}
 			}
 
@@ -305,9 +301,6 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 			{
 				while (next != null && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, next.getKey()) != 0
 						&& iterator.hasNext()) {
-					if(next.toString().startsWith("ObjectTableKey [hashKey=JFOREX_EURUSD_Ask_Renko[_Time[1 HOUR]_atr(20)]-2003_06_01_00_00_00_000-2003_06_30_23_59_59_999")) {
-						System.out.println(next);
-					}
 					next = iterator.next();
 				}
 			}
