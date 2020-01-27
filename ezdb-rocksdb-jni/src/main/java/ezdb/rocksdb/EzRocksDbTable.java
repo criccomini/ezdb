@@ -112,8 +112,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 					@Override
 					public TableRow<H, R, V> next() {
-						return new RawTableRow<H, R, V>(iterator.next(),
-								hashKeySerde, rangeKeySerde, valueSerde);
+						if(hasNext()) {
+							return new RawTableRow<H, R, V>(iterator.next(),
+									hashKeySerde, rangeKeySerde, valueSerde);
+						}else {
+							throw new NoSuchElementException();
+						}
 					}
 
 					@Override
@@ -153,8 +157,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 					@Override
 					public TableRow<H, R, V> next() {
-						return new RawTableRow<H, R, V>(iterator.next(),
-								hashKeySerde, rangeKeySerde, valueSerde);
+						if(hasNext()) {
+							return new RawTableRow<H, R, V>(iterator.next(),
+									hashKeySerde, rangeKeySerde, valueSerde);
+						}else {
+							throw new NoSuchElementException();
+						}
 					}
 
 					@Override
@@ -196,8 +204,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 					@Override
 					public TableRow<H, R, V> next() {
-						return new RawTableRow<H, R, V>(iterator.next(),
-								hashKeySerde, rangeKeySerde, valueSerde);
+						if(hasNext()) {
+							return new RawTableRow<H, R, V>(iterator.next(),
+									hashKeySerde, rangeKeySerde, valueSerde);
+						}else {
+							throw new NoSuchElementException();
+						}
 					}
 
 					@Override
