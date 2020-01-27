@@ -16,5 +16,10 @@ public final class ObjectTableKey<H, R> {
 	public R getRangeKey() {
 		return rangeKey;
 	}
-	
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + " [hashKey=" + getHashKey() + ", rangeKey=" + getRangeKey() + "]";
+	}
+
 }
