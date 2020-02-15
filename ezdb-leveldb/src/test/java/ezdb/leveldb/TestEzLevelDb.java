@@ -1,6 +1,7 @@
 package ezdb.leveldb;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -70,7 +71,7 @@ public class TestEzLevelDb {
 
 	@Test
 	public void testPutGetH() {
-		Table<Integer, Integer> table = ezdb.getTable("test-simple", IntegerSerde.get, IntegerSerde.get);
+		final Table<Integer, Integer> table = ezdb.getTable("test-simple", IntegerSerde.get, IntegerSerde.get);
 		table.put(1, 1);
 		assertEquals(new Integer(1), table.get(1));
 		table.put(1, 2);
@@ -115,8 +116,7 @@ public class TestEzLevelDb {
 		assertTrue(!it.hasNext());
 		it.close();
 	}
-	
-	
+
 	@Test
 	public void testRangeReverseH() {
 		TableIterator<Integer, Integer, Integer> it = table.rangeReverse(1);
@@ -131,7 +131,7 @@ public class TestEzLevelDb {
 		assertTrue(!it.hasNext());
 		it.close();
 	}
-	
+
 	@Test
 	public void testRangeReverseH0() {
 		TableIterator<Integer, Integer, Integer> it = table.rangeReverse(1);
@@ -144,7 +144,7 @@ public class TestEzLevelDb {
 		assertTrue(!it.hasNext());
 		it.close();
 	}
-	
+
 	@Test
 	public void testRangeHR() {
 		table.put(1, 2);
@@ -232,7 +232,7 @@ public class TestEzLevelDb {
 	@Test
 	public void testSortedStrings() {
 		ezdb.deleteTable("test-range-strings");
-		RangeTable<Integer, String, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get,
+		final RangeTable<Integer, String, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get,
 				StringSerde.get, IntegerSerde.get);
 
 		table.put(1213, "20120102-foo", 1);
@@ -244,7 +244,7 @@ public class TestEzLevelDb {
 		table.put(1214, "20120102-bar", 2);
 		table.put(1213, 12345678);
 
-		TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
+		final TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
 
 		assertTrue(it.hasNext());
 		assertEquals(new RawTableRow<Integer, String, Integer>(1213, "20120102-bar", 2), it.next());
@@ -258,11 +258,12 @@ public class TestEzLevelDb {
 
 	@Test
 	public void testCustomRangeComparator() {
-		RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator", IntegerSerde.get,
-				IntegerSerde.get, IntegerSerde.get, new LexicographicalComparator(), new Comparator<byte[]>() {
+		final RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator",
+				IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new LexicographicalComparator(),
+				new Comparator<byte[]>() {
 					// Let's do things in reverse lexicographical order.
 					@Override
-					public int compare(byte[] o1, byte[] o2) {
+					public int compare(final byte[] o1, final byte[] o2) {
 						return -1 * ByteBuffer.wrap(o1).compareTo(ByteBuffer.wrap(o2));
 					}
 				});
@@ -271,7 +272,7 @@ public class TestEzLevelDb {
 		table.put(1, 2, 2);
 		table.put(1, 3, 3);
 
-		TableIterator<Integer, Integer, Integer> it = table.range(1, 3);
+		final TableIterator<Integer, Integer, Integer> it = table.range(1, 3);
 
 		assertTrue(it.hasNext());
 		assertEquals(new RawTableRow<Integer, Integer, Integer>(1, 3, 3), it.next());
@@ -287,8 +288,8 @@ public class TestEzLevelDb {
 	@Test
 	public void testVersionedSortedStrings() {
 		ezdb.deleteTable("test-range-strings");
-		RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-range-strings", IntegerSerde.get,
-				StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
+		final RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-range-strings",
+				IntegerSerde.get, StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
 
 		table.put(1213, "20120102-foo", new Versioned<Integer>(1, 0));
 		table.put(1213, "20120102-bar", new Versioned<Integer>(2, 0));
@@ -369,7 +370,9 @@ public class TestEzLevelDb {
 	}
 
 	private void clearTable() {
-		reverseRangeTable.close();
+		if (reverseRangeTable != null) {
+			reverseRangeTable.close();
+		}
 		ezdb.deleteTable("testInverseOrder");
 	}
 
@@ -1297,14 +1300,15 @@ public class TestEzLevelDb {
 
 	@Test
 	public void testVariationsOfDatasetNormal() throws IllegalArgumentException, IllegalAccessException {
-		for (Method m : getClass().getMethods()) {
+		for (final Method m : getClass().getMethods()) {
 			try {
 				if (m.getAnnotation(Test.class) != null && !m.getName().startsWith("testVariationsOfDataset")
-						&& !m.getName().startsWith("deleteRange") && !m.getName().equals("testRangeHRR") && !m.getName().contains("Reverse")) {
-					//System.out.println(m.getName());
+						&& !m.getName().startsWith("deleteRange") && !m.getName().equals("testRangeHRR")
+						&& !m.getName().contains("Reverse")) {
+					// System.out.println(m.getName());
 					m.invoke(this);
 				}
-			} catch (InvocationTargetException t) {
+			} catch (final InvocationTargetException t) {
 				throw new RuntimeException("at: " + m.getName(), t.getTargetException());
 			}
 		}
