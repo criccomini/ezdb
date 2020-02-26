@@ -36,26 +36,26 @@ public class TestEzRocksDb {
 	protected Db<byte[]> ezdb;
 	protected RangeTable<Integer, Integer, Integer> table;
 
-	private static final String HASHKEY_ONE = "1";
-	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1).getTime();
-	private static final Date MIN_DATE = new GregorianCalendar(1, 1, 1).getTime();
-	private final Date now = new GregorianCalendar(2000, 1, 1).getTime();
-	private final Date oneDate = new Date(now.getTime() + 100000);
-	private final Date twoDate = new Date(now.getTime() + 200000);
-	private final Date threeDate = new Date(now.getTime() + 300000);
+	protected static final String HASHKEY_ONE = "1";
+	protected static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1).getTime();
+	protected static final Date MIN_DATE = new GregorianCalendar(1, 1, 1).getTime();
+	protected final Date now = new GregorianCalendar(2000, 1, 1).getTime();
+	protected final Date oneDate = new Date(now.getTime() + 100000);
+	protected final Date twoDate = new Date(now.getTime() + 200000);
+	protected final Date threeDate = new Date(now.getTime() + 300000);
 
-	private final Date oneDatePlus = new Date(oneDate.getTime() + 1);
-	private final Date twoDatePlus = new Date(twoDate.getTime() + 1);
-	private final Date threeDatePlus = new Date(threeDate.getTime() + 1);
+	protected final Date oneDatePlus = new Date(oneDate.getTime() + 1);
+	protected final Date twoDatePlus = new Date(twoDate.getTime() + 1);
+	protected final Date threeDatePlus = new Date(threeDate.getTime() + 1);
 
-	private final Date oneDateMinus = new Date(oneDate.getTime() - 1);
-	private final Date twoDateMinus = new Date(twoDate.getTime() - 1);
-	private final Date threeDateMinus = new Date(threeDate.getTime() - 1);
+	protected final Date oneDateMinus = new Date(oneDate.getTime() - 1);
+	protected final Date twoDateMinus = new Date(twoDate.getTime() - 1);
+	protected final Date threeDateMinus = new Date(threeDate.getTime() - 1);
 
-	private RangeTable<String, Date, Integer> reverseRangeTable;
-	private final Serde<String> hashKeySerde = SerializingSerde.get();
-	private final Serde<Date> hashRangeSerde = SerializingSerde.get();
-	private final Serde<Integer> valueSerde = SerializingSerde.get();
+	protected RangeTable<String, Date, Integer> reverseRangeTable;
+	protected final Serde<String> hashKeySerde = SerializingSerde.get();
+	protected final Serde<Date> hashRangeSerde = SerializingSerde.get();
+	protected final Serde<Integer> valueSerde = SerializingSerde.get();
 
 	@Test
 	public void testNulls() {
@@ -369,9 +369,10 @@ public class TestEzRocksDb {
 		clearTable();
 	}
 
-	private void clearTable() {
+	protected void clearTable() {
 		if (reverseRangeTable != null) {
 			reverseRangeTable.close();
+			reverseRangeTable = null;
 		}
 		ezdb.deleteTable("testInverseOrder");
 	}

@@ -3,70 +3,14 @@ package ezdb.rocksdb;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.NoSuchElementException;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-import ezdb.RangeTable;
 import ezdb.TableIterator;
-import ezdb.rocksdb.util.FileUtils;
-import ezdb.serde.IntegerSerde;
-import ezdb.serde.Serde;
-import ezdb.serde.SerializingSerde;
 
 public class TestEzRocksDbJni extends TestEzRocksDb {
-	private static final String HASHKEY_ONE = "1";
-	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1).getTime();
-	private static final Date MIN_DATE = new GregorianCalendar(1, 1, 1).getTime();
-	private final Date now = new GregorianCalendar(2000, 1, 1).getTime();
-	private final Date oneDate = new Date(now.getTime() + 100000);
-	private final Date twoDate = new Date(now.getTime() + 200000);
-	private final Date threeDate = new Date(now.getTime() + 300000);
-
-	private final Date oneDatePlus = new Date(oneDate.getTime() + 1);
-	private final Date twoDatePlus = new Date(twoDate.getTime() + 1);
-	private final Date threeDatePlus = new Date(threeDate.getTime() + 1);
-
-	private final Date oneDateMinus = new Date(oneDate.getTime() - 1);
-	private final Date twoDateMinus = new Date(twoDate.getTime() - 1);
-	private final Date threeDateMinus = new Date(threeDate.getTime() - 1);
-
-	private RangeTable<String, Date, Integer> reverseRangeTable;
-	private final Serde<String> hashKeySerde = SerializingSerde.get();
-	private final Serde<Date> hashRangeSerde = SerializingSerde.get();
-	private final Serde<Integer> valueSerde = SerializingSerde.get();
-
-	@Override
-	@Before
-	public void before() {
-		FileUtils.deleteRecursively(ROOT);
-		ROOT.mkdirs();
-		ezdb = new EzRocksDb(ROOT, new EzRocksDbJniFactory());
-		ezdb.deleteTable("test");
-		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
-
-		ezdb.deleteTable("testInverseOrder");
-		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
-		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
-		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
-		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
-	}
-
-	@Override
-	public void after() {
-		super.after();
-		clearTable();
-	}
-
-	private void clearTable() {
-		if (reverseRangeTable != null) {
-			reverseRangeTable.close();
-		}
-		ezdb.deleteTable("testInverseOrder");
-	}
 
 	@Override
 	@Test
