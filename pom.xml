@@ -8,7 +8,7 @@
 
 	<groupId>com.github.criccomini</groupId>
 	<artifactId>ezdb-parent</artifactId>
-	<version>0.1.16</version>
+	<version>0.1.17-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>EZDB Parent</name>
 	<description>EZDB is a simple hash/range database. Right now, it just has a LevelDB implementation.</description>
@@ -47,7 +47,7 @@
 	<scm>
 		<url>https://github.com/criccomini/ezdb.git</url>
 		<connection>scm:git:https://github.com/criccomini/ezdb.git</connection>
-		<tag>ezdb-parent-0.1.16</tag>
+		<tag>ezdb-parent-0.1.13</tag>
 	</scm>
 
 	<issueManagement>
@@ -74,23 +74,23 @@
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-api</artifactId>
-				<version>0.1.16</version>
+				<version>0.1.17-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-leveldb</artifactId>
-				<version>0.1.16</version>
+				<version>0.1.17-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-leveldb</artifactId>
 				<type>test-jar</type>
-				<version>0.1.16</version>
+				<version>0.1.17-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.criccomini</groupId>
 				<artifactId>ezdb-treemap</artifactId>
-				<version>0.1.16</version>
+				<version>0.1.17-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>org.fusesource.leveldbjni</groupId>
