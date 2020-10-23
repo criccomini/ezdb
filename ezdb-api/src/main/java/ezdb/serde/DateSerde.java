@@ -5,28 +5,26 @@ import java.util.Date;
 public class DateSerde implements Serde<Date> {
 
 	public static final DateSerde get = new DateSerde();
-	
+
 	@Override
-	public Date fromBytes(byte[] bytes) {
+	public Date fromBytes(final byte[] bytes) {
 		final Long time = LongSerde.get.fromBytes(bytes);
-		if(time == null){
+		if (time == null) {
 			return null;
-		}else{
+		} else {
 			return new Date(time);
 		}
 	}
 
 	@Override
-	public byte[] toBytes(Date obj) {
+	public byte[] toBytes(final Date obj) {
 		final Long time;
-		if(obj == null){
+		if (obj == null) {
 			time = null;
-		}else{
+		} else {
 			time = obj.getTime();
 		}
 		return LongSerde.get.toBytes(time);
 	}
-
-
 
 }
