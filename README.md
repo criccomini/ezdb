@@ -122,7 +122,7 @@ EZDB is built with Maven:
 
 You can get current releases from this maven repository:
 ```
-https://invesdwin.de/artifactory/invesdwin-oss-remote
+https://invesdwin.de/repo/invesdwin-oss-remote
 ```
 
 Dependency declaration:
