@@ -132,12 +132,12 @@
 
 	<distributionManagement>
 		<repository>
-			<id>central</id>
+			<id>invesdwin-oss</id>
 			<name>invesdwin.de-releases</name>
 			<url>https://invesdwin.de/repo/invesdwin-oss</url>
 		</repository>
 		<snapshotRepository>
-			<id>snapshots</id>
+			<id>invesdwin-oss</id>
 			<name>invesdwin.de-snapshots</name>
 			<url>https://invesdwin.de/repo/invesdwin-oss</url>
 		</snapshotRepository>
