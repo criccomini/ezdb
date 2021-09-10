@@ -210,12 +210,8 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
-		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
-			@Override
-			public Boolean apply(final CheckKeysRequest input) {
-				return Util.compareKeys(hashKeyComparator, null, input.getKeyBytesFrom(), input.getPeekKey()) == 0;
-			}
-		};
+		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
+				peek) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peek.getKey()) == 0;
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
 		final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFrom, null,
 				iterator, checkKeys);
@@ -233,15 +229,15 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 				if (useFixFirst()) {
 					return true;
 				}
-				return iterator.hasPrev() && checkKeys
-						.apply(new CheckKeysRequest(hashKey, null, null, keyBytesFrom, null, iterator.peekPrev()));
+				return iterator.hasPrev()
+						&& checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, iterator.peekPrev());
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
 					final Entry<byte[], byte[]> peekNext = iterator.peekNext();
 					if (peekNext != null) {
-						if (checkKeys.apply(new CheckKeysRequest(hashKey, null, null, keyBytesFrom, null, peekNext))) {
+						if (checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, peekNext)) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -285,11 +281,11 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	private TableIterator<H, R, V> reverseSeekToLast(final H hashKey, final R fromRangeKey, final R toRangeKey,
 			final byte[] keyBytesFrom, final byte[] keyBytesTo, final DBIterator iterator,
-			final Function<CheckKeysRequest, Boolean> checkKeys) {
+			final CheckKeysFunction<H, R, V> checkKeys) {
 		iterator.seek(keyBytesFrom);
 		Entry<byte[], byte[]> last = null;
-		while (iterator.hasNext() && checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey, toRangeKey,
-				keyBytesFrom, keyBytesTo, iterator.peekNext()))) {
+		while (iterator.hasNext() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
+				iterator.peekNext())) {
 			last = iterator.next();
 		}
 		// if there is no last one, there is nothing at all in the table
@@ -327,13 +323,11 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 			return rangeReverse(hashKey);
 		}
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
-		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
-			@Override
-			public Boolean apply(final CheckKeysRequest input) {
-				return Util.compareKeys(hashKeyComparator, null, input.getKeyBytesFrom(), input.getPeekKey()) == 0
-						&& (input.getFromRangeKey() == null || Util.compareKeys(hashKeyComparator, rangeKeyComparator,
-								input.getKeyBytesFrom(), input.getPeekKey()) >= 0);
-			}
+		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey, keyBytesFrom, keyBytesTo,
+				peek) -> {
+			final byte[] peekKey = peek.getKey();
+			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0 && (fromRangeKey1 == null
+					|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKey) >= 0);
 		};
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom);
@@ -355,16 +349,15 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 				if (useFixFirst()) {
 					return true;
 				}
-				return iterator.hasPrev() && checkKeys.apply(
-						new CheckKeysRequest(hashKey, fromRangeKey, null, keyBytesFrom, null, iterator.peekPrev()));
+				return iterator.hasPrev()
+						&& checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, iterator.peekPrev());
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
 					final Entry<byte[], byte[]> peekNext = iterator.peekNext();
 					if (peekNext != null) {
-						if (checkKeys.apply(
-								new CheckKeysRequest(hashKey, fromRangeKey, null, keyBytesFrom, null, peekNext))) {
+						if (checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, peekNext)) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -412,15 +405,14 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
-		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
-			@Override
-			public Boolean apply(final CheckKeysRequest input) {
-				return Util.compareKeys(hashKeyComparator, null, input.getKeyBytesFrom(), input.getPeekKey()) == 0
-						&& (input.getFromRangeKey() == null || Util.compareKeys(hashKeyComparator, rangeKeyComparator,
-								input.getKeyBytesFrom(), input.getPeekKey()) >= 0)
-						&& (input.getToRangeKey() == null || Util.compareKeys(hashKeyComparator, rangeKeyComparator,
-								input.getKeyBytesTo(), input.getPeekKey()) <= 0);
-			}
+		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey1, keyBytesFrom, keyBytesTo,
+				peek) -> {
+			final byte[] peekKey = peek.getKey();
+			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0
+					&& (fromRangeKey1 == null
+							|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKey) >= 0)
+					&& (toRangeKey1 == null
+							|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo, peekKey) <= 0);
 		};
 		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
@@ -443,16 +435,16 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 				if (useFixFirst()) {
 					return true;
 				}
-				return iterator.hasPrev() && checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey, toRangeKey,
-						keyBytesFrom, keyBytesTo, iterator.peekPrev()));
+				return iterator.hasPrev() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom,
+						keyBytesTo, iterator.peekPrev());
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
 					final Entry<byte[], byte[]> peekNext = iterator.peekNext();
 					if (peekNext != null) {
-						if (checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey, toRangeKey, keyBytesFrom,
-								keyBytesTo, peekNext))) {
+						if (checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
+								peekNext)) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -564,58 +556,6 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 				closed = true;
 				delegate.close();
 			}
-		}
-
-	}
-
-	private class CheckKeysRequest {
-
-		private final byte[] keyBytesFrom;
-		private final byte[] keyBytesTo;
-		private final Entry<byte[], byte[]> peek;
-		private final H hashKey;
-		private final R fromRangeKey;
-		private final R toRangeKey;
-
-		public CheckKeysRequest(final H hashKey, final R fromRangeKey, final R toRangeKey, final byte[] keyBytesFrom,
-				final byte[] keyBytesTo, final Entry<byte[], byte[]> peek) {
-			this.hashKey = hashKey;
-			this.fromRangeKey = fromRangeKey;
-			this.toRangeKey = toRangeKey;
-			this.keyBytesFrom = keyBytesFrom;
-			this.keyBytesTo = keyBytesTo;
-			this.peek = peek;
-		}
-
-		public byte[] getKeyBytesFrom() {
-			return keyBytesFrom;
-		}
-
-		public byte[] getKeyBytesTo() {
-			return keyBytesTo;
-		}
-
-		public byte[] getPeekKey() {
-			return peek.getKey();
-		}
-
-		public H getHashKey() {
-			return hashKey;
-		}
-
-		public R getFromRangeKey() {
-			return fromRangeKey;
-		}
-
-		public R getToRangeKey() {
-			return toRangeKey;
-		}
-
-		@Override
-		public String toString() {
-			return "CheckKeysRequest [hashKey=" + getHashKey() + ", fromRangeKey=" + getFromRangeKey() + ", toRangeKey="
-					+ getToRangeKey() + "] -> "
-					+ RawTableRow.valueOfBytes(peek, hashKeySerde, rangeKeySerde, valueSerde).toString();
 		}
 
 	}
@@ -740,6 +680,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 				throw new DbException(e);
 			}
 		}
+	}
+
+	@FunctionalInterface
+	private interface CheckKeysFunction<H, R, V> {
+		boolean checkKeys(final H hashKey, final R fromRangeKey, final R toRangeKey, final byte[] keyBytesFrom,
+				final byte[] keyBytesTo, final Entry<byte[], byte[]> peek);
 	}
 
 }
