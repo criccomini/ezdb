@@ -19,12 +19,9 @@ import ezdb.serde.Serde;
 import ezdb.util.Util;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 
 public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
-
-	private final ByteBufAllocator allocator = PooledByteBufAllocator.DEFAULT;
 
 	private final Serde<H> hashKeySerde;
 	private final Serde<R> rangeKeySerde;
@@ -66,7 +63,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public V get(final H hashKey, final R rangeKey) {
-		final ByteBuf keyBuffer = allocator.heapBuffer();
+		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.heapBuffer();
 		try {
 			Util.combine(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 			final ByteBuf valueBytes = map.get(keyBuffer);
@@ -82,7 +79,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(final H hashKey) {
-		final ByteBuf keyBytesFrom = allocator.heapBuffer();
+		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, null);
 		final Iterator<Map.Entry<ByteBuf, ByteBuf>> iterator = map.tailMap(keyBytesFrom, true).entrySet().iterator();
 		return new TableIterator<H, R, V>() {
@@ -136,7 +133,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return range(hashKey);
 		}
-		final ByteBuf keyBytesFrom = allocator.heapBuffer();
+		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		final Iterator<Map.Entry<ByteBuf, ByteBuf>> iterator = map.tailMap(keyBytesFrom, true).entrySet().iterator();
 		return new TableIterator<H, R, V>() {
@@ -190,9 +187,9 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
-		final ByteBuf keyBytesFrom = allocator.heapBuffer();
+		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final ByteBuf keyBytesTo = allocator.heapBuffer();
+		final ByteBuf keyBytesTo = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combine(keyBytesTo, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
 		if (fromRangeKey != null
 				&& Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, keyBytesTo) > 0) {
@@ -257,7 +254,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
-		final ByteBuf buffer = allocator.heapBuffer();
+		final ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combine(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 		try {
 			map.remove(buffer);
@@ -272,7 +269,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
-		final ByteBuf keyBytesFrom = allocator.heapBuffer();
+		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, null);
 		final Iterator<Map.Entry<ByteBuf, ByteBuf>> iterator = map.descendingMap().headMap(keyBytesFrom, true)
 				.entrySet().iterator();
@@ -334,7 +331,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
-		final ByteBuf keyBytesFrom = allocator.heapBuffer();
+		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		final Iterator<Map.Entry<ByteBuf, ByteBuf>> iterator = map.descendingMap().tailMap(keyBytesFrom, true)
 				.entrySet().iterator();
@@ -396,9 +393,9 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
-		final ByteBuf keyBytesFrom = allocator.heapBuffer();
+		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final ByteBuf keyBytesTo = allocator.heapBuffer();
+		final ByteBuf keyBytesTo = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combine(keyBytesTo, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
 		if (fromRangeKey != null
 				&& Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, keyBytesTo) < 0) {
