@@ -98,7 +98,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 				TableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = RawTableRow.valueOfBuffer(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = RawTableRow.valueOfBuf(next, hashKeySerde, rangeKeySerde, valueSerde);
 				}
 
 				if (iterator.hasNext()) {
@@ -152,7 +152,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 				RawTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = RawTableRow.valueOfBuffer(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = RawTableRow.valueOfBuf(next, hashKeySerde, rangeKeySerde, valueSerde);
 				}
 
 				if (iterator.hasNext()) {
@@ -216,7 +216,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 				RawTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = RawTableRow.valueOfBuffer(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = RawTableRow.valueOfBuf(next, hashKeySerde, rangeKeySerde, valueSerde);
 				}
 
 				if (iterator.hasNext()) {
@@ -296,7 +296,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 				TableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = RawTableRow.valueOfBuffer(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = RawTableRow.valueOfBuf(next, hashKeySerde, rangeKeySerde, valueSerde);
 				}
 
 				if (iterator.hasNext()) {
@@ -358,7 +358,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 				RawTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = RawTableRow.valueOfBuffer(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = RawTableRow.valueOfBuf(next, hashKeySerde, rangeKeySerde, valueSerde);
 				}
 
 				if (iterator.hasNext()) {
@@ -433,7 +433,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 				RawTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = RawTableRow.valueOfBuffer(next, hashKeySerde, rangeKeySerde, valueSerde);
+					row = RawTableRow.valueOfBuf(next, hashKeySerde, rangeKeySerde, valueSerde);
 				}
 
 				if (iterator.hasNext()) {

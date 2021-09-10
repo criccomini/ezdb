@@ -1,6 +1,7 @@
 package ezdb.lmdb;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Env;
@@ -15,23 +16,21 @@ import io.netty.buffer.ByteBufAllocator;
 
 public class EzLmDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
-	private final Dbi<ByteBuf> db;
-	private Txn<ByteBuf> txn;
+	private final Env<ByteBuffer> env;
+	private final Dbi<ByteBuffer> db;
+	private final Txn<ByteBuffer> txn;
 	private final Serde<H> hashKeySerde;
 	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
-	private ByteBuf keyBuf;
-	private ByteBuf valueBuf;
 
-	public EzLmDbBatch(final ByteBufAllocator allocator, final Env<ByteBuf> env, final Dbi<ByteBuf> db,
-			final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
+	public EzLmDbBatch(final Env<ByteBuffer> env, final Dbi<ByteBuffer> db, final Serde<H> hashKeySerde,
+			final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
+		this.env = env;
 		this.db = db;
 		this.txn = env.txnWrite();
 		this.hashKeySerde = hashKeySerde;
 		this.rangeKeySerde = rangeKeySerde;
 		this.valueSerde = valueSerde;
-		this.keyBuf = allocator.buffer();
-		this.valueBuf = allocator.buffer();
 	}
 
 	@Override
@@ -55,31 +54,33 @@ public class EzLmDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	@Override
 	public void close() throws IOException {
-		if (keyBuf != null) {
-			flush();
-			txn.close();
-			keyBuf.release(keyBuf.refCnt());
-			valueBuf.release(valueBuf.refCnt());
-			keyBuf = null;
-			valueBuf = null;
-			txn = null;
-		}
+		flush();
+		txn.close();
 	}
 
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
-		keyBuf.clear();
-		valueBuf.clear();
-		Util.combine(keyBuf, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
-		valueSerde.toBuffer(valueBuf, value);
-		db.put(txn, keyBuf, valueBuf);
+		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.directBuffer();
+		Util.combine(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+		final ByteBuf valueBuffer = ByteBufAllocator.DEFAULT.directBuffer();
+		valueSerde.toBuffer(valueBuffer, value);
+		try {
+			db.put(txn, keyBuffer.nioBuffer(), valueBuffer.nioBuffer());
+		} finally {
+			keyBuffer.release(keyBuffer.refCnt());
+			valueBuffer.release(valueBuffer.refCnt());
+		}
 	}
 
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
-		keyBuf.clear();
-		Util.combine(keyBuf, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
-		db.delete(txn, keyBuf);
+		final ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer();
+		try {
+			Util.combine(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+			db.delete(txn, buffer.nioBuffer());
+		} finally {
+			buffer.release(buffer.refCnt());
+		}
 	}
 
 }

@@ -1,9 +1,5 @@
 package ezdb.lmdb;
 
-import static ezdb.lmdb.TestEzLmDb.HASHKEY_ONE;
-import static ezdb.lmdb.TestEzLmDb.MAX_DATE;
-import static ezdb.lmdb.TestEzLmDb.MIN_DATE;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Date;
@@ -702,6 +698,7 @@ public class TestEzLmDbJni extends TestEzLmDb {
 			range.next();
 			Assert.fail("Exception expected!");
 		} catch (final NoSuchElementException e) {
+			range.close();
 			Assert.assertNotNull(e);
 		}
 	}

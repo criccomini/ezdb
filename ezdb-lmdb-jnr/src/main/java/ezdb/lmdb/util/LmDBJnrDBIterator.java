@@ -31,6 +31,7 @@
  */
 package ezdb.lmdb.util;
 
+import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -42,6 +43,7 @@ import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 //implementation taken from leveldbjni
 /**
@@ -49,13 +51,13 @@ import io.netty.buffer.ByteBuf;
  */
 public class LmDBJnrDBIterator implements DBIterator {
 
-	private final Env<ByteBuf> env;
-	private final Dbi<ByteBuf> dbi;
-	private final Txn<ByteBuf> txn;
-	private final Cursor<ByteBuf> cursor;
+	private final Env<ByteBuffer> env;
+	private final Dbi<ByteBuffer> dbi;
+	private final Txn<ByteBuffer> txn;
+	private final Cursor<ByteBuffer> cursor;
 	private boolean valid = false;
 
-	public LmDBJnrDBIterator(final Env<ByteBuf> env, final Dbi<ByteBuf> dbi) {
+	public LmDBJnrDBIterator(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
 		this.env = env;
 		this.dbi = dbi;
 		this.txn = env.txnRead();
@@ -81,7 +83,7 @@ public class LmDBJnrDBIterator implements DBIterator {
 
 	@Override
 	public void seek(final ByteBuf key) {
-		valid = cursor.get(key, GetOp.MDB_SET_RANGE);
+		valid = cursor.get(key.nioBuffer(), GetOp.MDB_SET_RANGE);
 	}
 
 	@Override
@@ -99,7 +101,8 @@ public class LmDBJnrDBIterator implements DBIterator {
 		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		return new AbstractMap.SimpleImmutableEntry<ByteBuf, ByteBuf>(cursor.key(), cursor.val());
+		return new AbstractMap.SimpleImmutableEntry<ByteBuf, ByteBuf>(Unpooled.wrappedBuffer(cursor.key()),
+				Unpooled.wrappedBuffer(cursor.val()));
 	}
 
 	@Override
