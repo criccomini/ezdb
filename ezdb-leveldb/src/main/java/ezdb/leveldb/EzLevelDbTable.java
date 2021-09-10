@@ -208,7 +208,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 
-			private boolean fixFirst = true;;
+			private boolean fixFirst = true;
 
 			@Override
 			public boolean hasNext() {

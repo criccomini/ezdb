@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
-import java.util.function.Function;
 
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
@@ -222,7 +221,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 
-			private boolean fixFirst = true;;
+			private boolean fixFirst = true;
 
 			@Override
 			public boolean hasNext() {
