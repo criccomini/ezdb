@@ -88,6 +88,12 @@ public class Util {
 	}
 
 	public static int compareKeys(final Comparator<ByteBuf> hashKeyComparator,
+			final Comparator<ByteBuf> rangeKeyComparator, final byte[] k1, final byte[] k2) {
+		return compareKeys(hashKeyComparator, rangeKeyComparator, Unpooled.wrappedBuffer(k1),
+				Unpooled.wrappedBuffer(k2));
+	}
+
+	public static int compareKeys(final Comparator<ByteBuf> hashKeyComparator,
 			final Comparator<ByteBuf> rangeKeyComparator, final ByteBuf k1, final ByteBuf k2) {
 		// First hash key
 		int k1Index = 0;

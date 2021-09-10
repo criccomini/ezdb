@@ -6,7 +6,6 @@ import org.iq80.leveldb.DBComparator;
 
 import ezdb.util.Util;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * LevelDb provides a comparator interface that we can use to handle hash/range
@@ -29,8 +28,7 @@ public class EzLevelDbComparator implements DBComparator {
 
 	@Override
 	public int compare(final byte[] k1, final byte[] k2) {
-		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, Unpooled.wrappedBuffer(k1),
-				Unpooled.wrappedBuffer(k2));
+		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
 	}
 
 	@Override

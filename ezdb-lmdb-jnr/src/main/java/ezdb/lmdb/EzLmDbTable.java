@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
 
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
@@ -232,8 +233,12 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
 		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
-		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
-				peek) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peek.getKey()) == 0;
+		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
+			@Override
+			public Boolean apply(final CheckKeysRequest input) {
+				return Util.compareKeys(hashKeyComparator, null, input.getKeyBytesFrom(), input.getPeekKey()) == 0;
+			}
+		};
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.directBuffer();
 		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, null);
 		final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFrom, null,
@@ -253,15 +258,15 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 				if (useFixFirst()) {
 					return true;
 				}
-				return iterator.hasPrev()
-						&& checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, iterator.peekPrev());
+				return iterator.hasPrev() && checkKeys
+						.apply(new CheckKeysRequest(hashKey, null, null, keyBytesFrom, null, iterator.peekPrev()));
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
 					final Entry<ByteBuf, ByteBuf> peekNext = iterator.peekNext();
 					if (peekNext != null) {
-						if (checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, peekNext)) {
+						if (checkKeys.apply(new CheckKeysRequest(hashKey, null, null, keyBytesFrom, null, peekNext))) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -306,11 +311,11 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	private TableIterator<H, R, V> reverseSeekToLast(final H hashKey, final R fromRangeKey, final R toRangeKey,
 			final ByteBuf keyBytesFrom, final ByteBuf keyBytesTo, final DBIterator iterator,
-			final CheckKeysFunction<H, R, V> checkKeys) {
+			final Function<CheckKeysRequest, Boolean> checkKeys) {
 		iterator.seek(keyBytesFrom);
 		Entry<ByteBuf, ByteBuf> last = null;
-		while (iterator.hasNext() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
-				iterator.peekNext())) {
+		while (iterator.hasNext() && checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey, toRangeKey,
+				keyBytesFrom, keyBytesTo, iterator.peekNext()))) {
 			last = iterator.next();
 		}
 		// if there is no last one, there is nothing at all in the table
@@ -348,11 +353,13 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			return rangeReverse(hashKey);
 		}
 		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
-		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey, keyBytesFrom, keyBytesTo,
-				peek) -> {
-			final ByteBuf peekKey = peek.getKey();
-			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0 && (fromRangeKey1 == null
-					|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKey) >= 0);
+		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
+			@Override
+			public Boolean apply(final CheckKeysRequest input) {
+				return Util.compareKeys(hashKeyComparator, null, input.getKeyBytesFrom(), input.getPeekKey()) == 0
+						&& (input.getFromRangeKey() == null || Util.compareKeys(hashKeyComparator, rangeKeyComparator,
+								input.getKeyBytesFrom(), input.getPeekKey()) >= 0);
+			}
 		};
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.directBuffer();
 		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
@@ -378,15 +385,16 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 				if (useFixFirst()) {
 					return true;
 				}
-				return iterator.hasPrev()
-						&& checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, iterator.peekPrev());
+				return iterator.hasPrev() && checkKeys.apply(
+						new CheckKeysRequest(hashKey, fromRangeKey, null, keyBytesFrom, null, iterator.peekPrev()));
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
 					final Entry<ByteBuf, ByteBuf> peekNext = iterator.peekNext();
 					if (peekNext != null) {
-						if (checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, peekNext)) {
+						if (checkKeys.apply(
+								new CheckKeysRequest(hashKey, fromRangeKey, null, keyBytesFrom, null, peekNext))) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -435,16 +443,14 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
 		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
-		final CheckKeysFunction<H, R, V> checkKeys = new CheckKeysFunction<H, R, V>() {
+		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
-			public boolean checkKeys(final H hashKey, final R fromRangeKey, final R toRangeKey,
-					final ByteBuf keyBytesFrom, final ByteBuf keyBytesTo, final Entry<ByteBuf, ByteBuf> peek) {
-				final ByteBuf peekKey = peek.getKey();
-				return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0
-						&& (fromRangeKey == null
-								|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKey) >= 0)
-						&& (toRangeKey == null
-								|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo, peekKey) <= 0);
+			public Boolean apply(final CheckKeysRequest input) {
+				return Util.compareKeys(hashKeyComparator, null, input.getKeyBytesFrom(), input.getPeekKey()) == 0
+						&& (input.getFromRangeKey() == null || Util.compareKeys(hashKeyComparator, rangeKeyComparator,
+								input.getKeyBytesFrom(), input.getPeekKey()) >= 0)
+						&& (input.getToRangeKey() == null || Util.compareKeys(hashKeyComparator, rangeKeyComparator,
+								input.getKeyBytesTo(), input.getPeekKey()) <= 0);
 			}
 		};
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.directBuffer();
@@ -474,16 +480,16 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 				if (useFixFirst()) {
 					return true;
 				}
-				return iterator.hasPrev() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom,
-						keyBytesTo, iterator.peekPrev());
+				return iterator.hasPrev() && checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey, toRangeKey,
+						keyBytesFrom, keyBytesTo, iterator.peekPrev()));
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
 					final Entry<ByteBuf, ByteBuf> peekNext = iterator.peekNext();
 					if (peekNext != null) {
-						if (checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
-								peekNext)) {
+						if (checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey, toRangeKey, keyBytesFrom,
+								keyBytesTo, peekNext))) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -599,6 +605,58 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 				closed = true;
 				delegate.close();
 			}
+		}
+
+	}
+
+	private class CheckKeysRequest {
+
+		private final ByteBuf keyBytesFrom;
+		private final ByteBuf keyBytesTo;
+		private final Entry<ByteBuf, ByteBuf> peek;
+		private final H hashKey;
+		private final R fromRangeKey;
+		private final R toRangeKey;
+
+		public CheckKeysRequest(final H hashKey, final R fromRangeKey, final R toRangeKey, final ByteBuf keyBytesFrom,
+				final ByteBuf keyBytesTo, final Entry<ByteBuf, ByteBuf> peek) {
+			this.hashKey = hashKey;
+			this.fromRangeKey = fromRangeKey;
+			this.toRangeKey = toRangeKey;
+			this.keyBytesFrom = keyBytesFrom;
+			this.keyBytesTo = keyBytesTo;
+			this.peek = peek;
+		}
+
+		public ByteBuf getKeyBytesFrom() {
+			return keyBytesFrom;
+		}
+
+		public ByteBuf getKeyBytesTo() {
+			return keyBytesTo;
+		}
+
+		public ByteBuf getPeekKey() {
+			return peek.getKey();
+		}
+
+		public H getHashKey() {
+			return hashKey;
+		}
+
+		public R getFromRangeKey() {
+			return fromRangeKey;
+		}
+
+		public R getToRangeKey() {
+			return toRangeKey;
+		}
+
+		@Override
+		public String toString() {
+			return "CheckKeysRequest [hashKey=" + getHashKey() + ", fromRangeKey=" + getFromRangeKey() + ", toRangeKey="
+					+ getToRangeKey() + "] -> "
+					+ RawTableRow.valueOfBuf(peek, hashKeySerde, rangeKeySerde, valueSerde).toString();
 		}
 
 	}
@@ -723,12 +781,6 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 				throw new DbException(e);
 			}
 		}
-	}
-
-	@FunctionalInterface
-	private interface CheckKeysFunction<H, R, V> {
-		boolean checkKeys(final H hashKey, final R fromRangeKey, final R toRangeKey, final ByteBuf keyBytesFrom,
-				final ByteBuf keyBytesTo, final Entry<ByteBuf, ByteBuf> peek);
 	}
 
 }
