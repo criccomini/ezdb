@@ -141,9 +141,6 @@ public class TestStockData {
 		Date left1000Date = null;
 		Date left900Date = null;
 		while (range.hasNext()) {
-			if (prevValue == 0) {
-				System.out.println("vlaa");
-			}
 			final TableRow<String, Date, Integer> next = range.next();
 			final Integer value = next.getValue();
 			// System.out.println(value);

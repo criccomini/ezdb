@@ -366,7 +366,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		iterator.seek(keyBytesFrom);
 		if (!iterator.hasNext() || fromRangeKey == null) {
 			final ByteBuf keyBytesFromForSeekLast = ByteBufAllocator.DEFAULT.directBuffer();
-			Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
+			Util.combine(keyBytesFromForSeekLast, hashKeySerde, rangeKeySerde, hashKey, null);
 			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFromForSeekLast,
 					null, iterator, checkKeys);
 			if (emptyIterator != null) {

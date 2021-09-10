@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ezdb.TableRow;
@@ -17,7 +18,7 @@ import ezdb.serde.LongSerde;
 import ezdb.serde.StringSerde;
 
 @NotThreadSafe
-//@Ignore("manual test")
+@Ignore("manual test")
 public class LmdbPerformanceTest extends ADatabasePerformanceTest {
 
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLmDb.class.getSimpleName());
