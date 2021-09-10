@@ -7,6 +7,7 @@ import org.rocksdb.Slice;
 
 import ezdb.util.Util;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * LevelDb provides a comparator interface that we can use to handle hash/range
@@ -30,7 +31,8 @@ public class EzRocksDbComparator extends org.rocksdb.Comparator {
 
 	@Override
 	public int compare(final Slice a, final Slice b) {
-		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, a.data(), b.data());
+		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, Unpooled.wrappedBuffer(a.data()),
+				Unpooled.wrappedBuffer(b.data()));
 	}
 
 	@Override
