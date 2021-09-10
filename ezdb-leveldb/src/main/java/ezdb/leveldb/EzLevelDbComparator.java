@@ -1,8 +1,11 @@
 package ezdb.leveldb;
 
 import java.util.Comparator;
+
 import org.iq80.leveldb.DBComparator;
+
 import ezdb.util.Util;
+import io.netty.buffer.ByteBuf;
 
 /**
  * LevelDb provides a comparator interface that we can use to handle hash/range
@@ -12,33 +15,34 @@ import ezdb.util.Util;
  * 
  */
 public class EzLevelDbComparator implements DBComparator {
-  public static final String name = EzLevelDbComparator.class.toString();
+	public static final String name = EzLevelDbComparator.class.toString();
 
-  private final Comparator<byte[]> hashKeyComparator;
-  private final Comparator<byte[]> rangeKeyComparator;
+	private final Comparator<ByteBuf> hashKeyComparator;
+	private final Comparator<ByteBuf> rangeKeyComparator;
 
-  public EzLevelDbComparator(Comparator<byte[]> hashKeyComparator, Comparator<byte[]> rangeKeyComparator) {
-    this.hashKeyComparator = hashKeyComparator;
-    this.rangeKeyComparator = rangeKeyComparator;
-  }
+	public EzLevelDbComparator(final Comparator<ByteBuf> hashKeyComparator,
+			final Comparator<ByteBuf> rangeKeyComparator) {
+		this.hashKeyComparator = hashKeyComparator;
+		this.rangeKeyComparator = rangeKeyComparator;
+	}
 
-  @Override
-  public int compare(byte[] k1, byte[] k2) {
-    return Util.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
-  }
+	@Override
+	public int compare(final byte[] k1, final byte[] k2) {
+		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
+	}
 
-  @Override
-  public byte[] findShortSuccessor(byte[] key) {
-    return key;
-  }
+	@Override
+	public byte[] findShortSuccessor(final byte[] key) {
+		return key;
+	}
 
-  @Override
-  public byte[] findShortestSeparator(byte[] start, byte[] limit) {
-    return start;
-  }
+	@Override
+	public byte[] findShortestSeparator(final byte[] start, final byte[] limit) {
+		return start;
+	}
 
-  @Override
-  public String name() {
-    return name;
-  }
+	@Override
+	public String name() {
+		return name;
+	}
 }

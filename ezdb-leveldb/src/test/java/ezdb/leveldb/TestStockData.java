@@ -29,6 +29,7 @@ import ezdb.serde.DateSerde;
 import ezdb.serde.Serde;
 import ezdb.serde.SerializingSerde;
 import ezdb.serde.StringSerde;
+import io.netty.buffer.ByteBuf;
 import junit.framework.Assert;
 
 public class TestStockData {
@@ -42,10 +43,10 @@ public class TestStockData {
 	private final Serde<Integer> valueSerde = SerializingSerde.get();
 
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLevelDb.class.getSimpleName());
-	protected Db<byte[]> ezdb;
+	protected Db<ByteBuf> ezdb;
 	protected RangeTable<String, Date, Integer> table;
-	private final Comparator<byte[]> hashKeyComparator = new SerdeComparator<String>(hashKeySerde);
-	private final Comparator<byte[]> rangeKeyComparator = new SerdeComparator<Date>(hashRangeSerde);
+	private final Comparator<ByteBuf> hashKeyComparator = new SerdeComparator<String>(hashKeySerde);
+	private final Comparator<ByteBuf> rangeKeyComparator = new SerdeComparator<Date>(hashRangeSerde);
 
 	@Before
 	public void before() {

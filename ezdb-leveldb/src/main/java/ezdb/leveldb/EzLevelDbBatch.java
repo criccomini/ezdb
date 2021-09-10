@@ -13,12 +13,12 @@ public class EzLevelDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	private final DB db;
 	private final WriteBatch writeBatch;
-	private Serde<H> hashKeySerde;
-	private Serde<R> rangeKeySerde;
-	private Serde<V> valueSerde;
+	private final Serde<H> hashKeySerde;
+	private final Serde<R> rangeKeySerde;
+	private final Serde<V> valueSerde;
 
-	public EzLevelDbBatch(DB db, Serde<H> hashKeySerde, Serde<R> rangeKeySerde,
-			Serde<V> valueSerde) {
+	public EzLevelDbBatch(final DB db, final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
+			final Serde<V> valueSerde) {
 		this.db = db;
 		this.writeBatch = db.createWriteBatch();
 		this.hashKeySerde = hashKeySerde;
@@ -27,12 +27,12 @@ public class EzLevelDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	}
 
 	@Override
-	public void put(H hashKey, V value) {
+	public void put(final H hashKey, final V value) {
 		put(hashKey, null, value);
 	}
 
 	@Override
-	public void delete(H hashKey) {
+	public void delete(final H hashKey) {
 		delete(hashKey, null);
 	}
 
@@ -47,16 +47,15 @@ public class EzLevelDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	}
 
 	@Override
-	public void put(H hashKey, R rangeKey, V value) {
-		writeBatch.put(
-				Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
-				valueSerde.toBytes(value));
+	public void put(final H hashKey, final R rangeKey, final V value) {
+		final byte[] valueBytes = valueSerde.toBytes(value);
+		final byte[] keyBytes = Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+		writeBatch.put(keyBytes, valueBytes);
 	}
 
 	@Override
-	public void delete(H hashKey, R rangeKey) {
-		writeBatch.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
-				rangeKey));
+	public void delete(final H hashKey, final R rangeKey) {
+		writeBatch.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
 	}
 
 }

@@ -2,9 +2,8 @@ package ezdb.lmdb;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Comparator;
 
+import org.lmdbjava.ByteBufProxy;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -12,16 +11,34 @@ import org.lmdbjava.Env.Builder;
 import org.lmdbjava.EnvFlags;
 
 import ezdb.lmdb.util.FileUtils;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.PooledByteBufAllocator;
 
 public class EzLmDbJnrFactory implements EzLmDbFactory {
+
+	private static PooledByteBufAllocator DIRECT_ALLOCATOR;
+
+	private static synchronized PooledByteBufAllocator getDirectAllocator() {
+		if (DIRECT_ALLOCATOR == null) {
+			if (PooledByteBufAllocator.defaultPreferDirect()) {
+				DIRECT_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
+			} else {
+				DIRECT_ALLOCATOR = new PooledByteBufAllocator();
+			}
+		}
+		return DIRECT_ALLOCATOR;
+	}
+
 	@Override
-	public Env<ByteBuffer> create(File path, EnvFlags... envFlags) throws IOException {
-		Env<ByteBuffer> env = newEnv().open(path.getAbsoluteFile(), envFlags);
+	public Env<ByteBuf> create(final File path, final EnvFlags... envFlags) throws IOException {
+		final Env<ByteBuf> env = newEnv().open(path.getAbsoluteFile(), envFlags);
 		return env;
 	}
 
-	protected Builder<ByteBuffer> newEnv() {
-		return Env.create().setMaxDbs(1).setMapSize(newMapSize()).setMaxReaders(Integer.MAX_VALUE);
+	protected Builder<ByteBuf> newEnv() {
+		return Env.create(ByteBufProxy.PROXY_NETTY).setMaxDbs(1).setMapSize(newMapSize())
+				.setMaxReaders(Integer.MAX_VALUE);
 	}
 
 	protected long newMapSize() {
@@ -29,14 +46,19 @@ public class EzLmDbJnrFactory implements EzLmDbFactory {
 	}
 
 	@Override
-	public Dbi<ByteBuffer> open(String tableName, Env<ByteBuffer> env, EzLmDbComparator comparator,
-			DbiFlags... dbiFlags) throws IOException {
-		Dbi<ByteBuffer> dbi = env.openDbi(tableName, comparator, dbiFlags);
+	public Dbi<ByteBuf> open(final String tableName, final Env<ByteBuf> env, final EzLmDbComparator comparator,
+			final DbiFlags... dbiFlags) throws IOException {
+		final Dbi<ByteBuf> dbi = env.openDbi(tableName, comparator, dbiFlags);
 		return dbi;
 	}
 
 	@Override
-	public void destroy(File path) throws IOException {
+	public ByteBufAllocator getAllocator() {
+		return getDirectAllocator();
+	}
+
+	@Override
+	public void destroy(final File path) throws IOException {
 		// implementation taken from java port of leveldb
 		FileUtils.deleteRecursively(path);
 	}

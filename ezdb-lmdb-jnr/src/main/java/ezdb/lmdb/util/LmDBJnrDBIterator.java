@@ -31,10 +31,7 @@
  */
 package ezdb.lmdb.util;
 
-import java.nio.ByteBuffer;
 import java.util.AbstractMap;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -44,75 +41,84 @@ import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
-import ezdb.lmdb.EzLmDbComparator;
+import io.netty.buffer.ByteBuf;
 
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 public class LmDBJnrDBIterator implements DBIterator {
-	
-	private final Env<ByteBuffer> env;
-	private final Dbi<ByteBuffer> dbi;
-	private final Txn<ByteBuffer> txn;
-	private final Cursor<ByteBuffer> cursor;
+
+	private final Env<ByteBuf> env;
+	private final Dbi<ByteBuf> dbi;
+	private final Txn<ByteBuf> txn;
+	private final Cursor<ByteBuf> cursor;
 	private boolean valid = false;
 
-	public LmDBJnrDBIterator(Env<ByteBuffer> env, Dbi<ByteBuffer> dbi) {
+	public LmDBJnrDBIterator(final Env<ByteBuf> env, final Dbi<ByteBuf> dbi) {
 		this.env = env;
 		this.dbi = dbi;
 		this.txn = env.txnRead();
 		this.cursor = dbi.openCursor(txn);
 	}
 
+	@Override
 	public void close() {
 		cursor.close();
-		txn.close(); 
+		txn.close();
 	}
-	
+
 	@Override
 	protected void finalize() throws Throwable {
 		super.finalize();
 		close();
 	}
 
+	@Override
 	public void remove() {
 		throw new UnsupportedOperationException();
 	}
 
-	public void seek(byte[] key) {
-		valid = cursor.get(DirectBuffers.wrap(key), GetOp.MDB_SET_RANGE);
+	@Override
+	public void seek(final ByteBuf key) {
+		valid = cursor.get(key, GetOp.MDB_SET_RANGE);
 	}
 
+	@Override
 	public void seekToFirst() {
 		valid = cursor.first();
 	}
 
+	@Override
 	public void seekToLast() {
 		valid = cursor.last();
 	}
 
-	public Map.Entry<byte[], byte[]> peekNext() {
+	@Override
+	public Map.Entry<ByteBuf, ByteBuf> peekNext() {
 		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		return new AbstractMap.SimpleImmutableEntry<byte[], byte[]>(DirectBuffers.array(cursor.key()),
-				DirectBuffers.array(cursor.val()));
+		return new AbstractMap.SimpleImmutableEntry<ByteBuf, ByteBuf>(cursor.key(), cursor.val());
 	}
 
+	@Override
 	public boolean hasNext() {
 		return valid;
 	}
 
-	public Map.Entry<byte[], byte[]> next() {
-		Map.Entry<byte[], byte[]> rc = peekNext();
+	@Override
+	public Map.Entry<ByteBuf, ByteBuf> next() {
+		final Map.Entry<ByteBuf, ByteBuf> rc = peekNext();
 		valid = cursor.next();
 		return rc;
 	}
 
+	@Override
 	public boolean hasPrev() {
-		if (!valid)
+		if (!valid) {
 			return false;
+		}
 		valid = cursor.prev();
 		try {
 			return valid;
@@ -125,7 +131,8 @@ public class LmDBJnrDBIterator implements DBIterator {
 		}
 	}
 
-	public Map.Entry<byte[], byte[]> peekPrev() {
+	@Override
+	public Map.Entry<ByteBuf, ByteBuf> peekPrev() {
 		valid = cursor.prev();
 		try {
 			return peekNext();
@@ -138,8 +145,9 @@ public class LmDBJnrDBIterator implements DBIterator {
 		}
 	}
 
-	public Map.Entry<byte[], byte[]> prev() {
-		Map.Entry<byte[], byte[]> rc = peekPrev();
+	@Override
+	public Map.Entry<ByteBuf, ByteBuf> prev() {
+		final Map.Entry<ByteBuf, ByteBuf> rc = peekPrev();
 		valid = cursor.prev();
 		return rc;
 	}

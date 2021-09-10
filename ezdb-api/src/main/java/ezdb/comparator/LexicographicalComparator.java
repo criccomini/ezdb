@@ -1,7 +1,8 @@
 package ezdb.comparator;
 
-import java.nio.ByteBuffer;
 import java.util.Comparator;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * A comparator that compares bytes using lexicographical ordering.
@@ -9,11 +10,12 @@ import java.util.Comparator;
  * @author criccomini
  * 
  */
-public class LexicographicalComparator implements Comparator<byte[]> {
-  public static final LexicographicalComparator get = new LexicographicalComparator();
+public class LexicographicalComparator implements Comparator<ByteBuf> {
+	public static final LexicographicalComparator get = new LexicographicalComparator();
 
-  @Override
-  public int compare(byte[] bytes1, byte[] bytes2) {
-    return ByteBuffer.wrap(bytes1).compareTo(ByteBuffer.wrap(bytes2));
-  }
+	@Override
+	public int compare(final ByteBuf bytes1, final ByteBuf bytes2) {
+		return bytes1.nioBuffer().compareTo(bytes2.nioBuffer());
+	}
+
 }

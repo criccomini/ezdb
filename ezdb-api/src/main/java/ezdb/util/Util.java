@@ -1,20 +1,66 @@
 package ezdb.util;
 
-import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 import ezdb.serde.Serde;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 
 public class Util {
 
-	public static <H, R> byte[] combine(Serde<H> hashKeySerde, Serde<R> rangeKeySerde, H hashKey, R rangeKey) {
-		byte[] rangeBytes = new byte[0];
+	public static <H, R> void combine(final ByteBuf buffer, final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
+			final H hashKey, final R rangeKey) {
 
+		final ByteBuf hashKeyBytes = buffer.alloc().buffer();
+		hashKeySerde.toBuffer(hashKeyBytes, hashKey);
+		final ByteBuf rangeKeyBytes;
 		if (rangeKey != null) {
-			rangeBytes = rangeKeySerde.toBytes(rangeKey);
+			rangeKeyBytes = buffer.alloc().buffer();
+			rangeKeySerde.toBuffer(rangeKeyBytes, rangeKey);
+		} else {
+			rangeKeyBytes = buffer.alloc().buffer(0);
 		}
 
-		return combine(hashKeySerde.toBytes(hashKey), rangeBytes);
+		combine(buffer, hashKeyBytes, rangeKeyBytes);
+
+		hashKeyBytes.release(hashKeyBytes.refCnt());
+		if (rangeKeyBytes != null) {
+			rangeKeyBytes.release(rangeKeyBytes.refCnt());
+		}
+	}
+
+	public static <H, R> byte[] combine(final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final H hashKey,
+			final R rangeKey) {
+
+		final ByteBuf hashKeyBytes = ByteBufAllocator.DEFAULT.heapBuffer();
+		hashKeySerde.toBuffer(hashKeyBytes, hashKey);
+		final ByteBuf rangeKeyBytes;
+		if (rangeKey != null) {
+			rangeKeyBytes = ByteBufAllocator.DEFAULT.heapBuffer();
+			rangeKeySerde.toBuffer(rangeKeyBytes, rangeKey);
+		} else {
+			rangeKeyBytes = ByteBufAllocator.DEFAULT.heapBuffer(0);
+		}
+
+		final byte[] bytes = combine(hashKeyBytes, rangeKeyBytes);
+
+		hashKeyBytes.release(hashKeyBytes.refCnt());
+		rangeKeyBytes.release(rangeKeyBytes.refCnt());
+
+		return bytes;
+	}
+
+	public static void combine(final ByteBuf buffer, final ByteBuf hashKeyBytes, final ByteBuf rangeKeyBytes) {
+		final int requiredCapacity = Integer.BYTES + hashKeyBytes.readableBytes() + Integer.BYTES
+				+ rangeKeyBytes.readableBytes();
+		if (buffer.capacity() < requiredCapacity) {
+			buffer.capacity(requiredCapacity);
+		}
+		buffer.writeInt(hashKeyBytes.readableBytes());
+		buffer.writeBytes(hashKeyBytes);
+		buffer.writeInt(rangeKeyBytes.readableBytes());
+		buffer.writeBytes(rangeKeyBytes);
 	}
 
 	/**
@@ -32,42 +78,49 @@ public class Util {
 	 * @param rangeKeyBytes Are the range key's bytes.
 	 * @return Returns a byte array defined by the format above.
 	 */
-	public static byte[] combine(byte[] hashKeyBytes, byte[] rangeKeyBytes) {
-		byte[] result = new byte[8 + hashKeyBytes.length + rangeKeyBytes.length];
-		System.arraycopy(ByteBuffer.allocate(4).putInt(hashKeyBytes.length).array(), 0, result, 0, 4);
-		System.arraycopy(hashKeyBytes, 0, result, 4, hashKeyBytes.length);
-		System.arraycopy(ByteBuffer.allocate(4).putInt(rangeKeyBytes.length).array(), 0, result,
-				4 + hashKeyBytes.length, 4);
-		System.arraycopy(rangeKeyBytes, 0, result, 8 + hashKeyBytes.length, rangeKeyBytes.length);
-		return result;
+	public static byte[] combine(final ByteBuf hashKeyBytes, final ByteBuf rangeKeyBytes) {
+		final byte[] bytes = new byte[Integer.BYTES + hashKeyBytes.readableBytes() + Integer.BYTES
+				+ rangeKeyBytes.readableBytes()];
+		final ByteBuf buf = Unpooled.wrappedBuffer(bytes);
+		buf.clear();
+		combine(buf, hashKeyBytes, rangeKeyBytes);
+		return bytes;
 	}
 
-	public static int compareKeys(Comparator<byte[]> hashKeyComparator, Comparator<byte[]> rangeKeyComparator,
-			byte[] k1, byte[] k2) {
+	public static int compareKeys(final Comparator<ByteBuf> hashKeyComparator,
+			final Comparator<ByteBuf> rangeKeyComparator, final byte[] k1, final byte[] k2) {
+		return compareKeys(hashKeyComparator, rangeKeyComparator, Unpooled.wrappedBuffer(k1),
+				Unpooled.wrappedBuffer(k2));
+	}
+
+	public static int compareKeys(final Comparator<ByteBuf> hashKeyComparator,
+			final Comparator<ByteBuf> rangeKeyComparator, final ByteBuf k1, final ByteBuf k2) {
 		// First hash key
-		ByteBuffer k1Buffer = ByteBuffer.wrap(k1);
-		int k1HashKeyLength = k1Buffer.getInt();
-		byte[] k1HashKeyBytes = new byte[k1HashKeyLength];
-		k1Buffer.get(k1HashKeyBytes);
+		int k1Index = 0;
+		final int k1HashKeyLength = k1.getInt(k1Index);
+		k1Index += Integer.BYTES;
+		final ByteBuf k1HashKeyBytes = k1.slice(k1Index, k1HashKeyLength);
 
 		// Second hash key
-		ByteBuffer k2Buffer = ByteBuffer.wrap(k2);
-		int k2HashKeyLength = k2Buffer.getInt();
-		byte[] k2HashKeyBytes = new byte[k2HashKeyLength];
-		k2Buffer.get(k2HashKeyBytes);
+		int k2Index = 0;
+		final int k2HashKeyLength = k2.getInt(k2Index);
+		k2Index += Integer.BYTES;
+		final ByteBuf k2HashKeyBytes = k2.slice(k2Index, k2HashKeyLength);
 
-		int hashComparison = hashKeyComparator.compare(k1HashKeyBytes, k2HashKeyBytes);
+		final int hashComparison = hashKeyComparator.compare(k1HashKeyBytes, k2HashKeyBytes);
 
 		if (rangeKeyComparator != null && hashComparison == 0) {
 			// First range key
-			int k1RangeKeyLength = k1Buffer.getInt();
-			byte[] k1RangeKeyBytes = new byte[k1RangeKeyLength];
-			k1Buffer.get(k1RangeKeyBytes);
+			k1Index += k1HashKeyLength;
+			final int k1RangeKeyLength = k1.getInt(k1Index);
+			k1Index += Integer.BYTES;
+			final ByteBuf k1RangeKeyBytes = k1.slice(k1Index, k1RangeKeyLength);
 
 			// Second range key
-			int k2RangeKeyLength = k2Buffer.getInt();
-			byte[] k2RangeKeyBytes = new byte[k2RangeKeyLength];
-			k2Buffer.get(k2RangeKeyBytes);
+			k2Index += k2HashKeyLength;
+			final int k2RangeKeyLength = k2.getInt(k2Index);
+			k2Index += Integer.BYTES;
+			final ByteBuf k2RangeKeyBytes = k2.slice(k2Index, k2RangeKeyLength);
 
 			return rangeKeyComparator.compare(k1RangeKeyBytes, k2RangeKeyBytes);
 		}
@@ -75,16 +128,16 @@ public class Util {
 		return hashComparison;
 	}
 
-	public static <H, R> int compareKeys(Comparator<H> hashKeyComparator, Comparator<R> rangeKeyComparator,
-			ObjectTableKey<H, R> k1, ObjectTableKey<H, R> k2) {
+	public static <H, R> int compareKeys(final Comparator<H> hashKeyComparator, final Comparator<R> rangeKeyComparator,
+			final ObjectTableKey<H, R> k1, final ObjectTableKey<H, R> k2) {
 		return compareKeys(hashKeyComparator, rangeKeyComparator, k1.getHashKey(), k1.getRangeKey(), k2.getHashKey(),
 				k2.getRangeKey());
 	}
 
-	public static <H, R> int compareKeys(Comparator<H> hashKeyComparator, Comparator<R> rangeKeyComparator, H h1, R r1,
-			H h2, R r2) {
+	public static <H, R> int compareKeys(final Comparator<H> hashKeyComparator, final Comparator<R> rangeKeyComparator,
+			final H h1, final R r1, final H h2, final R r2) {
 		// First hash key
-		int hashComparison = hashKeyComparator.compare(h1, h2);
+		final int hashComparison = hashKeyComparator.compare(h1, h2);
 
 		if (rangeKeyComparator != null && hashComparison == 0) {
 			return rangeKeyComparator.compare(r1, r2);
@@ -93,7 +146,7 @@ public class Util {
 		return hashComparison;
 	}
 
-	public static <H, R> ObjectTableKey<H, R> combine(H hashKey, R rangeKey) {
+	public static <H, R> ObjectTableKey<H, R> combine(final H hashKey, final R rangeKey) {
 		return new ObjectTableKey<H, R>(hashKey, rangeKey);
 	}
 }

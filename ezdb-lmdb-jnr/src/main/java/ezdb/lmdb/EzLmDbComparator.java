@@ -1,10 +1,9 @@
 package ezdb.lmdb;
 
-import java.nio.ByteBuffer;
 import java.util.Comparator;
 
-import ezdb.lmdb.util.DirectBuffers;
 import ezdb.util.Util;
+import io.netty.buffer.ByteBuf;
 
 /**
  * LevelDb provides a comparator interface that we can use to handle hash/range
@@ -13,20 +12,19 @@ import ezdb.util.Util;
  * @author criccomini
  * 
  */
-public class EzLmDbComparator implements Comparator<ByteBuffer> {
+public class EzLmDbComparator implements Comparator<ByteBuf> {
 
-	private final Comparator<byte[]> hashKeyComparator;
-	private final Comparator<byte[]> rangeKeyComparator;
+	private final Comparator<ByteBuf> hashKeyComparator;
+	private final Comparator<ByteBuf> rangeKeyComparator;
 
-	public EzLmDbComparator(Comparator<byte[]> hashKeyComparator,
-			Comparator<byte[]> rangeKeyComparator) {
+	public EzLmDbComparator(final Comparator<ByteBuf> hashKeyComparator, final Comparator<ByteBuf> rangeKeyComparator) {
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
 	}
-	
+
 	@Override
-	public int compare(ByteBuffer a, ByteBuffer b) {
-		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, DirectBuffers.array(a), DirectBuffers.array(b));
+	public int compare(final ByteBuf a, final ByteBuf b) {
+		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, a, b);
 	}
 
 }

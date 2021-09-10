@@ -16,13 +16,13 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	private final RocksDB db;
 	private final WriteBatch writeBatch;
-	private Serde<H> hashKeySerde;
-	private Serde<R> rangeKeySerde;
-	private Serde<V> valueSerde;
-	private WriteOptions writeOptions;
+	private final Serde<H> hashKeySerde;
+	private final Serde<R> rangeKeySerde;
+	private final Serde<V> valueSerde;
+	private final WriteOptions writeOptions;
 
-	public EzRocksDbBatch(RocksDB db, Serde<H> hashKeySerde, Serde<R> rangeKeySerde,
-			Serde<V> valueSerde) {
+	public EzRocksDbBatch(final RocksDB db, final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
+			final Serde<V> valueSerde) {
 		this.writeOptions = new WriteOptions();
 		this.db = db;
 		this.writeBatch = new WriteBatch();
@@ -32,12 +32,12 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	}
 
 	@Override
-	public void put(H hashKey, V value) {
+	public void put(final H hashKey, final V value) {
 		put(hashKey, null, value);
 	}
 
 	@Override
-	public void delete(H hashKey) {
+	public void delete(final H hashKey) {
 		delete(hashKey, null);
 	}
 
@@ -45,7 +45,7 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	public void flush() {
 		try {
 			db.write(writeOptions, writeBatch);
-		} catch (RocksDBException e) {
+		} catch (final RocksDBException e) {
 			throw new DbException(e);
 		}
 	}
@@ -57,22 +57,19 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	}
 
 	@Override
-	public void put(H hashKey, R rangeKey, V value) {
+	public void put(final H hashKey, final R rangeKey, final V value) {
 		try {
-			writeBatch.put(
-					Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
-					valueSerde.toBytes(value));
-		} catch (RocksDBException e) {
+			writeBatch.put(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey), valueSerde.toBytes(value));
+		} catch (final RocksDBException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
-	public void delete(H hashKey, R rangeKey) {
+	public void delete(final H hashKey, final R rangeKey) {
 		try {
-			writeBatch.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
-					rangeKey));
-		} catch (RocksDBException e) {
+			writeBatch.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
+		} catch (final RocksDBException e) {
 			throw new RuntimeException(e);
 		}
 	}

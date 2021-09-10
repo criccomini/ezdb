@@ -7,11 +7,9 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 
-import org.rocksdb.CompressionType;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
-import org.rocksdb.RocksEnv;
 
 import ezdb.DbException;
 import ezdb.RangeTable;
@@ -24,20 +22,20 @@ import ezdb.rocksdb.util.DBIterator;
 import ezdb.rocksdb.util.RocksDBJniDBIterator;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
+import io.netty.buffer.ByteBuf;
 
 public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	private final RocksDB db;
 	private final Serde<H> hashKeySerde;
 	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
-	private final Comparator<byte[]> hashKeyComparator;
-	private final Comparator<byte[]> rangeKeyComparator;
+	private final Comparator<ByteBuf> hashKeyComparator;
+	private final Comparator<ByteBuf> rangeKeyComparator;
 	private final Options options;
 
-	public EzRocksDbTable(File path, EzRocksDbFactory factory,
-			Serde<H> hashKeySerde, Serde<R> rangeKeySerde, Serde<V> valueSerde,
-			Comparator<byte[]> hashKeyComparator,
-			Comparator<byte[]> rangeKeyComparator) {
+	public EzRocksDbTable(final File path, final EzRocksDbFactory factory, final Serde<H> hashKeySerde,
+			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuf> hashKeyComparator,
+			final Comparator<ByteBuf> rangeKeyComparator) {
 		this.hashKeySerde = hashKeySerde;
 		this.rangeKeySerde = rangeKeySerde;
 		this.valueSerde = valueSerde;
@@ -47,43 +45,40 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		this.options = new Options();
 
 		options.setCreateIfMissing(true);
-		options.setComparator(new EzRocksDbComparator(hashKeyComparator,
-				rangeKeyComparator));
-		
+		options.setComparator(new EzRocksDbComparator(hashKeyComparator, rangeKeyComparator));
+
 		try {
 			this.db = factory.open(path, options);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new DbException(e);
 		}
 	}
 
 	@Override
-	public void put(H hashKey, V value) {
+	public void put(final H hashKey, final V value) {
 		put(hashKey, null, value);
 	}
 
 	@Override
-	public void put(H hashKey, R rangeKey, V value) {
+	public void put(final H hashKey, final R rangeKey, final V value) {
 		try {
-			db.put(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
-					valueSerde.toBytes(value));
-		} catch (RocksDBException e) {
+			db.put(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey), valueSerde.toBytes(value));
+		} catch (final RocksDBException e) {
 			throw new DbException(e);
 		}
 	}
 
 	@Override
-	public V get(H hashKey) {
+	public V get(final H hashKey) {
 		return get(hashKey, null);
 	}
 
 	@Override
-	public V get(H hashKey, R rangeKey) {
+	public V get(final H hashKey, final R rangeKey) {
 		byte[] valueBytes;
 		try {
-			valueBytes = db.get(Util.combine(hashKeySerde, rangeKeySerde,
-					hashKey, rangeKey));
-		} catch (RocksDBException e) {
+			valueBytes = db.get(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
+		} catch (final RocksDBException e) {
 			throw new DbException(e);
 		}
 
@@ -95,236 +90,206 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
-	public TableIterator<H, R, V> range(H hashKey) {
+	public TableIterator<H, R, V> range(final H hashKey) {
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
-				hashKey, null);
+		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
 		iterator.seek(keyBytesFrom);
-		return new AutoClosingTableIterator<H, R, V>(
-				new TableIterator<H, R, V>() {
-					@Override
-					public boolean hasNext() {
-						return iterator.hasNext()
-								&& Util.compareKeys(hashKeyComparator, null,
-										keyBytesFrom, iterator.peekNext()
-												.getKey()) == 0;
-					}
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
+			@Override
+			public boolean hasNext() {
+				return iterator.hasNext()
+						&& Util.compareKeys(hashKeyComparator, null, keyBytesFrom, iterator.peekNext().getKey()) == 0;
+			}
 
-					@Override
-					public TableRow<H, R, V> next() {
-						if(hasNext()) {
-							return new RawTableRow<H, R, V>(iterator.next(),
-									hashKeySerde, rangeKeySerde, valueSerde);
-						}else {
-							throw new NoSuchElementException();
-						}
-					}
+			@Override
+			public TableRow<H, R, V> next() {
+				if (hasNext()) {
+					return RawTableRow.valueOfBytes(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
 
-					@Override
-					public void remove() {
-						iterator.remove();
-					}
+			@Override
+			public void remove() {
+				iterator.remove();
+			}
 
-					@Override
-					public void close() {
-						try {
-							iterator.close();
-						} catch (Exception e) {
-							throw new DbException(e);
-						}
-					}
-				});
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
 	}
 
 	@Override
-	public TableIterator<H, R, V> range(H hashKey, R fromRangeKey) {
+	public TableIterator<H, R, V> range(final H hashKey, final R fromRangeKey) {
 		if (fromRangeKey == null) {
 			return range(hashKey);
 		}
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
-				hashKey, fromRangeKey);
+		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom);
-		return new AutoClosingTableIterator<H, R, V>(
-				new TableIterator<H, R, V>() {
-					@Override
-					public boolean hasNext() {
-						return iterator.hasNext()
-								&& Util.compareKeys(hashKeyComparator, null,
-										keyBytesFrom, iterator.peekNext()
-												.getKey()) == 0;
-					}
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
+			@Override
+			public boolean hasNext() {
+				return iterator.hasNext()
+						&& Util.compareKeys(hashKeyComparator, null, keyBytesFrom, iterator.peekNext().getKey()) == 0;
+			}
 
-					@Override
-					public TableRow<H, R, V> next() {
-						if(hasNext()) {
-							return new RawTableRow<H, R, V>(iterator.next(),
-									hashKeySerde, rangeKeySerde, valueSerde);
-						}else {
-							throw new NoSuchElementException();
-						}
-					}
+			@Override
+			public TableRow<H, R, V> next() {
+				if (hasNext()) {
+					return RawTableRow.valueOfBytes(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
 
-					@Override
-					public void remove() {
-						iterator.remove();
-					}
+			@Override
+			public void remove() {
+				iterator.remove();
+			}
 
-					@Override
-					public void close() {
-						try {
-							iterator.close();
-						} catch (Exception e) {
-							throw new DbException(e);
-						}
-					}
-				});
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
 	}
 
 	@Override
-	public TableIterator<H, R, V> range(H hashKey, R fromRangeKey, R toRangeKey) {
+	public TableIterator<H, R, V> range(final H hashKey, final R fromRangeKey, final R toRangeKey) {
 		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
-				hashKey, fromRangeKey);
-		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde,
-				hashKey, toRangeKey);
+		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
 		iterator.seek(keyBytesFrom);
-		return new AutoClosingTableIterator<H, R, V>(
-				new TableIterator<H, R, V>() {
-					@Override
-					public boolean hasNext() {
-						return iterator.hasNext()
-								&& Util.compareKeys(hashKeyComparator,
-										rangeKeyComparator, keyBytesTo,
-										iterator.peekNext().getKey()) >= 0;
-					}
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
+			@Override
+			public boolean hasNext() {
+				return iterator.hasNext() && Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo,
+						iterator.peekNext().getKey()) >= 0;
+			}
 
-					@Override
-					public TableRow<H, R, V> next() {
-						if(hasNext()) {
-							return new RawTableRow<H, R, V>(iterator.next(),
-									hashKeySerde, rangeKeySerde, valueSerde);
-						}else {
-							throw new NoSuchElementException();
-						}
-					}
+			@Override
+			public TableRow<H, R, V> next() {
+				if (hasNext()) {
+					return RawTableRow.valueOfBytes(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
 
-					@Override
-					public void remove() {
-						iterator.remove();
-					}
+			@Override
+			public void remove() {
+				iterator.remove();
+			}
 
-					@Override
-					public void close() {
-						try {
-							iterator.close();
-						} catch (Exception e) {
-							throw new DbException(e);
-						}
-					}
-				});
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
 	}
 
+	@Override
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
-			public Boolean apply(CheckKeysRequest input) {
-				return Util.compareKeys(hashKeyComparator, null,
-						input.getKeyBytesFrom(), input.getPeekKey()) == 0;
+			public Boolean apply(final CheckKeysRequest input) {
+				return Util.compareKeys(hashKeyComparator, null, input.getKeyBytesFrom(), input.getPeekKey()) == 0;
 			}
 		};
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
-				hashKey, null);
-		TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null,
-				null, keyBytesFrom, null, iterator, checkKeys);
+		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
+		final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFrom, null,
+				iterator, checkKeys);
 		if (emptyIterator != null) {
 			iterator.close();
 			return emptyIterator;
 		}
 
-		return new AutoClosingTableIterator<H, R, V>(
-				new TableIterator<H, R, V>() {
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 
-					private boolean fixFirst = true;;
+			private boolean fixFirst = true;;
 
-					@Override
-					public boolean hasNext() {
-						if (useFixFirst()) {
+			@Override
+			public boolean hasNext() {
+				if (useFixFirst()) {
+					return true;
+				}
+				return iterator.hasPrev() && checkKeys
+						.apply(new CheckKeysRequest(hashKey, null, null, keyBytesFrom, null, iterator.peekPrev()));
+			}
+
+			private boolean useFixFirst() {
+				if (fixFirst && iterator.hasNext()) {
+					final Entry<byte[], byte[]> peekNext = iterator.peekNext();
+					if (peekNext != null) {
+						if (checkKeys.apply(new CheckKeysRequest(hashKey, null, null, keyBytesFrom, null, peekNext))) {
 							return true;
-						}
-						return iterator.hasPrev()
-								&& checkKeys.apply(new CheckKeysRequest(
-										hashKey, null, null, keyBytesFrom,
-										null, iterator.peekPrev()));
-					}
-
-					private boolean useFixFirst() {
-						if (fixFirst && iterator.hasNext()) {
-							final Entry<byte[], byte[]> peekNext = iterator
-									.peekNext();
-							if (peekNext != null) {
-								if (checkKeys.apply(new CheckKeysRequest(
-										hashKey, null, null, keyBytesFrom,
-										null, peekNext))) {
-									return true;
-								} else {
-									fixFirst = false;
-								}
-							}
-						}
-						return false;
-					}
-
-					@Override
-					public TableRow<H, R, V> next() {
-						if (useFixFirst()) {
+						} else {
 							fixFirst = false;
-							return new RawTableRow<H, R, V>(
-									iterator.peekNext(), hashKeySerde,
-									rangeKeySerde, valueSerde);
-						}
-						if(hasNext()) {
-							return new RawTableRow<H, R, V>(iterator.prev(),
-									hashKeySerde, rangeKeySerde, valueSerde);
-						}else {
-							throw new NoSuchElementException();
 						}
 					}
+				}
+				return false;
+			}
 
-					@Override
-					public void remove() {
-						if (useFixFirst()) {
-							throw new UnsupportedOperationException(
-									"Not possible on first result for now...");
-						}
-						iterator.remove();
-					}
+			@Override
+			public TableRow<H, R, V> next() {
+				if (useFixFirst()) {
+					fixFirst = false;
+					return RawTableRow.valueOfBytes(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+				}
+				if (hasNext()) {
+					return RawTableRow.valueOfBytes(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
 
-					@Override
-					public void close() {
-						try {
-							iterator.close();
-						} catch (final Exception e) {
-							throw new DbException(e);
-						}
-					}
-				});
+			@Override
+			public void remove() {
+				if (useFixFirst()) {
+					throw new UnsupportedOperationException("Not possible on first result for now...");
+				}
+				iterator.remove();
+			}
+
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
 	}
 
-	private TableIterator<H, R, V> reverseSeekToLast(H hashKey, R fromRangeKey,
-			R toRangeKey, final byte[] keyBytesFrom, byte[] keyBytesTo,
-			final DBIterator iterator,
-			Function<CheckKeysRequest, Boolean> checkKeys) {
+	private TableIterator<H, R, V> reverseSeekToLast(final H hashKey, final R fromRangeKey, final R toRangeKey,
+			final byte[] keyBytesFrom, final byte[] keyBytesTo, final DBIterator iterator,
+			final Function<CheckKeysRequest, Boolean> checkKeys) {
 		iterator.seek(keyBytesFrom);
 		Entry<byte[], byte[]> last = null;
-		while (iterator.hasNext()
-				&& checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey,
-						toRangeKey, keyBytesFrom, keyBytesTo, iterator
-								.peekNext()))) {
+		while (iterator.hasNext() && checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey, toRangeKey,
+				keyBytesFrom, keyBytesTo, iterator.peekNext()))) {
 			last = iterator.next();
 		}
 		// if there is no last one, there is nothing at all in the table
@@ -356,225 +321,189 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		return null;
 	}
 
-	public TableIterator<H, R, V> rangeReverse(final H hashKey,
-			final R fromRangeKey) {
+	@Override
+	public TableIterator<H, R, V> rangeReverse(final H hashKey, final R fromRangeKey) {
 		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
-			public Boolean apply(CheckKeysRequest input) {
-				return Util.compareKeys(hashKeyComparator, null,
-						input.getKeyBytesFrom(), input.getPeekKey()) == 0
-						&& (input.getFromRangeKey() == null || Util
-								.compareKeys(hashKeyComparator,
-										rangeKeyComparator,
-										input.getKeyBytesFrom(),
-										input.getPeekKey()) >= 0);
+			public Boolean apply(final CheckKeysRequest input) {
+				return Util.compareKeys(hashKeyComparator, null, input.getKeyBytesFrom(), input.getPeekKey()) == 0
+						&& (input.getFromRangeKey() == null || Util.compareKeys(hashKeyComparator, rangeKeyComparator,
+								input.getKeyBytesFrom(), input.getPeekKey()) >= 0);
 			}
 		};
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
-				hashKey, fromRangeKey);
+		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom);
 		if (!iterator.hasNext() || fromRangeKey == null) {
-			byte[] keyBytesFromForSeekLast = Util.combine(hashKeySerde,
-					rangeKeySerde, hashKey, null);
-			TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey,
-					null, null, keyBytesFromForSeekLast, null, iterator,
-					checkKeys);
+			final byte[] keyBytesFromForSeekLast = Util.combine(hashKeySerde, rangeKeySerde, hashKey, null);
+			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFromForSeekLast,
+					null, iterator, checkKeys);
 			if (emptyIterator != null) {
 				iterator.close();
 				return emptyIterator;
 			}
 		}
-		return new AutoClosingTableIterator<H, R, V>(
-				new TableIterator<H, R, V>() {
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 
-					private boolean fixFirst = true;
+			private boolean fixFirst = true;
 
-					@Override
-					public boolean hasNext() {
-						if (useFixFirst()) {
+			@Override
+			public boolean hasNext() {
+				if (useFixFirst()) {
+					return true;
+				}
+				return iterator.hasPrev() && checkKeys.apply(
+						new CheckKeysRequest(hashKey, fromRangeKey, null, keyBytesFrom, null, iterator.peekPrev()));
+			}
+
+			private boolean useFixFirst() {
+				if (fixFirst && iterator.hasNext()) {
+					final Entry<byte[], byte[]> peekNext = iterator.peekNext();
+					if (peekNext != null) {
+						if (checkKeys.apply(
+								new CheckKeysRequest(hashKey, fromRangeKey, null, keyBytesFrom, null, peekNext))) {
 							return true;
-						}
-						return iterator.hasPrev()
-								&& checkKeys.apply(new CheckKeysRequest(
-										hashKey, fromRangeKey, null,
-										keyBytesFrom, null, iterator.peekPrev()));
-					}
-
-					private boolean useFixFirst() {
-						if (fixFirst && iterator.hasNext()) {
-							final Entry<byte[], byte[]> peekNext = iterator
-									.peekNext();
-							if (peekNext != null) {
-								if (checkKeys.apply(new CheckKeysRequest(
-										hashKey, fromRangeKey, null,
-										keyBytesFrom, null, peekNext))) {
-									return true;
-								} else {
-									fixFirst = false;
-								}
-							}
-						}
-						return false;
-					}
-
-					@Override
-					public TableRow<H, R, V> next() {
-						if (useFixFirst()) {
+						} else {
 							fixFirst = false;
-							return new RawTableRow<H, R, V>(
-									iterator.peekNext(), hashKeySerde,
-									rangeKeySerde, valueSerde);
-						}
-						if(hasNext()) {
-							return new RawTableRow<H, R, V>(iterator.prev(),
-									hashKeySerde, rangeKeySerde, valueSerde);
-						}else {
-							throw new NoSuchElementException();
 						}
 					}
+				}
+				return false;
+			}
 
-					@Override
-					public void remove() {
-						if (useFixFirst()) {
-							throw new UnsupportedOperationException(
-									"Not possible on first result for now...");
-						}
-						iterator.remove();
-					}
+			@Override
+			public TableRow<H, R, V> next() {
+				if (useFixFirst()) {
+					fixFirst = false;
+					return RawTableRow.valueOfBytes(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+				}
+				if (hasNext()) {
+					return RawTableRow.valueOfBytes(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
 
-					@Override
-					public void close() {
-						try {
-							iterator.close();
-						} catch (final Exception e) {
-							throw new DbException(e);
-						}
-					}
-				});
+			@Override
+			public void remove() {
+				if (useFixFirst()) {
+					throw new UnsupportedOperationException("Not possible on first result for now...");
+				}
+				iterator.remove();
+			}
+
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
 	}
 
-	public TableIterator<H, R, V> rangeReverse(final H hashKey,
-			final R fromRangeKey, final R toRangeKey) {
+	@Override
+	public TableIterator<H, R, V> rangeReverse(final H hashKey, final R fromRangeKey, final R toRangeKey) {
 		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final Function<CheckKeysRequest, Boolean> checkKeys = new Function<CheckKeysRequest, Boolean>() {
 			@Override
-			public Boolean apply(CheckKeysRequest input) {
-				return Util.compareKeys(hashKeyComparator, null,
-						input.getKeyBytesFrom(), input.getPeekKey()) == 0
-						&& (input.getFromRangeKey() == null || Util
-								.compareKeys(hashKeyComparator,
-										rangeKeyComparator,
-										input.getKeyBytesFrom(),
-										input.getPeekKey()) >= 0)
-						&& (input.getToRangeKey() == null || Util.compareKeys(
-								hashKeyComparator, rangeKeyComparator,
+			public Boolean apply(final CheckKeysRequest input) {
+				return Util.compareKeys(hashKeyComparator, null, input.getKeyBytesFrom(), input.getPeekKey()) == 0
+						&& (input.getFromRangeKey() == null || Util.compareKeys(hashKeyComparator, rangeKeyComparator,
+								input.getKeyBytesFrom(), input.getPeekKey()) >= 0)
+						&& (input.getToRangeKey() == null || Util.compareKeys(hashKeyComparator, rangeKeyComparator,
 								input.getKeyBytesTo(), input.getPeekKey()) <= 0);
 			}
 		};
-		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde,
-				hashKey, fromRangeKey);
-		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde,
-				hashKey, toRangeKey);
+		final byte[] keyBytesFrom = Util.combine(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final byte[] keyBytesTo = Util.combine(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
 		iterator.seek(keyBytesFrom);
 		if (!iterator.hasNext() || fromRangeKey == null) {
-			byte[] keyBytesFromForSeekLast = Util.combine(hashKeySerde,
-					rangeKeySerde, hashKey, toRangeKey);
-			TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey,
-					null, toRangeKey, keyBytesFromForSeekLast, keyBytesTo,
-					iterator, checkKeys);
+			final byte[] keyBytesFromForSeekLast = Util.combine(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, toRangeKey,
+					keyBytesFromForSeekLast, keyBytesTo, iterator, checkKeys);
 			if (emptyIterator != null) {
 				iterator.close();
 				return emptyIterator;
 			}
 		}
-		return new AutoClosingTableIterator<H, R, V>(
-				new TableIterator<H, R, V>() {
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 
-					private boolean fixFirst = true;
+			private boolean fixFirst = true;
 
-					@Override
-					public boolean hasNext() {
-						if (useFixFirst()) {
+			@Override
+			public boolean hasNext() {
+				if (useFixFirst()) {
+					return true;
+				}
+				return iterator.hasPrev() && checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey, toRangeKey,
+						keyBytesFrom, keyBytesTo, iterator.peekPrev()));
+			}
+
+			private boolean useFixFirst() {
+				if (fixFirst && iterator.hasNext()) {
+					final Entry<byte[], byte[]> peekNext = iterator.peekNext();
+					if (peekNext != null) {
+						if (checkKeys.apply(new CheckKeysRequest(hashKey, fromRangeKey, toRangeKey, keyBytesFrom,
+								keyBytesTo, peekNext))) {
 							return true;
-						}
-						return iterator.hasPrev()
-								&& checkKeys.apply(new CheckKeysRequest(
-										hashKey, fromRangeKey, toRangeKey,
-										keyBytesFrom, keyBytesTo, iterator
-												.peekPrev()));
-					}
-
-					private boolean useFixFirst() {
-						if (fixFirst && iterator.hasNext()) {
-							final Entry<byte[], byte[]> peekNext = iterator
-									.peekNext();
-							if (peekNext != null) {
-								if (checkKeys.apply(new CheckKeysRequest(
-										hashKey, fromRangeKey, toRangeKey,
-										keyBytesFrom, keyBytesTo, peekNext))) {
-									return true;
-								} else {
-									fixFirst = false;
-								}
-							}
-						}
-						return false;
-					}
-
-					@Override
-					public TableRow<H, R, V> next() {
-						if (useFixFirst()) {
+						} else {
 							fixFirst = false;
-							return new RawTableRow<H, R, V>(
-									iterator.peekNext(), hashKeySerde,
-									rangeKeySerde, valueSerde);
-						}
-						if(hasNext()) {
-							return new RawTableRow<H, R, V>(iterator.prev(),
-									hashKeySerde, rangeKeySerde, valueSerde);
-						}else {
-							throw new NoSuchElementException();
 						}
 					}
+				}
+				return false;
+			}
 
-					@Override
-					public void remove() {
-						if (useFixFirst()) {
-							throw new UnsupportedOperationException(
-									"Not possible on first result for now...");
-						}
-						iterator.remove();
-					}
+			@Override
+			public TableRow<H, R, V> next() {
+				if (useFixFirst()) {
+					fixFirst = false;
+					return RawTableRow.valueOfBytes(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+				}
+				if (hasNext()) {
+					return RawTableRow.valueOfBytes(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
 
-					@Override
-					public void close() {
-						try {
-							iterator.close();
-						} catch (final Exception e) {
-							throw new DbException(e);
-						}
-					}
-				});
+			@Override
+			public void remove() {
+				if (useFixFirst()) {
+					throw new UnsupportedOperationException("Not possible on first result for now...");
+				}
+				iterator.remove();
+			}
+
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
 	}
 
 	@Override
-	public void delete(H hashKey) {
+	public void delete(final H hashKey) {
 		delete(hashKey, null);
 	}
 
 	@Override
-	public void delete(H hashKey, R rangeKey) {
+	public void delete(final H hashKey, final R rangeKey) {
 		try {
-			this.db.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey,
-					rangeKey));
-		} catch (RocksDBException e) {
+			this.db.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
+		} catch (final RocksDBException e) {
 			throw new DbException(e);
 		}
 	}
@@ -584,13 +513,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		try {
 			this.db.close();
 			this.options.close();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new DbException(e);
 		}
 	}
 
-	private static class AutoClosingTableIterator<_H, _R, _V> implements
-			TableIterator<_H, _R, _V> {
+	private static class AutoClosingTableIterator<_H, _R, _V> implements TableIterator<_H, _R, _V> {
 
 		private final TableIterator<_H, _R, _V> delegate;
 		private boolean closed;
@@ -649,9 +577,8 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		private final R fromRangeKey;
 		private final R toRangeKey;
 
-		public CheckKeysRequest(H hashKey, R fromRangeKey, R toRangeKey,
-				byte[] keyBytesFrom, byte[] keyBytesTo,
-				Entry<byte[], byte[]> peek) {
+		public CheckKeysRequest(final H hashKey, final R fromRangeKey, final R toRangeKey, final byte[] keyBytesFrom,
+				final byte[] keyBytesTo, final Entry<byte[], byte[]> peek) {
 			this.hashKey = hashKey;
 			this.fromRangeKey = fromRangeKey;
 			this.toRangeKey = toRangeKey;
@@ -686,21 +613,15 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 		@Override
 		public String toString() {
-			return "CheckKeysRequest [hashKey="
-					+ getHashKey()
-					+ ", fromRangeKey="
-					+ getFromRangeKey()
-					+ ", toRangeKey="
-					+ getToRangeKey()
-					+ "] -> "
-					+ new RawTableRow<H, R, V>(peek, hashKeySerde,
-							rangeKeySerde, valueSerde).toString();
+			return "CheckKeysRequest [hashKey=" + getHashKey() + ", fromRangeKey=" + getFromRangeKey() + ", toRangeKey="
+					+ getToRangeKey() + "] -> "
+					+ RawTableRow.valueOfBytes(peek, hashKeySerde, rangeKeySerde, valueSerde).toString();
 		}
 
 	}
 
 	@Override
-	public TableRow<H, R, V> getLatest(H hashKey) {
+	public TableRow<H, R, V> getLatest(final H hashKey) {
 		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey);
 		try {
 			if (rangeReverse.hasNext()) {
@@ -723,12 +644,11 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
-	public TableRow<H, R, V> getLatest(H hashKey, R rangeKey) {
+	public TableRow<H, R, V> getLatest(final H hashKey, final R rangeKey) {
 		if (rangeKey == null) {
 			return getLatest(hashKey);
 		}
-		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey,
-				rangeKey);
+		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey, rangeKey);
 		try {
 			if (rangeReverse.hasNext()) {
 				return rangeReverse.next();
@@ -750,7 +670,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
-	public TableRow<H, R, V> getNext(H hashKey, R rangeKey) {
+	public TableRow<H, R, V> getNext(final H hashKey, final R rangeKey) {
 		final TableIterator<H, R, V> range = range(hashKey, rangeKey);
 		try {
 			if (range.hasNext()) {
@@ -764,9 +684,8 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
-	public TableRow<H, R, V> getPrev(H hashKey, R rangeKey) {
-		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey,
-				rangeKey);
+	public TableRow<H, R, V> getPrev(final H hashKey, final R rangeKey) {
+		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey, rangeKey);
 		try {
 			if (rangeReverse.hasNext()) {
 				return rangeReverse.next();
@@ -785,41 +704,39 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public RangeBatch<H, R, V> newRangeBatch() {
-		return new EzRocksDbBatch<H, R, V>(db, hashKeySerde, rangeKeySerde,
-				valueSerde);
+		return new EzRocksDbBatch<H, R, V>(db, hashKeySerde, rangeKeySerde, valueSerde);
 	}
 
 	@Override
-	public void deleteRange(H hashKey) {
-		TableIterator<H, R, V> range = range(hashKey);
+	public void deleteRange(final H hashKey) {
+		final TableIterator<H, R, V> range = range(hashKey);
 		internalDeleteRange(range);
 	}
 
 	@Override
-	public void deleteRange(H hashKey, R fromRangeKey) {
-		TableIterator<H, R, V> range = range(hashKey, fromRangeKey);
+	public void deleteRange(final H hashKey, final R fromRangeKey) {
+		final TableIterator<H, R, V> range = range(hashKey, fromRangeKey);
 		internalDeleteRange(range);
 	}
-
 
 	@Override
-	public void deleteRange(H hashKey, R fromRangeKey, R toRangeKey) {
-		TableIterator<H, R, V> range = range(hashKey, fromRangeKey, toRangeKey);
+	public void deleteRange(final H hashKey, final R fromRangeKey, final R toRangeKey) {
+		final TableIterator<H, R, V> range = range(hashKey, fromRangeKey, toRangeKey);
 		internalDeleteRange(range);
 	}
-	
-	private void internalDeleteRange(TableIterator<H, R, V> range) {
-		RangeBatch<H, R, V> batch = newRangeBatch();
+
+	private void internalDeleteRange(final TableIterator<H, R, V> range) {
+		final RangeBatch<H, R, V> batch = newRangeBatch();
 		try {
 			while (range.hasNext()) {
-				TableRow<H, R, V> next = range.next();
+				final TableRow<H, R, V> next = range.next();
 				batch.delete(next.getHashKey(), next.getRangeKey());
 			}
 			batch.flush();
 		} finally {
 			try {
 				batch.close();
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new DbException(e);
 			}
 		}

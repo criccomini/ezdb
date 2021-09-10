@@ -3,19 +3,20 @@ package ezdb.comparator;
 import java.util.Comparator;
 
 import ezdb.serde.Serde;
+import io.netty.buffer.ByteBuf;
 
-public class SerdeComparator<O> implements Comparator<byte[]> {
+public class SerdeComparator<O> implements Comparator<ByteBuf> {
 
-	private Serde<O> serde;
+	private final Serde<O> serde;
 
-	public SerdeComparator(Serde<O> serde) {
+	public SerdeComparator(final Serde<O> serde) {
 		this.serde = serde;
 	}
 
 	@Override
-	public final int compare(byte[] o1, byte[] o2) {
-		boolean o1NullOrEmpty = o1 == null || o1.length == 0;
-		boolean o2NullOrEmpty = o2 == null || o2.length == 0;
+	public final int compare(final ByteBuf o1, final ByteBuf o2) {
+		final boolean o1NullOrEmpty = o1 == null || o1.readableBytes() == 0;
+		final boolean o2NullOrEmpty = o2 == null || o2.readableBytes() == 0;
 		if (o1NullOrEmpty && o2NullOrEmpty) {
 			return 0;
 		}
@@ -26,15 +27,15 @@ public class SerdeComparator<O> implements Comparator<byte[]> {
 			// fix buffer underflow
 			return 1;
 		}
-		Comparable<Object> co1 = toComparable(serde.fromBytes(o1));
-		Comparable<Object> co2 = toComparable(serde.fromBytes(o2));
+		final Comparable<Object> co1 = toComparable(serde.fromBuffer(o1));
+		final Comparable<Object> co2 = toComparable(serde.fromBuffer(o2));
 		return innerCompare(co1, co2);
 	}
 
 	/**
 	 * Override this to customize the comparation itself. E.g. inversing it.
 	 */
-	protected int innerCompare(Comparable<Object> co1, Comparable<Object> co2) {
+	protected int innerCompare(final Comparable<Object> co1, final Comparable<Object> co2) {
 		return co1.compareTo(co2);
 	}
 
@@ -43,7 +44,7 @@ public class SerdeComparator<O> implements Comparator<byte[]> {
 	 * object.
 	 */
 	@SuppressWarnings("unchecked")
-	protected Comparable<Object> toComparable(Object fromBytes) {
+	protected Comparable<Object> toComparable(final Object fromBytes) {
 		return (Comparable<Object>) fromBytes;
 	}
 

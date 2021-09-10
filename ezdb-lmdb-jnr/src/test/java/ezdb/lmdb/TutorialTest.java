@@ -54,8 +54,6 @@ import org.lmdbjava.GetOp;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
-import ezdb.lmdb.util.DirectBuffers;
-
 /**
  * Welcome to LmdbJava!
  *
@@ -251,7 +249,7 @@ public final class TutorialTest {
 			c.put(key, val);
 
 			// We can read from the Cursor by key.
-			c.get(DirectBuffers.wrap("cccc".getBytes()), GetOp.MDB_SET_RANGE);
+			c.get(wrap("cccc".getBytes()), GetOp.MDB_SET_RANGE);
 			assertThat(UTF_8.decode(c.key()).toString(), is("zzz"));
 			c.prev();
 			assertThat(UTF_8.decode(c.key()).toString(), is("ccc"));
@@ -296,6 +294,13 @@ public final class TutorialTest {
 		c.seek(MDB_LAST);
 
 		tx2.close();
+	}
+
+	public static ByteBuffer wrap(final byte[] bytes) {
+		final ByteBuffer directBuffer = ByteBuffer.allocateDirect(bytes.length);
+		directBuffer.put(bytes);
+		directBuffer.flip();
+		return directBuffer;
 	}
 
 	/**
