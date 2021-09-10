@@ -2,13 +2,12 @@ package ezdb.lmdb;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * An interface that allows us to inject either a JNI or pure-Java
@@ -19,10 +18,9 @@ import io.netty.buffer.ByteBuf;
  * 
  */
 public interface EzLmDbFactory {
-	public Env<ByteBuf> create(File path, EnvFlags... envFlags) throws IOException;
+	public Env<ByteBuffer> create(File path, EnvFlags... envFlags) throws IOException;
 
-	public Dbi<ByteBuf> open(String tableName, Env<ByteBuf> env, EzLmDbComparator comparator, DbiFlags... dbiFlags)
-			throws IOException;
+	public Dbi<ByteBuffer> open(String tableName, Env<ByteBuffer> env, EzLmDbComparator comparator, DbiFlags... dbiFlags) throws IOException;
 
 	public void destroy(File path) throws IOException;
 }

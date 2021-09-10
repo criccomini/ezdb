@@ -2,6 +2,7 @@ package ezdb.lmdb;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -26,10 +27,11 @@ import ezdb.serde.Serde;
 import ezdb.util.Util;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 
 public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
-	private final Env<ByteBuf> env;
-	private final Dbi<ByteBuf> db;
+	private final Env<ByteBuffer> env;
+	private final Dbi<ByteBuffer> db;
 	private final Serde<H> hashKeySerde;
 	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
@@ -71,7 +73,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		final ByteBuf valueBuffer = ByteBufAllocator.DEFAULT.directBuffer();
 		valueSerde.toBuffer(valueBuffer, value);
 		try {
-			db.put(keyBuffer, valueBuffer);
+			db.put(keyBuffer.nioBuffer(), valueBuffer.nioBuffer());
 		} finally {
 			keyBuffer.release(keyBuffer.refCnt());
 			valueBuffer.release(valueBuffer.refCnt());
@@ -85,17 +87,17 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public V get(final H hashKey, final R rangeKey) {
-		final Txn<ByteBuf> txn = env.txnRead();
+		final Txn<ByteBuffer> txn = env.txnRead();
 		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.directBuffer();
 		try {
 			Util.combine(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
-			final ByteBuf valueBytes = db.get(txn, keyBuffer);
+			final ByteBuffer valueBytes = db.get(txn, keyBuffer.nioBuffer());
 
 			if (valueBytes == null) {
 				return null;
 			}
 
-			return valueSerde.fromBuffer(valueBytes);
+			return valueSerde.fromBuffer(Unpooled.wrappedBuffer(valueBytes));
 		} finally {
 			keyBuffer.release(keyBuffer.refCnt());
 			txn.close();
@@ -541,7 +543,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		final ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer();
 		Util.combine(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 		try {
-			this.db.delete(buffer);
+			this.db.delete(buffer.nioBuffer());
 		} finally {
 			buffer.release(buffer.refCnt());
 		}
