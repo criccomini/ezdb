@@ -31,7 +31,6 @@
  */
 package ezdb.lmdb.util;
 
-import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -51,13 +50,13 @@ import io.netty.buffer.Unpooled;
  */
 public class LmDBJnrDBIterator implements DBIterator {
 
-	private final Env<ByteBuffer> env;
-	private final Dbi<ByteBuffer> dbi;
-	private final Txn<ByteBuffer> txn;
-	private final Cursor<ByteBuffer> cursor;
+	private final Env<ByteBuf> env;
+	private final Dbi<ByteBuf> dbi;
+	private final Txn<ByteBuf> txn;
+	private final Cursor<ByteBuf> cursor;
 	private boolean valid = false;
 
-	public LmDBJnrDBIterator(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
+	public LmDBJnrDBIterator(final Env<ByteBuf> env, final Dbi<ByteBuf> dbi) {
 		this.env = env;
 		this.dbi = dbi;
 		this.txn = env.txnRead();
@@ -83,7 +82,7 @@ public class LmDBJnrDBIterator implements DBIterator {
 
 	@Override
 	public void seek(final ByteBuf key) {
-		valid = cursor.get(key.nioBuffer(), GetOp.MDB_SET_RANGE);
+		valid = cursor.get(key, GetOp.MDB_SET_RANGE);
 	}
 
 	@Override
