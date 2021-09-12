@@ -95,6 +95,8 @@ public class Util {
 
 		hashKeyBytes.release(hashKeyBytes.refCnt());
 		rangeKeyBytes.release(rangeKeyBytes.refCnt());
+
+		buffer.clear();
 		return buffer;
 	}
 
