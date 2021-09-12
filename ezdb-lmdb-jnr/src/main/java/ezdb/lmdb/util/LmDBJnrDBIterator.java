@@ -42,8 +42,6 @@ import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
-import io.netty.buffer.Unpooled;
-
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
@@ -51,12 +49,14 @@ import io.netty.buffer.Unpooled;
 public class LmDBJnrDBIterator implements DBIterator {
 
 	private final Env<ByteBuffer> env;
+	private final Dbi<ByteBuffer> dbi;
 	private final Txn<ByteBuffer> txn;
 	private final Cursor<ByteBuffer> cursor;
 	private boolean valid = false;
 
 	public LmDBJnrDBIterator(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
 		this.env = env;
+		this.dbi = dbi;
 		this.txn = env.txnRead();
 		this.cursor = dbi.openCursor(txn);
 	}
@@ -98,16 +98,8 @@ public class LmDBJnrDBIterator implements DBIterator {
 		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		return new AbstractMap.SimpleImmutableEntry<ByteBuffer, ByteBuffer>(
-				Unpooled.wrappedBuffer(cursor.key()).nioBuffer(), Unpooled.wrappedBuffer(cursor.val()).nioBuffer());
-	}
-
-	@Override
-	public ByteBuffer peekNextKey() {
-		if (!valid) {
-			throw new NoSuchElementException();
-		}
-		return cursor.key();
+		return new AbstractMap.SimpleImmutableEntry<ByteBuffer, ByteBuffer>(cursor.key().duplicate(),
+				cursor.val().duplicate());
 	}
 
 	@Override
@@ -154,6 +146,21 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
+	public Map.Entry<ByteBuffer, ByteBuffer> prev() {
+		final Map.Entry<ByteBuffer, ByteBuffer> rc = peekPrev();
+		valid = cursor.prev();
+		return rc;
+	}
+
+	@Override
+	public ByteBuffer peekNextKey() {
+		if (!valid) {
+			throw new NoSuchElementException();
+		}
+		return cursor.key().duplicate();
+	}
+
+	@Override
 	public ByteBuffer peekPrevKey() {
 		valid = cursor.prev();
 		try {
@@ -165,13 +172,6 @@ public class LmDBJnrDBIterator implements DBIterator {
 				seekToFirst();
 			}
 		}
-	}
-
-	@Override
-	public Map.Entry<ByteBuffer, ByteBuffer> prev() {
-		final Map.Entry<ByteBuffer, ByteBuffer> rc = peekPrev();
-		valid = cursor.prev();
-		return rc;
 	}
 
 }
