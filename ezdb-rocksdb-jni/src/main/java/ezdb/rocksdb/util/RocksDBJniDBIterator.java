@@ -45,51 +45,68 @@ public class RocksDBJniDBIterator implements DBIterator {
 
 	private final RocksIterator iterator;
 
-	public RocksDBJniDBIterator(RocksIterator iterator) {
+	public RocksDBJniDBIterator(final RocksIterator iterator) {
 		this.iterator = iterator;
 	}
 
+	@Override
 	public void close() {
 		iterator.close();
 	}
 
+	@Override
 	public void remove() {
 		throw new UnsupportedOperationException();
 	}
 
-	public void seek(byte[] key) {
+	@Override
+	public void seek(final byte[] key) {
 		iterator.seek(key);
 	}
 
+	@Override
 	public void seekToFirst() {
 		iterator.seekToFirst();
 	}
 
+	@Override
 	public void seekToLast() {
 		iterator.seekToLast();
 	}
 
+	@Override
 	public Map.Entry<byte[], byte[]> peekNext() {
 		if (!iterator.isValid()) {
 			throw new NoSuchElementException();
 		}
-		return new AbstractMap.SimpleImmutableEntry<byte[], byte[]>(
-				iterator.key(), iterator.value());
+		return new AbstractMap.SimpleImmutableEntry<byte[], byte[]>(iterator.key(), iterator.value());
 	}
 
+	@Override
+	public byte[] peekNextKey() {
+		if (!iterator.isValid()) {
+			throw new NoSuchElementException();
+		}
+		return iterator.key();
+	}
+
+	@Override
 	public boolean hasNext() {
 		return iterator.isValid();
 	}
 
+	@Override
 	public Map.Entry<byte[], byte[]> next() {
-		Map.Entry<byte[], byte[]> rc = peekNext();
+		final Map.Entry<byte[], byte[]> rc = peekNext();
 		iterator.next();
 		return rc;
 	}
 
+	@Override
 	public boolean hasPrev() {
-		if (!iterator.isValid())
+		if (!iterator.isValid()) {
 			return false;
+		}
 		iterator.prev();
 		try {
 			return iterator.isValid();
@@ -102,6 +119,7 @@ public class RocksDBJniDBIterator implements DBIterator {
 		}
 	}
 
+	@Override
 	public Map.Entry<byte[], byte[]> peekPrev() {
 		iterator.prev();
 		try {
@@ -115,8 +133,23 @@ public class RocksDBJniDBIterator implements DBIterator {
 		}
 	}
 
+	@Override
+	public byte[] peekPrevKey() {
+		iterator.prev();
+		try {
+			return peekNextKey();
+		} finally {
+			if (iterator.isValid()) {
+				iterator.next();
+			} else {
+				iterator.seekToFirst();
+			}
+		}
+	}
+
+	@Override
 	public Map.Entry<byte[], byte[]> prev() {
-		Map.Entry<byte[], byte[]> rc = peekPrev();
+		final Map.Entry<byte[], byte[]> rc = peekPrev();
 		iterator.prev();
 		return rc;
 	}

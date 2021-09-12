@@ -26,6 +26,8 @@ public interface DBIterator extends Iterator<Map.Entry<byte[], byte[]>>, Closeab
 	 */
 	public Map.Entry<byte[], byte[]> peekNext();
 
+	public byte[] peekNextKey();
+
 	/**
 	 * @return true if there is a previous entry in the iteration.
 	 */
@@ -41,6 +43,8 @@ public interface DBIterator extends Iterator<Map.Entry<byte[], byte[]>>, Closeab
 	 *         iteration.
 	 */
 	public Map.Entry<byte[], byte[]> peekPrev();
+
+	public byte[] peekPrevKey();
 
 	/**
 	 * Repositions the iterator so it is at the end of of the Database.

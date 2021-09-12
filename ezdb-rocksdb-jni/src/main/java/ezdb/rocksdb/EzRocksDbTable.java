@@ -210,7 +210,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
-				peek) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, ByteBuffer.wrap(peek.getKey())) == 0;
+				peekKey) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, ByteBuffer.wrap(peekKey)) == 0;
 		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, null);
 		final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFrom, null,
 				iterator, checkKeys);
@@ -229,14 +229,14 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 					return true;
 				}
 				return iterator.hasPrev()
-						&& checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, iterator.peekPrev());
+						&& checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, iterator.peekPrevKey());
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
-					final Entry<byte[], byte[]> peekNext = iterator.peekNext();
-					if (peekNext != null) {
-						if (checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, peekNext)) {
+					final byte[] peekNextKey = iterator.peekNextKey();
+					if (peekNextKey != null) {
+						if (checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, peekNextKey)) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -284,7 +284,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		iterator.seek(keyBytesFrom.array());
 		Entry<byte[], byte[]> last = null;
 		while (iterator.hasNext() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
-				iterator.peekNext())) {
+				iterator.peekNextKey())) {
 			last = iterator.next();
 		}
 		// if there is no last one, there is nothing at all in the table
@@ -323,10 +323,10 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		}
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey, keyBytesFrom, keyBytesTo,
-				peek) -> {
-			final ByteBuffer peekKey = ByteBuffer.wrap(peek.getKey());
-			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0 && (fromRangeKey1 == null
-					|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKey) >= 0);
+				peekKey) -> {
+			final ByteBuffer peekKeyBuffer = ByteBuffer.wrap(peekKey);
+			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKeyBuffer) == 0 && (fromRangeKey1 == null
+					|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKeyBuffer) >= 0);
 		};
 		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom.array());
@@ -349,14 +349,14 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 					return true;
 				}
 				return iterator.hasPrev()
-						&& checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, iterator.peekPrev());
+						&& checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, iterator.peekPrevKey());
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
-					final Entry<byte[], byte[]> peekNext = iterator.peekNext();
-					if (peekNext != null) {
-						if (checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, peekNext)) {
+					final byte[] peekNextKey = iterator.peekNextKey();
+					if (peekNextKey != null) {
+						if (checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, peekNextKey)) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -405,13 +405,12 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		}
 		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey1, keyBytesFrom, keyBytesTo,
-				peek) -> {
-			final ByteBuffer peekKey = ByteBuffer.wrap(peek.getKey());
-			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0
-					&& (fromRangeKey1 == null
-							|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKey) >= 0)
+				peekKey) -> {
+			final ByteBuffer peekKeyBuffer = ByteBuffer.wrap(peekKey);
+			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKeyBuffer) == 0 && (fromRangeKey1 == null
+					|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKeyBuffer) >= 0)
 					&& (toRangeKey1 == null
-							|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo, peekKey) <= 0);
+							|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo, peekKeyBuffer) <= 0);
 		};
 		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		final ByteBuffer keyBytesTo = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
@@ -436,15 +435,15 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 					return true;
 				}
 				return iterator.hasPrev() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom,
-						keyBytesTo, iterator.peekPrev());
+						keyBytesTo, iterator.peekPrevKey());
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
-					final Entry<byte[], byte[]> peekNext = iterator.peekNext();
-					if (peekNext != null) {
+					final byte[] peekNextKey = iterator.peekNextKey();
+					if (peekNextKey != null) {
 						if (checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
-								peekNext)) {
+								peekNextKey)) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -686,7 +685,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	@FunctionalInterface
 	private interface CheckKeysFunction<H, R, V> {
 		boolean checkKeys(final H hashKey, final R fromRangeKey, final R toRangeKey, final ByteBuffer keyBytesFrom,
-				final ByteBuffer keyBytesTo, final Entry<byte[], byte[]> peek);
+				final ByteBuffer keyBytesTo, final byte[] peekKey);
 	}
 
 }
