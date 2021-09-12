@@ -18,6 +18,16 @@ public class IntegerSerde implements Serde<Integer> {
 	}
 
 	@Override
+	public Integer fromBuffer(final ByteBuffer buffer) {
+		return buffer.getInt(buffer.position());
+	}
+
+	@Override
+	public void toBuffer(final ByteBuffer buffer, final Integer obj) {
+		buffer.putInt(buffer.position(), obj);
+	}
+
+	@Override
 	public Integer fromBytes(final byte[] bytes) {
 		final ByteBuffer buffer = ByteBuffer.wrap(bytes);
 		return buffer.getInt();

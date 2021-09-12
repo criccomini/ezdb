@@ -1,5 +1,7 @@
 package ezdb.serde;
 
+import java.nio.ByteBuffer;
+
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -20,6 +22,19 @@ public interface Serde<O> {
 	default void toBuffer(final ByteBuf buffer, final O obj) {
 		final byte[] bytes = toBytes(obj);
 		buffer.writeBytes(bytes);
+	}
+
+	default O fromBuffer(final ByteBuffer buffer) {
+		final byte[] bytes = new byte[buffer.remaining()];
+		buffer.get(bytes);
+		buffer.flip();
+		return fromBytes(bytes);
+	}
+
+	default void toBuffer(final ByteBuffer buffer, final O obj) {
+		final byte[] bytes = toBytes(obj);
+		buffer.put(bytes);
+		buffer.flip();
 	}
 
 	public O fromBytes(byte[] bytes);

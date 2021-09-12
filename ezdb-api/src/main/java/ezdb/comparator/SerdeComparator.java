@@ -1,11 +1,11 @@
 package ezdb.comparator;
 
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 import ezdb.serde.Serde;
-import io.netty.buffer.ByteBuf;
 
-public class SerdeComparator<O> implements Comparator<ByteBuf> {
+public class SerdeComparator<O> implements Comparator<ByteBuffer> {
 
 	private final Serde<O> serde;
 
@@ -14,9 +14,9 @@ public class SerdeComparator<O> implements Comparator<ByteBuf> {
 	}
 
 	@Override
-	public final int compare(final ByteBuf o1, final ByteBuf o2) {
-		final boolean o1NullOrEmpty = o1 == null || o1.readableBytes() == 0;
-		final boolean o2NullOrEmpty = o2 == null || o2.readableBytes() == 0;
+	public final int compare(final ByteBuffer o1, final ByteBuffer o2) {
+		final boolean o1NullOrEmpty = o1 == null || o1.remaining() == 0;
+		final boolean o2NullOrEmpty = o2 == null || o2.remaining() == 0;
 		if (o1NullOrEmpty && o2NullOrEmpty) {
 			return 0;
 		}

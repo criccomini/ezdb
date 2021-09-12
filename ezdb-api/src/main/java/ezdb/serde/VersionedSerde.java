@@ -1,9 +1,11 @@
 package ezdb.serde;
 
+import java.nio.ByteBuffer;
+
 import ezdb.serde.VersionedSerde.Versioned;
+import ezdb.util.Util;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.Unpooled;
 
 /**
  * A wrapper serde that handles pre-pending some version number to a byte
@@ -40,6 +42,25 @@ public class VersionedSerde<O> implements Serde<Versioned<O>> {
 	}
 
 	@Override
+	public Versioned<O> fromBuffer(final ByteBuffer buffer) {
+		final int positionBefore = buffer.position();
+		final long version = LongSerde.get.fromBuffer(buffer);
+		Util.position(buffer, positionBefore + Long.BYTES);
+		final O object = objectSerde.fromBuffer(buffer);
+		Util.position(buffer, positionBefore);
+		return new Versioned<O>(object, version);
+	}
+
+	@Override
+	public void toBuffer(final ByteBuffer buffer, final Versioned<O> versioned) {
+		final int positionBefore = buffer.position();
+		LongSerde.get.toBuffer(buffer, versioned.getVersion());
+		Util.position(buffer, positionBefore + Long.BYTES);
+		objectSerde.toBuffer(buffer, versioned.getObj());
+		Util.position(buffer, positionBefore);
+	}
+
+	@Override
 	public byte[] toBytes(final Versioned<O> obj) {
 		final ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer();
 		try {
@@ -55,7 +76,7 @@ public class VersionedSerde<O> implements Serde<Versioned<O>> {
 
 	@Override
 	public Versioned<O> fromBytes(final byte[] bytes) {
-		final ByteBuf buffer = Unpooled.wrappedBuffer(bytes);
+		final ByteBuffer buffer = ByteBuffer.wrap(bytes);
 		return fromBuffer(buffer);
 	}
 

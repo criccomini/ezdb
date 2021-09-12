@@ -42,9 +42,6 @@ import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
@@ -82,8 +79,8 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
-	public void seek(final ByteBuf key) {
-		valid = cursor.get(key.nioBuffer(), GetOp.MDB_SET_RANGE);
+	public void seek(final ByteBuffer key) {
+		valid = cursor.get(key, GetOp.MDB_SET_RANGE);
 	}
 
 	@Override
@@ -97,12 +94,11 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<ByteBuf, ByteBuf> peekNext() {
+	public Map.Entry<ByteBuffer, ByteBuffer> peekNext() {
 		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		return new AbstractMap.SimpleImmutableEntry<ByteBuf, ByteBuf>(Unpooled.wrappedBuffer(cursor.key()),
-				Unpooled.wrappedBuffer(cursor.val()));
+		return new AbstractMap.SimpleImmutableEntry<ByteBuffer, ByteBuffer>(cursor.key(), cursor.val());
 	}
 
 	@Override
@@ -111,8 +107,8 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<ByteBuf, ByteBuf> next() {
-		final Map.Entry<ByteBuf, ByteBuf> rc = peekNext();
+	public Map.Entry<ByteBuffer, ByteBuffer> next() {
+		final Map.Entry<ByteBuffer, ByteBuffer> rc = peekNext();
 		valid = cursor.next();
 		return rc;
 	}
@@ -135,7 +131,7 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<ByteBuf, ByteBuf> peekPrev() {
+	public Map.Entry<ByteBuffer, ByteBuffer> peekPrev() {
 		valid = cursor.prev();
 		try {
 			return peekNext();
@@ -149,8 +145,8 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<ByteBuf, ByteBuf> prev() {
-		final Map.Entry<ByteBuf, ByteBuf> rc = peekPrev();
+	public Map.Entry<ByteBuffer, ByteBuffer> prev() {
+		final Map.Entry<ByteBuffer, ByteBuffer> rc = peekPrev();
 		valid = cursor.prev();
 		return rc;
 	}

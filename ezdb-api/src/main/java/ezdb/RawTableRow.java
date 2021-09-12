@@ -4,8 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Map.Entry;
 
 import ezdb.serde.Serde;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import ezdb.util.Util;
 
 public class RawTableRow<H, R, V> implements TableRow<H, R, V> {
 	private final LazyGetter<H> hashKey;
@@ -44,37 +43,41 @@ public class RawTableRow<H, R, V> implements TableRow<H, R, V> {
 			final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
 
 		// extract hashKeyBytes/rangeKeyBytes only if needed
-		final LazyGetter<Entry<ByteBuf, ByteBuf>> hashKeyBytes_rangeKeyBytes = new LazyGetter<Entry<ByteBuf, ByteBuf>>() {
+		final LazyGetter<Entry<ByteBuffer, ByteBuffer>> hashKeyBytes_rangeKeyBytes = new LazyGetter<Entry<ByteBuffer, ByteBuffer>>() {
 			@Override
-			protected Entry<ByteBuf, ByteBuf> internalGet() {
-				final ByteBuf compoundKeyBytes = Unpooled.wrappedBuffer(rawRow.getKey());
+			protected Entry<ByteBuffer, ByteBuffer> internalGet() {
+				final ByteBuffer compoundKeyBytes = rawRow.getKey();
 				int index = 0;
 				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
 				index += Integer.BYTES;
-				final ByteBuf hashKeyBytes = compoundKeyBytes.slice(index, hashKeyBytesLength);
+				final ByteBuffer hashKeyBytes = Util.slice(compoundKeyBytes, index, hashKeyBytesLength);
 				index += hashKeyBytesLength;
 				final int rangeKeyBytesLength = compoundKeyBytes.getInt(index);
 				index += Integer.BYTES;
-				final ByteBuf rangeKeyBytes;
+				final ByteBuffer rangeKeyBytes;
 
 				if (rangeKeyBytesLength > 0) {
-					rangeKeyBytes = compoundKeyBytes.slice(index, rangeKeyBytesLength);
+					rangeKeyBytes = Util.slice(compoundKeyBytes, index, rangeKeyBytesLength);
 				} else {
 					rangeKeyBytes = null;
 				}
-				return new Entry<ByteBuf, ByteBuf>() {
+				return new Entry<ByteBuffer, ByteBuffer>() {
 					@Override
-					public ByteBuf setValue(final ByteBuf value) {
+					public ByteBuffer setValue(final ByteBuffer value) {
 						throw new UnsupportedOperationException();
 					}
 
 					@Override
-					public ByteBuf getValue() {
+					public ByteBuffer getValue() {
+						if (rangeKeyBytes != null) {
+							rangeKeyBytes.clear();
+						}
 						return rangeKeyBytes;
 					}
 
 					@Override
-					public ByteBuf getKey() {
+					public ByteBuffer getKey() {
+						hashKeyBytes.clear();
 						return hashKeyBytes;
 					}
 				};
@@ -84,19 +87,17 @@ public class RawTableRow<H, R, V> implements TableRow<H, R, V> {
 		final LazyGetter<H> hashKey = new LazyGetter<H>() {
 			@Override
 			protected H internalGet() {
-				final ByteBuf hashKeyBytes = hashKeyBytes_rangeKeyBytes.get().getKey();
-				hashKeyBytes.resetReaderIndex();
+				final ByteBuffer hashKeyBytes = hashKeyBytes_rangeKeyBytes.get().getKey();
 				return hashKeySerde.fromBuffer(hashKeyBytes);
 			}
 		};
 		final LazyGetter<R> rangeKey = new LazyGetter<R>() {
 			@Override
 			protected R internalGet() {
-				final ByteBuf rangeKeyBytes = hashKeyBytes_rangeKeyBytes.get().getValue();
+				final ByteBuffer rangeKeyBytes = hashKeyBytes_rangeKeyBytes.get().getValue();
 				if (rangeKeyBytes == null) {
 					return null;
 				} else {
-					rangeKeyBytes.resetReaderIndex();
 					return rangeKeySerde.fromBuffer(rangeKeyBytes);
 				}
 			}
@@ -104,80 +105,7 @@ public class RawTableRow<H, R, V> implements TableRow<H, R, V> {
 		final LazyGetter<V> value = new LazyGetter<V>() {
 			@Override
 			protected V internalGet() {
-				final ByteBuf valueBytes = Unpooled.wrappedBuffer(rawRow.getValue());
-				valueBytes.resetReaderIndex();
-				return valueSerde.fromBuffer(valueBytes);
-			}
-		};
-		return new RawTableRow<>(hashKey, rangeKey, value);
-	}
-
-	public static <H, R, V> RawTableRow<H, R, V> valueOfBuf(final Entry<ByteBuf, ByteBuf> rawRow,
-			final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
-
-		// extract hashKeyBytes/rangeKeyBytes only if needed
-		final LazyGetter<Entry<ByteBuf, ByteBuf>> hashKeyBytes_rangeKeyBytes = new LazyGetter<Entry<ByteBuf, ByteBuf>>() {
-			@Override
-			protected Entry<ByteBuf, ByteBuf> internalGet() {
-				final ByteBuf compoundKeyBytes = rawRow.getKey();
-				int index = 0;
-				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
-				index += Integer.BYTES;
-				final ByteBuf hashKeyBytes = compoundKeyBytes.slice(index, hashKeyBytesLength);
-				index += hashKeyBytesLength;
-				final int rangeKeyBytesLength = compoundKeyBytes.getInt(index);
-				index += Integer.BYTES;
-				final ByteBuf rangeKeyBytes;
-
-				if (rangeKeyBytesLength > 0) {
-					rangeKeyBytes = compoundKeyBytes.slice(index, rangeKeyBytesLength);
-				} else {
-					rangeKeyBytes = null;
-				}
-				return new Entry<ByteBuf, ByteBuf>() {
-					@Override
-					public ByteBuf setValue(final ByteBuf value) {
-						throw new UnsupportedOperationException();
-					}
-
-					@Override
-					public ByteBuf getValue() {
-						return rangeKeyBytes;
-					}
-
-					@Override
-					public ByteBuf getKey() {
-						return hashKeyBytes;
-					}
-				};
-			}
-		};
-
-		final LazyGetter<H> hashKey = new LazyGetter<H>() {
-			@Override
-			protected H internalGet() {
-				final ByteBuf hashKeyBytes = hashKeyBytes_rangeKeyBytes.get().getKey();
-				hashKeyBytes.resetReaderIndex();
-				return hashKeySerde.fromBuffer(hashKeyBytes);
-			}
-		};
-		final LazyGetter<R> rangeKey = new LazyGetter<R>() {
-			@Override
-			protected R internalGet() {
-				final ByteBuf rangeKeyBytes = hashKeyBytes_rangeKeyBytes.get().getValue();
-				if (rangeKeyBytes == null) {
-					return null;
-				} else {
-					rangeKeyBytes.resetReaderIndex();
-					return rangeKeySerde.fromBuffer(rangeKeyBytes);
-				}
-			}
-		};
-		final LazyGetter<V> value = new LazyGetter<V>() {
-			@Override
-			protected V internalGet() {
-				final ByteBuf valueBytes = rawRow.getValue();
-				valueBytes.resetReaderIndex();
+				final ByteBuffer valueBytes = rawRow.getValue();
 				return valueSerde.fromBuffer(valueBytes);
 			}
 		};
@@ -188,37 +116,41 @@ public class RawTableRow<H, R, V> implements TableRow<H, R, V> {
 			final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
 
 		// extract hashKeyBytes/rangeKeyBytes only if needed
-		final LazyGetter<Entry<ByteBuf, ByteBuf>> hashKeyBytes_rangeKeyBytes = new LazyGetter<Entry<ByteBuf, ByteBuf>>() {
+		final LazyGetter<Entry<ByteBuffer, ByteBuffer>> hashKeyBytes_rangeKeyBytes = new LazyGetter<Entry<ByteBuffer, ByteBuffer>>() {
 			@Override
-			protected Entry<ByteBuf, ByteBuf> internalGet() {
-				final ByteBuf compoundKeyBytes = Unpooled.wrappedBuffer(rawRow.getKey());
+			protected Entry<ByteBuffer, ByteBuffer> internalGet() {
+				final ByteBuffer compoundKeyBytes = ByteBuffer.wrap(rawRow.getKey());
 				int index = 0;
 				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
 				index += Integer.BYTES;
-				final ByteBuf hashKeyBytes = compoundKeyBytes.slice(index, hashKeyBytesLength);
+				final ByteBuffer hashKeyBytes = Util.slice(compoundKeyBytes, index, hashKeyBytesLength);
 				index += hashKeyBytesLength;
 				final int rangeKeyBytesLength = compoundKeyBytes.getInt(index);
 				index += Integer.BYTES;
-				final ByteBuf rangeKeyBytes;
+				final ByteBuffer rangeKeyBytes;
 
 				if (rangeKeyBytesLength > 0) {
-					rangeKeyBytes = compoundKeyBytes.slice(index, rangeKeyBytesLength);
+					rangeKeyBytes = Util.slice(compoundKeyBytes, index, rangeKeyBytesLength);
 				} else {
 					rangeKeyBytes = null;
 				}
-				return new Entry<ByteBuf, ByteBuf>() {
+				return new Entry<ByteBuffer, ByteBuffer>() {
 					@Override
-					public ByteBuf setValue(final ByteBuf value) {
+					public ByteBuffer setValue(final ByteBuffer value) {
 						throw new UnsupportedOperationException();
 					}
 
 					@Override
-					public ByteBuf getValue() {
+					public ByteBuffer getValue() {
+						if (rangeKeyBytes != null) {
+							rangeKeyBytes.clear();
+						}
 						return rangeKeyBytes;
 					}
 
 					@Override
-					public ByteBuf getKey() {
+					public ByteBuffer getKey() {
+						hashKeyBytes.clear();
 						return hashKeyBytes;
 					}
 				};
@@ -228,14 +160,14 @@ public class RawTableRow<H, R, V> implements TableRow<H, R, V> {
 		final LazyGetter<H> hashKey = new LazyGetter<H>() {
 			@Override
 			protected H internalGet() {
-				final ByteBuf hashKeyBytes = hashKeyBytes_rangeKeyBytes.get().getKey();
+				final ByteBuffer hashKeyBytes = hashKeyBytes_rangeKeyBytes.get().getKey();
 				return hashKeySerde.fromBuffer(hashKeyBytes);
 			}
 		};
 		final LazyGetter<R> rangeKey = new LazyGetter<R>() {
 			@Override
 			protected R internalGet() {
-				final ByteBuf rangeKeyBytes = hashKeyBytes_rangeKeyBytes.get().getValue();
+				final ByteBuffer rangeKeyBytes = hashKeyBytes_rangeKeyBytes.get().getValue();
 				if (rangeKeyBytes == null) {
 					return null;
 				} else {
@@ -246,7 +178,8 @@ public class RawTableRow<H, R, V> implements TableRow<H, R, V> {
 		final LazyGetter<V> value = new LazyGetter<V>() {
 			@Override
 			protected V internalGet() {
-				return valueSerde.fromBytes(rawRow.getValue());
+				final byte[] valueBytes = rawRow.getValue();
+				return valueSerde.fromBytes(valueBytes);
 			}
 		};
 		return new RawTableRow<>(hashKey, rangeKey, value);

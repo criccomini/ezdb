@@ -1,5 +1,6 @@
 package ezdb.serde;
 
+import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -43,6 +44,16 @@ public class TypeDelegateSerde<O> implements Serde<O> {
 
 	@Override
 	public void toBuffer(final ByteBuf buffer, final O obj) {
+		delegate.toBuffer(buffer, obj);
+	}
+
+	@Override
+	public O fromBuffer(final ByteBuffer buffer) {
+		return delegate.fromBuffer(buffer);
+	}
+
+	@Override
+	public void toBuffer(final ByteBuffer buffer, final O obj) {
 		delegate.toBuffer(buffer, obj);
 	}
 

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 import org.junit.Before;
@@ -15,7 +16,6 @@ import ezdb.TableIterator;
 import ezdb.comparator.LexicographicalComparator;
 import ezdb.serde.IntegerSerde;
 import ezdb.treemap.bytes.BytesTreeMapTable;
-import io.netty.buffer.ByteBuf;
 
 /**
  * This is a little test that mostly just compares random behavior between a
@@ -32,7 +32,7 @@ public class TestEzLmDbJniTorture {
 	public static final int ITERATIONS = 50000;
 	public static final String tableName = "torture";
 
-	public Db<ByteBuf> db;
+	public Db<ByteBuffer> db;
 
 	@Before
 	public void before() {
@@ -56,9 +56,9 @@ public class TestEzLmDbJniTorture {
 
 	public static class TortureRunnable implements Runnable {
 		private final int offset;
-		private final Db<ByteBuf> db;
+		private final Db<ByteBuffer> db;
 
-		public TortureRunnable(final int threadId, final Db<ByteBuf> db) {
+		public TortureRunnable(final int threadId, final Db<ByteBuffer> db) {
 			this.offset = threadId * 1000;
 			this.db = db;
 		}

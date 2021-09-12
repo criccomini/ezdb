@@ -59,7 +59,8 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
 		try {
-			writeBatch.put(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey), valueSerde.toBytes(value));
+			writeBatch.put(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey),
+					valueSerde.toBytes(value));
 		} catch (final RocksDBException e) {
 			throw new RuntimeException(e);
 		}
@@ -68,7 +69,7 @@ public class EzRocksDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
 		try {
-			writeBatch.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
+			writeBatch.delete(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
 		} catch (final RocksDBException e) {
 			throw new RuntimeException(e);
 		}

@@ -2,6 +2,7 @@ package ezdb.leveldb;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,6 @@ import ezdb.Table;
 import ezdb.comparator.LexicographicalComparator;
 import ezdb.serde.ByteSerde;
 import ezdb.serde.Serde;
-import io.netty.buffer.ByteBuf;
 
 /**
  * An implementation of Db that uses LevelDb tables to persist data. Each
@@ -25,7 +25,7 @@ import io.netty.buffer.ByteBuf;
  * @author criccomini
  * 
  */
-public class EzLevelDb implements Db<ByteBuf> {
+public class EzLevelDb implements Db<ByteBuffer> {
 	private final File root;
 	private final Map<String, RangeTable<?, ?, ?>> cache;
 	private final EzLevelDbFactory factory;
@@ -67,8 +67,8 @@ public class EzLevelDb implements Db<ByteBuf> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <H, R, V> RangeTable<H, R, V> getTable(final String tableName, final Serde<H> hashKeySerde,
-			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuf> hashKeyComparator,
-			final Comparator<ByteBuf> rangeKeyComparator) {
+			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuffer> hashKeyComparator,
+			final Comparator<ByteBuffer> rangeKeyComparator) {
 		synchronized (cache) {
 			RangeTable<?, ?, ?> table = cache.get(tableName);
 

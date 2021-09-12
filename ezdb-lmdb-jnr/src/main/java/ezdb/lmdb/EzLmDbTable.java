@@ -26,7 +26,6 @@ import ezdb.serde.Serde;
 import ezdb.util.Util;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.Unpooled;
 
 public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	private final Env<ByteBuffer> env;
@@ -34,12 +33,12 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	private final Serde<H> hashKeySerde;
 	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
-	private final Comparator<ByteBuf> hashKeyComparator;
-	private final Comparator<ByteBuf> rangeKeyComparator;
+	private final Comparator<ByteBuffer> hashKeyComparator;
+	private final Comparator<ByteBuffer> rangeKeyComparator;
 
 	public EzLmDbTable(final File path, final EzLmDbFactory factory, final Serde<H> hashKeySerde,
-			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuf> hashKeyComparator,
-			final Comparator<ByteBuf> rangeKeyComparator) {
+			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuffer> hashKeyComparator,
+			final Comparator<ByteBuffer> rangeKeyComparator) {
 		this.hashKeySerde = hashKeySerde;
 		this.rangeKeySerde = rangeKeySerde;
 		this.valueSerde = valueSerde;
@@ -68,7 +67,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
 		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+		Util.combineBuf(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 		final ByteBuf valueBuffer = ByteBufAllocator.DEFAULT.directBuffer();
 		valueSerde.toBuffer(valueBuffer, value);
 		try {
@@ -89,14 +88,14 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		final Txn<ByteBuffer> txn = env.txnRead();
 		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.directBuffer();
 		try {
-			Util.combine(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+			Util.combineBuf(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 			final ByteBuffer valueBytes = db.get(txn, keyBuffer.nioBuffer());
 
 			if (valueBytes == null) {
 				return null;
 			}
 
-			return valueSerde.fromBuffer(Unpooled.wrappedBuffer(valueBytes));
+			return valueSerde.fromBuffer(valueBytes);
 		} finally {
 			keyBuffer.release(keyBuffer.refCnt());
 			txn.close();
@@ -107,19 +106,20 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	public TableIterator<H, R, V> range(final H hashKey) {
 		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, null);
-		iterator.seek(keyBytesFrom);
+		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, null);
+		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
+		iterator.seek(keyBytesFromBuffer);
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 			@Override
 			public boolean hasNext() {
-				return iterator.hasNext()
-						&& Util.compareKeys(hashKeyComparator, null, keyBytesFrom, iterator.peekNext().getKey()) == 0;
+				return iterator.hasNext() && Util.compareKeys(hashKeyComparator, null, keyBytesFromBuffer,
+						iterator.peekNext().getKey()) == 0;
 			}
 
 			@Override
 			public TableRow<H, R, V> next() {
 				if (hasNext()) {
-					return RawTableRow.valueOfBuf(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+					return RawTableRow.valueOfBuffer(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -149,19 +149,20 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		}
 		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		iterator.seek(keyBytesFrom);
+		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
+		iterator.seek(keyBytesFromBuffer);
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 			@Override
 			public boolean hasNext() {
-				return iterator.hasNext()
-						&& Util.compareKeys(hashKeyComparator, null, keyBytesFrom, iterator.peekNext().getKey()) == 0;
+				return iterator.hasNext() && Util.compareKeys(hashKeyComparator, null, keyBytesFromBuffer,
+						iterator.peekNext().getKey()) == 0;
 			}
 
 			@Override
 			public TableRow<H, R, V> next() {
 				if (hasNext()) {
-					return RawTableRow.valueOfBuf(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+					return RawTableRow.valueOfBuffer(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -191,21 +192,23 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		}
 		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
 		final ByteBuf keyBytesTo = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBytesTo, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
-		iterator.seek(keyBytesFrom);
+		Util.combineBuf(keyBytesTo, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+		final ByteBuffer keyBytesToBuffer = keyBytesTo.nioBuffer();
+		iterator.seek(keyBytesFromBuffer);
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 			@Override
 			public boolean hasNext() {
-				return iterator.hasNext() && Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo,
+				return iterator.hasNext() && Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesToBuffer,
 						iterator.peekNext().getKey()) >= 0;
 			}
 
 			@Override
 			public TableRow<H, R, V> next() {
 				if (hasNext()) {
-					return RawTableRow.valueOfBuf(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+					return RawTableRow.valueOfBuffer(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -235,8 +238,9 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
 				peek) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peek.getKey()) == 0;
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, null);
-		final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFrom, null,
+		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, null);
+		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
+		final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFromBuffer, null,
 				iterator, checkKeys);
 		if (emptyIterator != null) {
 			keyBytesFrom.release(keyBytesFrom.refCnt());
@@ -254,14 +258,14 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 					return true;
 				}
 				return iterator.hasPrev()
-						&& checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, iterator.peekPrev());
+						&& checkKeys.checkKeys(hashKey, null, null, keyBytesFromBuffer, null, iterator.peekPrev());
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
-					final Entry<ByteBuf, ByteBuf> peekNext = iterator.peekNext();
+					final Entry<ByteBuffer, ByteBuffer> peekNext = iterator.peekNext();
 					if (peekNext != null) {
-						if (checkKeys.checkKeys(hashKey, null, null, keyBytesFrom, null, peekNext)) {
+						if (checkKeys.checkKeys(hashKey, null, null, keyBytesFromBuffer, null, peekNext)) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -275,10 +279,10 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public TableRow<H, R, V> next() {
 				if (useFixFirst()) {
 					fixFirst = false;
-					return RawTableRow.valueOfBuf(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+					return RawTableRow.valueOfBuffer(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
 				}
 				if (hasNext()) {
-					return RawTableRow.valueOfBuf(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+					return RawTableRow.valueOfBuffer(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -305,10 +309,10 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	private TableIterator<H, R, V> reverseSeekToLast(final H hashKey, final R fromRangeKey, final R toRangeKey,
-			final ByteBuf keyBytesFrom, final ByteBuf keyBytesTo, final DBIterator iterator,
+			final ByteBuffer keyBytesFrom, final ByteBuffer keyBytesTo, final DBIterator iterator,
 			final CheckKeysFunction<H, R, V> checkKeys) {
 		iterator.seek(keyBytesFrom);
-		Entry<ByteBuf, ByteBuf> last = null;
+		Entry<ByteBuffer, ByteBuffer> last = null;
 		while (iterator.hasNext() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
 				iterator.peekNext())) {
 			last = iterator.next();
@@ -350,18 +354,20 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey, keyBytesFrom, keyBytesTo,
 				peek) -> {
-			final ByteBuf peekKey = peek.getKey();
+			final ByteBuffer peekKey = peek.getKey();
 			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0 && (fromRangeKey1 == null
 					|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKey) >= 0);
 		};
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		iterator.seek(keyBytesFrom);
+		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
+		iterator.seek(keyBytesFromBuffer);
 		if (!iterator.hasNext() || fromRangeKey == null) {
 			final ByteBuf keyBytesFromForSeekLast = ByteBufAllocator.DEFAULT.directBuffer();
-			Util.combine(keyBytesFromForSeekLast, hashKeySerde, rangeKeySerde, hashKey, null);
-			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFromForSeekLast,
-					null, iterator, checkKeys);
+			Util.combineBuf(keyBytesFromForSeekLast, hashKeySerde, rangeKeySerde, hashKey, null);
+			final ByteBuffer keyBytesFromForSeekLastBuffer = keyBytesFromForSeekLast.nioBuffer();
+			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null,
+					keyBytesFromForSeekLastBuffer, null, iterator, checkKeys);
 			if (emptyIterator != null) {
 				keyBytesFrom.release(keyBytesFrom.refCnt());
 				keyBytesFromForSeekLast.release(keyBytesFromForSeekLast.refCnt());
@@ -378,15 +384,15 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 				if (useFixFirst()) {
 					return true;
 				}
-				return iterator.hasPrev()
-						&& checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, iterator.peekPrev());
+				return iterator.hasPrev() && checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFromBuffer, null,
+						iterator.peekPrev());
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
-					final Entry<ByteBuf, ByteBuf> peekNext = iterator.peekNext();
+					final Entry<ByteBuffer, ByteBuffer> peekNext = iterator.peekNext();
 					if (peekNext != null) {
-						if (checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFrom, null, peekNext)) {
+						if (checkKeys.checkKeys(hashKey, fromRangeKey, null, keyBytesFromBuffer, null, peekNext)) {
 							return true;
 						} else {
 							fixFirst = false;
@@ -400,10 +406,10 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public TableRow<H, R, V> next() {
 				if (useFixFirst()) {
 					fixFirst = false;
-					return RawTableRow.valueOfBuf(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+					return RawTableRow.valueOfBuffer(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
 				}
 				if (hasNext()) {
-					return RawTableRow.valueOfBuf(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+					return RawTableRow.valueOfBuffer(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -435,28 +441,28 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
 		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
-		final CheckKeysFunction<H, R, V> checkKeys = new CheckKeysFunction<H, R, V>() {
-			@Override
-			public boolean checkKeys(final H hashKey, final R fromRangeKey, final R toRangeKey,
-					final ByteBuf keyBytesFrom, final ByteBuf keyBytesTo, final Entry<ByteBuf, ByteBuf> peek) {
-				final ByteBuf peekKey = peek.getKey();
-				return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0
-						&& (fromRangeKey == null
-								|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKey) >= 0)
-						&& (toRangeKey == null
-								|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo, peekKey) <= 0);
-			}
+		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey1, keyBytesFrom, keyBytesTo,
+				peek) -> {
+			final ByteBuffer peekKey = peek.getKey();
+			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0
+					&& (fromRangeKey1 == null
+							|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKey) >= 0)
+					&& (toRangeKey1 == null
+							|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo, peekKey) <= 0);
 		};
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
 		final ByteBuf keyBytesTo = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBytesTo, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
-		iterator.seek(keyBytesFrom);
+		Util.combineBuf(keyBytesTo, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+		final ByteBuffer keyBytesToBuffer = keyBytesTo.nioBuffer();
+		iterator.seek(keyBytesFromBuffer);
 		if (!iterator.hasNext() || fromRangeKey == null) {
 			final ByteBuf keyBytesFromForSeekLast = ByteBufAllocator.DEFAULT.directBuffer();
-			Util.combine(keyBytesFromForSeekLast, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+			Util.combineBuf(keyBytesFromForSeekLast, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+			final ByteBuffer keyBytesFromForSeekLastBuffer = keyBytesFromForSeekLast.nioBuffer();
 			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, toRangeKey,
-					keyBytesFromForSeekLast, keyBytesTo, iterator, checkKeys);
+					keyBytesFromForSeekLastBuffer, keyBytesToBuffer, iterator, checkKeys);
 			if (emptyIterator != null) {
 				keyBytesFrom.release(keyBytesFrom.refCnt());
 				keyBytesTo.release(keyBytesTo.refCnt());
@@ -474,15 +480,15 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 				if (useFixFirst()) {
 					return true;
 				}
-				return iterator.hasPrev() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom,
-						keyBytesTo, iterator.peekPrev());
+				return iterator.hasPrev() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFromBuffer,
+						keyBytesToBuffer, iterator.peekPrev());
 			}
 
 			private boolean useFixFirst() {
 				if (fixFirst && iterator.hasNext()) {
-					final Entry<ByteBuf, ByteBuf> peekNext = iterator.peekNext();
+					final Entry<ByteBuffer, ByteBuffer> peekNext = iterator.peekNext();
 					if (peekNext != null) {
-						if (checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
+						if (checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFromBuffer, keyBytesToBuffer,
 								peekNext)) {
 							return true;
 						} else {
@@ -497,10 +503,10 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public TableRow<H, R, V> next() {
 				if (useFixFirst()) {
 					fixFirst = false;
-					return RawTableRow.valueOfBuf(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+					return RawTableRow.valueOfBuffer(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
 				}
 				if (hasNext()) {
-					return RawTableRow.valueOfBuf(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+					return RawTableRow.valueOfBuffer(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -535,7 +541,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
 		final ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+		Util.combineBuf(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 		try {
 			this.db.delete(buffer.nioBuffer());
 		} finally {
@@ -728,8 +734,8 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@FunctionalInterface
 	private interface CheckKeysFunction<H, R, V> {
-		boolean checkKeys(final H hashKey, final R fromRangeKey, final R toRangeKey, final ByteBuf keyBytesFrom,
-				final ByteBuf keyBytesTo, final Entry<ByteBuf, ByteBuf> peek);
+		boolean checkKeys(final H hashKey, final R fromRangeKey, final R toRangeKey, final ByteBuffer keyBytesFrom,
+				final ByteBuffer keyBytesTo, final Entry<ByteBuffer, ByteBuffer> peek);
 	}
 
 }

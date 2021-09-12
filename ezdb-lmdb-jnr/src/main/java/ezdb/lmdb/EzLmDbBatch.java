@@ -61,7 +61,7 @@ public class EzLmDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
 		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.directBuffer();
-		Util.combine(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+		Util.combineBuf(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 		final ByteBuf valueBuffer = ByteBufAllocator.DEFAULT.directBuffer();
 		valueSerde.toBuffer(valueBuffer, value);
 		try {
@@ -76,7 +76,7 @@ public class EzLmDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	public void delete(final H hashKey, final R rangeKey) {
 		final ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer();
 		try {
-			Util.combine(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+			Util.combineBuf(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 			db.delete(txn, buffer.nioBuffer());
 		} finally {
 			buffer.release(buffer.refCnt());

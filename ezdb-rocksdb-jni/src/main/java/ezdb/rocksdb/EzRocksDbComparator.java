@@ -1,12 +1,12 @@
 package ezdb.rocksdb;
 
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 import org.rocksdb.ComparatorOptions;
 import org.rocksdb.Slice;
 
 import ezdb.util.Util;
-import io.netty.buffer.ByteBuf;
 
 /**
  * LevelDb provides a comparator interface that we can use to handle hash/range
@@ -18,11 +18,11 @@ import io.netty.buffer.ByteBuf;
 public class EzRocksDbComparator extends org.rocksdb.Comparator {
 	public static final String name = EzRocksDbComparator.class.toString();
 
-	private final Comparator<ByteBuf> hashKeyComparator;
-	private final Comparator<ByteBuf> rangeKeyComparator;
+	private final Comparator<ByteBuffer> hashKeyComparator;
+	private final Comparator<ByteBuffer> rangeKeyComparator;
 
-	public EzRocksDbComparator(final Comparator<ByteBuf> hashKeyComparator,
-			final Comparator<ByteBuf> rangeKeyComparator) {
+	public EzRocksDbComparator(final Comparator<ByteBuffer> hashKeyComparator,
+			final Comparator<ByteBuffer> rangeKeyComparator) {
 		super(new ComparatorOptions());
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
@@ -30,7 +30,8 @@ public class EzRocksDbComparator extends org.rocksdb.Comparator {
 
 	@Override
 	public int compare(final Slice a, final Slice b) {
-		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, a.data(), b.data());
+		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, ByteBuffer.wrap(a.data()),
+				ByteBuffer.wrap(b.data()));
 	}
 
 	@Override

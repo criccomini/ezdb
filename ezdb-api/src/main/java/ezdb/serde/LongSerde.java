@@ -25,6 +25,22 @@ public class LongSerde implements Serde<Long> {
 	}
 
 	@Override
+	public Long fromBuffer(final ByteBuffer buffer) {
+		if (buffer == null || buffer.remaining() == 0) {
+			return null;
+		}
+		return buffer.getLong(buffer.position());
+	}
+
+	@Override
+	public void toBuffer(final ByteBuffer buffer, final Long obj) {
+		if (obj == null) {
+			return;
+		}
+		buffer.putLong(buffer.position(), obj);
+	}
+
+	@Override
 	public Long fromBytes(final byte[] bytes) {
 		if (bytes == null || bytes.length == 0) {
 			return null;

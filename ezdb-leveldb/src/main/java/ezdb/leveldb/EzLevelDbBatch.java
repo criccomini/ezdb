@@ -49,13 +49,13 @@ public class EzLevelDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
 		final byte[] valueBytes = valueSerde.toBytes(value);
-		final byte[] keyBytes = Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+		final byte[] keyBytes = Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 		writeBatch.put(keyBytes, valueBytes);
 	}
 
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
-		writeBatch.delete(Util.combine(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
+		writeBatch.delete(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
 	}
 
 }

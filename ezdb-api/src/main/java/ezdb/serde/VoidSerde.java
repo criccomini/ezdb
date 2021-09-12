@@ -1,5 +1,7 @@
 package ezdb.serde;
 
+import java.nio.ByteBuffer;
+
 import io.netty.buffer.ByteBuf;
 
 public final class VoidSerde implements Serde<Void> {
@@ -7,6 +9,16 @@ public final class VoidSerde implements Serde<Void> {
 	public static final VoidSerde get = new VoidSerde();
 
 	private VoidSerde() {
+	}
+
+	@Override
+	public Void fromBuffer(final ByteBuffer buffer) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void toBuffer(final ByteBuffer buffer, final Void obj) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

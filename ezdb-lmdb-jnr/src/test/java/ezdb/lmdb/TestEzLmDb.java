@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -29,11 +30,10 @@ import ezdb.serde.SerializingSerde;
 import ezdb.serde.StringSerde;
 import ezdb.serde.VersionedSerde;
 import ezdb.serde.VersionedSerde.Versioned;
-import io.netty.buffer.ByteBuf;
 
 public class TestEzLmDb {
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLmDb.class.getSimpleName());
-	protected Db<ByteBuf> ezdb;
+	protected Db<ByteBuffer> ezdb;
 	protected RangeTable<Integer, Integer, Integer> table;
 
 	protected static final String HASHKEY_ONE = "1";
@@ -260,11 +260,11 @@ public class TestEzLmDb {
 	public void testCustomRangeComparator() {
 		final RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator",
 				IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new LexicographicalComparator(),
-				new Comparator<ByteBuf>() {
+				new Comparator<ByteBuffer>() {
 					// Let's do things in reverse lexicographical order.
 					@Override
-					public int compare(final ByteBuf o1, final ByteBuf o2) {
-						return -1 * o1.nioBuffer().compareTo(o2.nioBuffer());
+					public int compare(final ByteBuffer o1, final ByteBuffer o2) {
+						return -1 * o1.compareTo(o2);
 					}
 				});
 

@@ -1,16 +1,65 @@
 package ezdb.util;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 import ezdb.serde.Serde;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.Unpooled;
 
 public class Util {
 
-	public static <H, R> void combine(final ByteBuf buffer, final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
-			final H hashKey, final R rangeKey) {
+	private static final ISliceInvoker SLICE_INVOKER;
+
+	static {
+		SLICE_INVOKER = newSliceInvoker();
+	}
+
+	private static ISliceInvoker newSliceInvoker() {
+		try {
+			// java >= 13
+			final Method sliceMethod = java.nio.ByteBuffer.class.getDeclaredMethod("slice", int.class, int.class);
+			final MethodHandle sliceInvoker = MethodHandles.lookup().unreflect(sliceMethod);
+			return (buffer, position, length) -> {
+				try {
+					return (java.nio.ByteBuffer) sliceInvoker.invoke(buffer, position, length);
+				} catch (final Throwable e) {
+					throw new RuntimeException(e);
+				}
+			};
+		} catch (final Throwable e) {
+			// java < 13
+			return (buffer, position, length) -> {
+				final java.nio.ByteBuffer duplicate = buffer.duplicate();
+				position(duplicate, position);
+				duplicate.limit(position + length);
+				return duplicate.slice();
+			};
+		}
+	}
+
+	@FunctionalInterface
+	private interface ISliceInvoker {
+		java.nio.ByteBuffer slice(java.nio.ByteBuffer buffer, int position, int length);
+	}
+
+	/**
+	 * Workaround for java 8 compiled on java 9 or higher
+	 */
+	public static void position(final Buffer buffer, final int position) {
+		buffer.position(position);
+	}
+
+	public static java.nio.ByteBuffer slice(final java.nio.ByteBuffer buffer, final int position, final int length) {
+		return SLICE_INVOKER.slice(buffer, position, length);
+	}
+
+	public static <H, R> void combineBuf(final ByteBuf buffer, final Serde<H> hashKeySerde,
+			final Serde<R> rangeKeySerde, final H hashKey, final R rangeKey) {
 
 		final ByteBuf hashKeyBytes = buffer.alloc().buffer();
 		hashKeySerde.toBuffer(hashKeyBytes, hashKey);
@@ -22,15 +71,34 @@ public class Util {
 			rangeKeyBytes = buffer.alloc().buffer(0);
 		}
 
-		combine(buffer, hashKeyBytes, rangeKeyBytes);
+		combineBuf(buffer, hashKeyBytes, rangeKeyBytes);
 
 		hashKeyBytes.release(hashKeyBytes.refCnt());
-		if (rangeKeyBytes != null) {
-			rangeKeyBytes.release(rangeKeyBytes.refCnt());
-		}
+		rangeKeyBytes.release(rangeKeyBytes.refCnt());
 	}
 
-	public static <H, R> byte[] combine(final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final H hashKey,
+	public static <H, R> ByteBuffer combineBuffer(final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
+			final H hashKey, final R rangeKey) {
+
+		final ByteBuf hashKeyBytes = ByteBufAllocator.DEFAULT.heapBuffer();
+		hashKeySerde.toBuffer(hashKeyBytes, hashKey);
+		final ByteBuf rangeKeyBytes;
+		if (rangeKey != null) {
+			rangeKeyBytes = ByteBufAllocator.DEFAULT.heapBuffer();
+			rangeKeySerde.toBuffer(rangeKeyBytes, rangeKey);
+		} else {
+			rangeKeyBytes = ByteBufAllocator.DEFAULT.heapBuffer(0);
+		}
+
+		final ByteBuffer buffer = ByteBuffer.allocate(combinedSize(hashKeyBytes, rangeKeyBytes));
+		combineBuffer(buffer, hashKeyBytes, rangeKeyBytes);
+
+		hashKeyBytes.release(hashKeyBytes.refCnt());
+		rangeKeyBytes.release(rangeKeyBytes.refCnt());
+		return buffer;
+	}
+
+	public static <H, R> byte[] combineBytes(final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final H hashKey,
 			final R rangeKey) {
 
 		final ByteBuf hashKeyBytes = ByteBufAllocator.DEFAULT.heapBuffer();
@@ -43,7 +111,7 @@ public class Util {
 			rangeKeyBytes = ByteBufAllocator.DEFAULT.heapBuffer(0);
 		}
 
-		final byte[] bytes = combine(hashKeyBytes, rangeKeyBytes);
+		final byte[] bytes = combineBytes(hashKeyBytes, rangeKeyBytes);
 
 		hashKeyBytes.release(hashKeyBytes.refCnt());
 		rangeKeyBytes.release(rangeKeyBytes.refCnt());
@@ -51,9 +119,12 @@ public class Util {
 		return bytes;
 	}
 
-	public static void combine(final ByteBuf buffer, final ByteBuf hashKeyBytes, final ByteBuf rangeKeyBytes) {
-		final int requiredCapacity = Integer.BYTES + hashKeyBytes.readableBytes() + Integer.BYTES
-				+ rangeKeyBytes.readableBytes();
+	public static int combinedSize(final ByteBuf hashKeyBytes, final ByteBuf rangeKeyBytes) {
+		return Integer.BYTES + hashKeyBytes.readableBytes() + Integer.BYTES + rangeKeyBytes.readableBytes();
+	}
+
+	public static void combineBuf(final ByteBuf buffer, final ByteBuf hashKeyBytes, final ByteBuf rangeKeyBytes) {
+		final int requiredCapacity = combinedSize(hashKeyBytes, rangeKeyBytes);
 		if (buffer.capacity() < requiredCapacity) {
 			buffer.capacity(requiredCapacity);
 		}
@@ -61,6 +132,16 @@ public class Util {
 		buffer.writeBytes(hashKeyBytes);
 		buffer.writeInt(rangeKeyBytes.readableBytes());
 		buffer.writeBytes(rangeKeyBytes);
+	}
+
+	public static ByteBuffer combineBuffer(final ByteBuffer buffer, final ByteBuf hashKeyBytes,
+			final ByteBuf rangeKeyBytes) {
+		buffer.putInt(hashKeyBytes.readableBytes());
+		hashKeyBytes.readBytes(buffer.limit(buffer.position() + hashKeyBytes.readableBytes()));
+		buffer.limit(buffer.capacity());
+		buffer.putInt(rangeKeyBytes.readableBytes());
+		rangeKeyBytes.readBytes(buffer);
+		return buffer;
 	}
 
 	/**
@@ -78,34 +159,25 @@ public class Util {
 	 * @param rangeKeyBytes Are the range key's bytes.
 	 * @return Returns a byte array defined by the format above.
 	 */
-	public static byte[] combine(final ByteBuf hashKeyBytes, final ByteBuf rangeKeyBytes) {
-		final byte[] bytes = new byte[Integer.BYTES + hashKeyBytes.readableBytes() + Integer.BYTES
-				+ rangeKeyBytes.readableBytes()];
-		final ByteBuf buf = Unpooled.wrappedBuffer(bytes);
-		buf.clear();
-		combine(buf, hashKeyBytes, rangeKeyBytes);
-		return bytes;
+	public static byte[] combineBytes(final ByteBuf hashKeyBytes, final ByteBuf rangeKeyBytes) {
+		final ByteBuffer buffer = ByteBuffer.allocate(combinedSize(hashKeyBytes, rangeKeyBytes));
+		combineBuffer(buffer, hashKeyBytes, rangeKeyBytes);
+		return buffer.array();
 	}
 
-	public static int compareKeys(final Comparator<ByteBuf> hashKeyComparator,
-			final Comparator<ByteBuf> rangeKeyComparator, final byte[] k1, final byte[] k2) {
-		return compareKeys(hashKeyComparator, rangeKeyComparator, Unpooled.wrappedBuffer(k1),
-				Unpooled.wrappedBuffer(k2));
-	}
-
-	public static int compareKeys(final Comparator<ByteBuf> hashKeyComparator,
-			final Comparator<ByteBuf> rangeKeyComparator, final ByteBuf k1, final ByteBuf k2) {
+	public static int compareKeys(final Comparator<ByteBuffer> hashKeyComparator,
+			final Comparator<ByteBuffer> rangeKeyComparator, final ByteBuffer k1, final ByteBuffer k2) {
 		// First hash key
 		int k1Index = 0;
 		final int k1HashKeyLength = k1.getInt(k1Index);
 		k1Index += Integer.BYTES;
-		final ByteBuf k1HashKeyBytes = k1.slice(k1Index, k1HashKeyLength);
+		final ByteBuffer k1HashKeyBytes = slice(k1, k1Index, k1HashKeyLength);
 
 		// Second hash key
 		int k2Index = 0;
 		final int k2HashKeyLength = k2.getInt(k2Index);
 		k2Index += Integer.BYTES;
-		final ByteBuf k2HashKeyBytes = k2.slice(k2Index, k2HashKeyLength);
+		final ByteBuffer k2HashKeyBytes = slice(k2, k2Index, k2HashKeyLength);
 
 		final int hashComparison = hashKeyComparator.compare(k1HashKeyBytes, k2HashKeyBytes);
 
@@ -114,13 +186,13 @@ public class Util {
 			k1Index += k1HashKeyLength;
 			final int k1RangeKeyLength = k1.getInt(k1Index);
 			k1Index += Integer.BYTES;
-			final ByteBuf k1RangeKeyBytes = k1.slice(k1Index, k1RangeKeyLength);
+			final ByteBuffer k1RangeKeyBytes = slice(k1, k1Index, k1RangeKeyLength);
 
 			// Second range key
 			k2Index += k2HashKeyLength;
 			final int k2RangeKeyLength = k2.getInt(k2Index);
 			k2Index += Integer.BYTES;
-			final ByteBuf k2RangeKeyBytes = k2.slice(k2Index, k2RangeKeyLength);
+			final ByteBuffer k2RangeKeyBytes = slice(k2, k2Index, k2RangeKeyLength);
 
 			return rangeKeyComparator.compare(k1RangeKeyBytes, k2RangeKeyBytes);
 		}
@@ -149,4 +221,5 @@ public class Util {
 	public static <H, R> ObjectTableKey<H, R> combine(final H hashKey, final R rangeKey) {
 		return new ObjectTableKey<H, R>(hashKey, rangeKey);
 	}
+
 }
