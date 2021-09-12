@@ -44,6 +44,17 @@ public interface DBIterator extends Iterator<Map.Entry<ByteBuffer, ByteBuffer>>,
 	public Map.Entry<ByteBuffer, ByteBuffer> peekPrev();
 
 	/**
+	 * Returns the next element in the iteration, without advancing the iteration.
+	 */
+	public ByteBuffer peekNextKey();
+
+	/**
+	 * @return the previous element in the iteration, without rewinding the
+	 *         iteration.
+	 */
+	public ByteBuffer peekPrevKey();
+
+	/**
 	 * Repositions the iterator so it is at the end of of the Database.
 	 */
 	public void seekToLast();

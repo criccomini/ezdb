@@ -42,6 +42,9 @@ import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
@@ -49,10 +52,11 @@ import org.lmdbjava.Txn;
 public class LmDBJnrDBIterator implements DBIterator {
 
 	private final Env<ByteBuffer> env;
-	private final Dbi<ByteBuffer> dbi;
 	private final Txn<ByteBuffer> txn;
 	private final Cursor<ByteBuffer> cursor;
 	private boolean valid = false;
+	private final ByteBuf resultKey = ByteBufAllocator.DEFAULT.directBuffer();
+	private final ByteBuf resultValue = ByteBufAllocator.DEFAULT.directBuffer();
 
 	public LmDBJnrDBIterator(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
 		this.env = env;
@@ -98,7 +102,20 @@ public class LmDBJnrDBIterator implements DBIterator {
 		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		return new AbstractMap.SimpleImmutableEntry<ByteBuffer, ByteBuffer>(cursor.key(), cursor.val());
+		resultKey.clear();
+		resultKey.writeBytes(cursor.key());
+		resultValue.clear();
+		resultValue.writeBytes(cursor.val());
+		return new AbstractMap.SimpleImmutableEntry<ByteBuffer, ByteBuffer>(resultKey.nioBuffer(),
+				resultValue.nioBuffer());
+	}
+
+	@Override
+	public ByteBuffer peekNextKey() {
+		if (!valid) {
+			throw new NoSuchElementException();
+		}
+		return cursor.key();
 	}
 
 	@Override
@@ -135,6 +152,20 @@ public class LmDBJnrDBIterator implements DBIterator {
 		valid = cursor.prev();
 		try {
 			return peekNext();
+		} finally {
+			if (valid) {
+				valid = cursor.next();
+			} else {
+				seekToFirst();
+			}
+		}
+	}
+
+	@Override
+	public ByteBuffer peekPrevKey() {
+		valid = cursor.prev();
+		try {
+			return peekNextKey();
 		} finally {
 			if (valid) {
 				valid = cursor.next();
