@@ -42,8 +42,7 @@ import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 
 //implementation taken from leveldbjni
 /**
@@ -55,12 +54,9 @@ public class LmDBJnrDBIterator implements DBIterator {
 	private final Txn<ByteBuffer> txn;
 	private final Cursor<ByteBuffer> cursor;
 	private boolean valid = false;
-	private final ByteBuf resultKey = ByteBufAllocator.DEFAULT.directBuffer();
-	private final ByteBuf resultValue = ByteBufAllocator.DEFAULT.directBuffer();
 
 	public LmDBJnrDBIterator(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
 		this.env = env;
-		this.dbi = dbi;
 		this.txn = env.txnRead();
 		this.cursor = dbi.openCursor(txn);
 	}
@@ -102,12 +98,8 @@ public class LmDBJnrDBIterator implements DBIterator {
 		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		resultKey.clear();
-		resultKey.writeBytes(cursor.key());
-		resultValue.clear();
-		resultValue.writeBytes(cursor.val());
-		return new AbstractMap.SimpleImmutableEntry<ByteBuffer, ByteBuffer>(resultKey.nioBuffer(),
-				resultValue.nioBuffer());
+		return new AbstractMap.SimpleImmutableEntry<ByteBuffer, ByteBuffer>(
+				Unpooled.wrappedBuffer(cursor.key()).nioBuffer(), Unpooled.wrappedBuffer(cursor.val()).nioBuffer());
 	}
 
 	@Override
