@@ -678,6 +678,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 			} catch (final IOException e) {
 				throw new DbException(e);
 			}
+			range.close();
 		}
 	}
 

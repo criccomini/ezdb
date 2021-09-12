@@ -429,11 +429,12 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableRow<H, R, V> getLatest(final H hashKey) {
-		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey);
-		if (rangeReverse.hasNext()) {
-			return rangeReverse.next();
-		} else {
-			return null;
+		try (TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey)) {
+			if (rangeReverse.hasNext()) {
+				return rangeReverse.next();
+			} else {
+				return null;
+			}
 		}
 	}
 
@@ -442,15 +443,17 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (rangeKey == null) {
 			return getLatest(hashKey);
 		}
-		final TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey, rangeKey);
-		if (rangeReverse.hasNext()) {
-			return rangeReverse.next();
-		} else {
-			final TableIterator<H, R, V> range = range(hashKey);
-			if (range.hasNext()) {
-				return range.next();
+		try (TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey, rangeKey)) {
+			if (rangeReverse.hasNext()) {
+				return rangeReverse.next();
 			} else {
-				return null;
+				try (TableIterator<H, R, V> range = range(hashKey)) {
+					if (range.hasNext()) {
+						return range.next();
+					} else {
+						return null;
+					}
+				}
 			}
 		}
 	}
@@ -537,25 +540,28 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void deleteRange(final H hashKey) {
-		final TableIterator<H, R, V> range = range(hashKey);
-		while (range.hasNext()) {
-			range.remove();
+		try (TableIterator<H, R, V> range = range(hashKey)) {
+			while (range.hasNext()) {
+				range.remove();
+			}
 		}
 	}
 
 	@Override
 	public void deleteRange(final H hashKey, final R fromRangeKey) {
-		final TableIterator<H, R, V> range = range(hashKey, fromRangeKey);
-		while (range.hasNext()) {
-			range.remove();
+		try (TableIterator<H, R, V> range = range(hashKey, fromRangeKey)) {
+			while (range.hasNext()) {
+				range.remove();
+			}
 		}
 	}
 
 	@Override
 	public void deleteRange(final H hashKey, final R fromRangeKey, final R toRangeKey) {
-		final TableIterator<H, R, V> range = range(hashKey, fromRangeKey, toRangeKey);
-		while (range.hasNext()) {
-			range.remove();
+		try (TableIterator<H, R, V> range = range(hashKey, fromRangeKey, toRangeKey)) {
+			while (range.hasNext()) {
+				range.remove();
+			}
 		}
 	}
 

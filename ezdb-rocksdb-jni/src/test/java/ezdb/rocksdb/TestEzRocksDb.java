@@ -390,6 +390,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -404,6 +405,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -418,6 +420,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -433,6 +436,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -447,6 +451,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -461,6 +466,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -474,6 +480,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -487,6 +494,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -499,6 +507,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -511,6 +520,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -525,6 +535,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -539,6 +550,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -553,6 +565,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -567,6 +580,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -581,6 +595,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -595,6 +610,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -609,6 +625,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -623,6 +640,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -636,6 +654,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -651,6 +670,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 	}
 
 	@Test
@@ -666,6 +686,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 	}
 
 	@Test
@@ -682,6 +703,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 	}
 
 	@Test
@@ -697,6 +719,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 	}
 
 	@Test
@@ -712,6 +735,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 	}
 
 	@Test
@@ -728,6 +752,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 	}
 
 	@Test
@@ -741,6 +766,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 	}
 
 	@Test
@@ -754,6 +780,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 	}
 
 	@Test
@@ -770,6 +797,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 	}
 
 	@Test
@@ -785,6 +813,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -800,6 +829,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -814,6 +844,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -828,6 +859,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -841,6 +873,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -855,6 +888,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -870,6 +904,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -885,6 +920,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -900,6 +936,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -914,6 +951,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -928,6 +966,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -940,6 +979,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -955,6 +995,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -970,6 +1011,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -982,6 +1024,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -995,6 +1038,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1007,6 +1051,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1020,6 +1065,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1035,6 +1081,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1047,6 +1094,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1062,6 +1110,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeMin.close();
 	}
 
 	@Test
@@ -1077,6 +1126,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1089,6 +1139,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1101,6 +1152,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1114,6 +1166,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1130,6 +1183,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1145,6 +1199,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1157,6 +1212,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range.close();
 	}
 
 	@Test
@@ -1297,6 +1353,7 @@ public class TestEzRocksDb {
 		reverseRangeTable.deleteRange(HASHKEY_ONE);
 		range = reverseRangeTable.range(HASHKEY_ONE);
 		Assert.assertFalse(range.hasNext());
+		range.close();
 	}
 
 	@Test
@@ -1427,6 +1484,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNone.close();
 
 		final TableIterator<String, Date, Integer> rangeMin = reverseRangeTable.range(HASHKEY_ONE, MIN_DATE);
 		Assert.assertEquals((Integer) 1, rangeMin.next().getValue());
@@ -1439,6 +1497,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeMin.close();
 
 		final TableIterator<String, Date, Integer> rangeMax = reverseRangeTable.range(HASHKEY_ONE, MAX_DATE);
 		Assert.assertFalse(rangeMax.hasNext());
@@ -1448,6 +1507,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeMax.close();
 
 		final TableIterator<String, Date, Integer> range2 = reverseRangeTable.range(HASHKEY_ONE, twoDate);
 		Assert.assertEquals((Integer) 2, range2.next().getValue());
@@ -1459,6 +1519,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range2.close();
 
 		testReverse();
 
@@ -1493,6 +1554,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range3Reverse.close();
 
 		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE);
 		Assert.assertEquals((Integer) 3, rangeNoneReverse.next().getValue());
@@ -1505,6 +1567,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		rangeNoneReverse.close();
 
 		final TableIterator<String, Date, Integer> range2Reverse = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDate);
 		Assert.assertEquals((Integer) 2, range2Reverse.next().getValue());
@@ -1516,6 +1579,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range2Reverse.close();
 
 		final TableIterator<String, Date, Integer> range32Reverse = reverseRangeTable.rangeReverse(HASHKEY_ONE,
 				threeDate, twoDate);
@@ -1528,6 +1592,7 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range32Reverse.close();
 
 		final TableIterator<String, Date, Integer> range21Reverse = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDate,
 				oneDate);
@@ -1540,5 +1605,6 @@ public class TestEzRocksDb {
 		} catch (final NoSuchElementException e) {
 			Assert.assertNotNull(e);
 		}
+		range21Reverse.close();
 	}
 }

@@ -106,6 +106,7 @@ public class TestStockData {
 			countBars++;
 		}
 		Assert.assertEquals(253, countBars);
+		range.close();
 
 		range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime(), null);
 		countBars = 0;
@@ -115,6 +116,7 @@ public class TestStockData {
 			countBars++;
 		}
 		Assert.assertEquals(253, countBars);
+		range.close();
 
 		range = table.range(MSFT, null, new GregorianCalendar(1987, 0, 1).getTime());
 		countBars = 0;
@@ -124,6 +126,7 @@ public class TestStockData {
 			countBars++;
 		}
 		Assert.assertEquals(204, countBars);
+		range.close();
 	}
 
 	private void assertIteration(final int countDates, final Date fromDate, final Date toDate) {
@@ -146,6 +149,7 @@ public class TestStockData {
 				left900Date = next.getRangeKey();
 			}
 		}
+		range.close();
 		Assert.assertEquals(countDates, iteratedBars);
 
 		Assert.assertEquals((Integer) 1, table.getLatest(MSFT, fromDate).getValue());
@@ -174,6 +178,7 @@ public class TestStockData {
 			Assert.assertEquals(next.getValue(), prevFromNextIsSame);
 			prev = next;
 		}
+		range.close();
 		Assert.assertEquals(100, curLeftIt);
 	}
 

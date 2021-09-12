@@ -103,6 +103,8 @@ public class TestEzObjectTreeMapDbJniTorture {
 
 					assertFalse(iterator.hasNext());
 					assertFalse(mockIterator.hasNext());
+					iterator.close();
+					mockIterator.close();
 				} else if (pick < 0.80) {
 					// 10% of the time range(h, f)
 					int hash = rand.nextInt(500) + offset;
@@ -117,6 +119,8 @@ public class TestEzObjectTreeMapDbJniTorture {
 
 					assertFalse(iterator.hasNext());
 					assertFalse(mockIterator.hasNext());
+					iterator.close();
+					mockIterator.close();
 				} else {
 					// 20% of the time range(h, f, t)
 					int hash = rand.nextInt(500) + offset;
@@ -132,6 +136,8 @@ public class TestEzObjectTreeMapDbJniTorture {
 
 					assertFalse(iterator.hasNext());
 					assertFalse(mockIterator.hasNext());
+					iterator.close();
+					mockIterator.close();
 				}
 			}
 
