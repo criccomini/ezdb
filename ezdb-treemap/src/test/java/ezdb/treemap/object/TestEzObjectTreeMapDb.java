@@ -58,16 +58,22 @@ public class TestEzObjectTreeMapDb {
 		// test nulls
 		assertEquals(null, table.get(1));
 		assertEquals(null, table.get(1, 1));
-		assertTrue(!table.range(1).hasNext());
-		assertTrue(!table.range(1, 2).hasNext());
-		assertTrue(!table.range(1, 1, 2).hasNext());
+		final TableIterator<Integer, Integer, Integer> range1 = table.range(1);
+		assertTrue(!range1.hasNext());
+		range1.close();
+		final TableIterator<Integer, Integer, Integer> range12 = table.range(1, 2);
+		assertTrue(!range12.hasNext());
+		range12.close();
+		final TableIterator<Integer, Integer, Integer> range112 = table.range(1, 1, 2);
+		assertTrue(!range112.hasNext());
+		range112.close();
 		table.delete(1);
 		table.delete(1, 1);
 	}
 
 	@Test
 	public void testPutGetH() {
-		Table<Integer, Integer> table = ezdb.getTable("test-simple", IntegerSerde.get, IntegerSerde.get);
+		final Table<Integer, Integer> table = ezdb.getTable("test-simple", IntegerSerde.get, IntegerSerde.get);
 		table.put(1, 1);
 		assertEquals(new Integer(1), table.get(1));
 		table.put(1, 2);
@@ -112,8 +118,7 @@ public class TestEzObjectTreeMapDb {
 		assertTrue(!it.hasNext());
 		it.close();
 	}
-	
-	
+
 	@Test
 	public void testRangeReverseH() {
 		TableIterator<Integer, Integer, Integer> it = table.rangeReverse(1);
@@ -128,7 +133,7 @@ public class TestEzObjectTreeMapDb {
 		assertTrue(!it.hasNext());
 		it.close();
 	}
-	
+
 	@Test
 	public void testRangeReverseH0() {
 		TableIterator<Integer, Integer, Integer> it = table.rangeReverse(1);
@@ -141,7 +146,7 @@ public class TestEzObjectTreeMapDb {
 		assertTrue(!it.hasNext());
 		it.close();
 	}
-	
+
 	@Test
 	public void testRangeHR() {
 		table.put(1, 2);
@@ -229,7 +234,7 @@ public class TestEzObjectTreeMapDb {
 	@Test
 	public void testSortedStrings() {
 		ezdb.deleteTable("test-range-strings");
-		RangeTable<Integer, String, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get,
+		final RangeTable<Integer, String, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get,
 				StringSerde.get, IntegerSerde.get);
 
 		table.put(1213, "20120102-foo", 1);
@@ -241,7 +246,7 @@ public class TestEzObjectTreeMapDb {
 		table.put(1214, "20120102-bar", 2);
 		table.put(1213, 12345678);
 
-		TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
+		final TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
 
 		assertTrue(it.hasNext());
 		assertEquals(new ObjectTableRow<Integer, String, Integer>(1213, "20120102-bar", 2), it.next());
@@ -255,10 +260,11 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void testCustomRangeComparator() {
-		RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator", IntegerSerde.get,
-				IntegerSerde.get, IntegerSerde.get, new ComparableComparator(), new ComparableComparator() {
+		final RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator",
+				IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new ComparableComparator(),
+				new ComparableComparator() {
 					@Override
-					public int compare(Object o1, Object o2) {
+					public int compare(final Object o1, final Object o2) {
 						return super.compare(o1, o2) * -1;
 					}
 				});
@@ -267,7 +273,7 @@ public class TestEzObjectTreeMapDb {
 		table.put(1, 2, 2);
 		table.put(1, 3, 3);
 
-		TableIterator<Integer, Integer, Integer> it = table.range(1, 3);
+		final TableIterator<Integer, Integer, Integer> it = table.range(1, 3);
 
 		assertTrue(it.hasNext());
 		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 3, 3), it.next());
@@ -283,8 +289,8 @@ public class TestEzObjectTreeMapDb {
 	@Test
 	public void testVersionedSortedStrings() {
 		ezdb.deleteTable("test-range-strings");
-		RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-range-strings", IntegerSerde.get,
-				StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
+		final RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-range-strings",
+				IntegerSerde.get, StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
 
 		table.put(1213, "20120102-foo", new Versioned<Integer>(1, 0));
 		table.put(1213, "20120102-bar", new Versioned<Integer>(2, 0));
@@ -316,9 +322,8 @@ public class TestEzObjectTreeMapDb {
 		// keys
 		it = table.range(1213);
 		assertTrue(it.hasNext());
-		assertEquals(
-				new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, null, new Versioned<Integer>(12345678, 0)),
-				it.next());
+		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, null,
+				new Versioned<Integer>(12345678, 0)), it.next());
 		assertTrue(it.hasNext());
 		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, "20120101-foo",
 				new Versioned<Integer>(3, 0)), it.next());
@@ -346,7 +351,6 @@ public class TestEzObjectTreeMapDb {
 		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
 	}
 
-
 	@After
 	public void after() {
 		table.close();
@@ -359,7 +363,7 @@ public class TestEzObjectTreeMapDb {
 	}
 
 	private void clearTable() {
-		if(reverseRangeTable != null) {
+		if (reverseRangeTable != null) {
 			reverseRangeTable.close();
 		}
 		ezdb.deleteTable("testInverseOrder");
@@ -1346,14 +1350,15 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void testVariationsOfDatasetNormal() throws IllegalArgumentException, IllegalAccessException {
-		for (Method m : getClass().getMethods()) {
+		for (final Method m : getClass().getMethods()) {
 			try {
 				if (m.getAnnotation(Test.class) != null && !m.getName().startsWith("testVariationsOfDataset")
-						&& !m.getName().startsWith("deleteRange") && !m.getName().equals("testRangeHRR") && !m.getName().contains("Reverse")) {
-					//System.out.println(m.getName());
+						&& !m.getName().startsWith("deleteRange") && !m.getName().equals("testRangeHRR")
+						&& !m.getName().contains("Reverse")) {
+					// System.out.println(m.getName());
 					m.invoke(this);
 				}
-			} catch (InvocationTargetException t) {
+			} catch (final InvocationTargetException t) {
 				throw new RuntimeException("at: " + m.getName(), t.getTargetException());
 			}
 		}

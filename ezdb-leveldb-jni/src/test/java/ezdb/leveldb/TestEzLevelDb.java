@@ -61,9 +61,15 @@ public class TestEzLevelDb {
 		// test nulls
 		assertEquals(null, table.get(1));
 		assertEquals(null, table.get(1, 1));
-		assertTrue(!table.range(1).hasNext());
-		assertTrue(!table.range(1, 2).hasNext());
-		assertTrue(!table.range(1, 1, 2).hasNext());
+		final TableIterator<Integer, Integer, Integer> range1 = table.range(1);
+		assertTrue(!range1.hasNext());
+		range1.close();
+		final TableIterator<Integer, Integer, Integer> range12 = table.range(1, 2);
+		assertTrue(!range12.hasNext());
+		range12.close();
+		final TableIterator<Integer, Integer, Integer> range112 = table.range(1, 1, 2);
+		assertTrue(!range112.hasNext());
+		range112.close();
 		table.delete(1);
 		table.delete(1, 1);
 	}
