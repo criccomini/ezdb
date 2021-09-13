@@ -37,12 +37,17 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		this.valueSerde = valueSerde;
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
-		this.map = new ConcurrentSkipListMap<ByteBuffer, ByteBuffer>(new Comparator<ByteBuffer>() {
+		final Comparator<ByteBuffer> comparator = new Comparator<ByteBuffer>() {
 			@Override
 			public int compare(final ByteBuffer k1, final ByteBuffer k2) {
 				return Util.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
 			}
-		});
+		};
+		this.map = newMap(comparator);
+	}
+
+	protected ConcurrentSkipListMap<ByteBuffer, ByteBuffer> newMap(final Comparator<ByteBuffer> comparator) {
+		return new ConcurrentSkipListMap<ByteBuffer, ByteBuffer>(comparator);
 	}
 
 	@Override

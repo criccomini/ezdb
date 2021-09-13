@@ -28,12 +28,17 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 	public ObjectTreeMapTable(final Comparator<H> hashKeyComparator, final Comparator<R> rangeKeyComparator) {
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
-		this.map = new ConcurrentSkipListMap<ObjectTableKey<H, R>, V>(new Comparator<ObjectTableKey<H, R>>() {
+		final Comparator<ObjectTableKey<H, R>> comparator = new Comparator<ObjectTableKey<H, R>>() {
 			@Override
 			public int compare(final ObjectTableKey<H, R> k1, final ObjectTableKey<H, R> k2) {
 				return Util.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
 			}
-		});
+		};
+		this.map = newMap(comparator);
+	}
+
+	protected ConcurrentSkipListMap<ObjectTableKey<H, R>, V> newMap(final Comparator<ObjectTableKey<H, R>> comparator) {
+		return new ConcurrentSkipListMap<ObjectTableKey<H, R>, V>(comparator);
 	}
 
 	@Override

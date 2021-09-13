@@ -47,13 +47,19 @@ public class EzBytesTreeMapDb implements Db<ByteBuffer> {
 			RangeTable<?, ?, ?> table = cache.get(tableName);
 
 			if (table == null) {
-				table = new BytesTreeMapTable<H, R, V>(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator,
-						rangeKeyComparator);
+				table = newTable(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
 				cache.put(tableName, table);
 			}
 
 			return (RangeTable<H, R, V>) table;
 		}
+	}
+
+	protected <V, H, R> BytesTreeMapTable<H, R, V> newTable(final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
+			final Serde<V> valueSerde, final Comparator<ByteBuffer> hashKeyComparator,
+			final Comparator<ByteBuffer> rangeKeyComparator) {
+		return new BytesTreeMapTable<H, R, V>(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator,
+				rangeKeyComparator);
 	}
 
 }
