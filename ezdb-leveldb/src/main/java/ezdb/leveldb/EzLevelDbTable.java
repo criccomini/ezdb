@@ -9,7 +9,6 @@ import java.util.NoSuchElementException;
 
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.ReadOptions;
-import org.iq80.leveldb.WriteOptions;
 import org.iq80.leveldb.impl.ExtendedDbImpl;
 import org.iq80.leveldb.util.Slice;
 
@@ -28,7 +27,6 @@ import io.netty.buffer.ByteBufAllocator;
 
 public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
-	private static final WriteOptions DEFAULT_WRITE_OPTIONS = new WriteOptions();
 	private final ReadOptions defaultReadOptions;
 
 	private final ExtendedDbImpl db;
