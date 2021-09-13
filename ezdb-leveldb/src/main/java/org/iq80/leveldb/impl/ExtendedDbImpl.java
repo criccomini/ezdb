@@ -773,6 +773,55 @@ public class ExtendedDbImpl implements DB {
 		return null;
 	}
 
+	public Slice get(final Slice key, final ReadOptions options) throws DBException {
+		LookupKey lookupKey;
+		LookupResult lookupResult;
+		mutex.lock();
+		try {
+			final long lastSequence = options.snapshot() != null ? snapshots.getSequenceFrom(options.snapshot())
+					: versions.getLastSequence();
+			lookupKey = new LookupKey(key, lastSequence);
+
+			// First look in the memtable, then in the immutable memtable (if any).
+			final MemTable memTable = this.memTable;
+			final MemTable immutableMemTable = this.immutableMemTable;
+			final Version current = versions.getCurrent();
+			current.retain();
+			ReadStats readStats = null;
+			mutex.unlock();
+			try {
+				lookupResult = memTable.get(lookupKey);
+				if (lookupResult == null && immutableMemTable != null) {
+					lookupResult = immutableMemTable.get(lookupKey);
+				}
+
+				if (lookupResult == null) {
+					// Not in memTables; try live files in level order
+					readStats = new ReadStats();
+					lookupResult = current.get(options, lookupKey, readStats);
+				}
+
+				// schedule compaction if necessary
+			} finally {
+				mutex.lock();
+				if (readStats != null && current.updateStats(readStats)) {
+					maybeScheduleCompaction();
+				}
+				current.release();
+			}
+		} finally {
+			mutex.unlock();
+		}
+
+		if (lookupResult != null) {
+			final Slice value = lookupResult.getValue();
+			if (value != null) {
+				return value;
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public void put(final byte[] key, final byte[] value) throws DBException {
 		put(key, value, new WriteOptions());

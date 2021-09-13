@@ -10,6 +10,7 @@ import ezdb.LazyGetter;
 import ezdb.RawTableRow;
 import ezdb.TableRow;
 import ezdb.serde.Serde;
+import io.netty.buffer.ByteBuf;
 
 public class Slices {
 
@@ -23,6 +24,10 @@ public class Slices {
 
 	public static Slice wrap(final ByteBuffer buffer) {
 		return new Slice(buffer.array(), buffer.position(), buffer.remaining());
+	}
+
+	public static Slice wrap(final ByteBuf buffer) {
+		return new Slice(buffer.array(), buffer.readerIndex() + buffer.arrayOffset(), buffer.readableBytes());
 	}
 
 	public static <H, R, V> TableRow<H, R, V> newRawTableRow(final Entry<Slice, Slice> rawRow,

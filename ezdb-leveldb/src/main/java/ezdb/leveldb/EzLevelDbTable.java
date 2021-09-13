@@ -7,8 +7,9 @@ import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
-import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
+import org.iq80.leveldb.ReadOptions;
+import org.iq80.leveldb.impl.ExtendedDbImpl;
 import org.iq80.leveldb.util.Slice;
 
 import ezdb.DbException;
@@ -21,9 +22,14 @@ import ezdb.leveldb.util.EzLevelDBIterator;
 import ezdb.leveldb.util.Slices;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 
 public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
-	private final DB db;
+
+	private static final ReadOptions DEFAULT_READ_OPTIONS = new ReadOptions().verifyChecksums(false);
+
+	private final ExtendedDbImpl db;
 	private final Serde<H> hashKeySerde;
 	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
@@ -67,13 +73,19 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public V get(final H hashKey, final R rangeKey) {
-		final byte[] valueBytes = db.get(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
+		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.heapBuffer();
+		try {
+			Util.combineBuf(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+			final Slice valueBytes = db.get(Slices.wrap(keyBuffer), DEFAULT_READ_OPTIONS);
 
-		if (valueBytes == null) {
-			return null;
+			if (valueBytes == null) {
+				return null;
+			}
+
+			return valueSerde.fromBuffer(Slices.unwrap(valueBytes));
+		} finally {
+			keyBuffer.release(keyBuffer.refCnt());
 		}
-
-		return valueSerde.fromBytes(valueBytes);
 	}
 
 	@Override
