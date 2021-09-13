@@ -1,6 +1,7 @@
 package ezdb.leveldb.util;
 
 import java.nio.ByteBuffer;
+import java.util.Comparator;
 import java.util.Map.Entry;
 
 import org.iq80.leveldb.util.Slice;
@@ -15,6 +16,10 @@ public class Slices {
 
 	public static ByteBuffer unwrap(final Slice slice) {
 		return ByteBuffer.wrap(slice.getRawArray(), slice.getRawOffset(), slice.length());
+	}
+
+	public static ByteBuffer slice(final Slice slice, final int index, final int length) {
+		return ByteBuffer.wrap(slice.getRawArray(), slice.getRawOffset() + index, length);
 	}
 
 	public static Slice wrap(final ByteBuffer buffer) {
@@ -91,6 +96,42 @@ public class Slices {
 			}
 		};
 		return new RawTableRow<>(hashKey, rangeKey, value);
+	}
+
+	public static int compareKeys(final Comparator<ByteBuffer> hashKeyComparator,
+			final Comparator<ByteBuffer> rangeKeyComparator, final Slice k1, final Slice k2) {
+		// First hash key
+		int k1Index = 0;
+		// leveldb stores data in little endian
+		final int k1HashKeyLength = Integer.reverseBytes(k1.getInt(k1Index));
+		k1Index += Integer.BYTES;
+		final ByteBuffer k1HashKeyBytes = slice(k1, k1Index, k1HashKeyLength);
+
+		// Second hash key
+		int k2Index = 0;
+		final int k2HashKeyLength = Integer.reverseBytes(k2.getInt(k2Index));
+		k2Index += Integer.BYTES;
+		final ByteBuffer k2HashKeyBytes = slice(k2, k2Index, k2HashKeyLength);
+
+		final int hashComparison = hashKeyComparator.compare(k1HashKeyBytes, k2HashKeyBytes);
+
+		if (rangeKeyComparator != null && hashComparison == 0) {
+			// First range key
+			k1Index += k1HashKeyLength;
+			final int k1RangeKeyLength = Integer.reverseBytes(k1.getInt(k1Index));
+			k1Index += Integer.BYTES;
+			final ByteBuffer k1RangeKeyBytes = slice(k1, k1Index, k1RangeKeyLength);
+
+			// Second range key
+			k2Index += k2HashKeyLength;
+			final int k2RangeKeyLength = Integer.reverseBytes(k2.getInt(k2Index));
+			k2Index += Integer.BYTES;
+			final ByteBuffer k2RangeKeyBytes = slice(k2, k2Index, k2RangeKeyLength);
+
+			return rangeKeyComparator.compare(k1RangeKeyBytes, k2RangeKeyBytes);
+		}
+
+		return hashComparison;
 	}
 
 }

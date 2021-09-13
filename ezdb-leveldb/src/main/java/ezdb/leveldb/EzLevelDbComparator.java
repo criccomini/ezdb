@@ -4,8 +4,9 @@ import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 import org.iq80.leveldb.DBComparator;
+import org.iq80.leveldb.util.Slice;
 
-import ezdb.util.Util;
+import ezdb.leveldb.util.Slices;
 
 /**
  * LevelDb provides a comparator interface that we can use to handle hash/range
@@ -26,9 +27,14 @@ public class EzLevelDbComparator implements DBComparator {
 		this.rangeKeyComparator = rangeKeyComparator;
 	}
 
+	@Deprecated
 	@Override
 	public int compare(final byte[] k1, final byte[] k2) {
-		return Util.compareKeys(hashKeyComparator, rangeKeyComparator, ByteBuffer.wrap(k1), ByteBuffer.wrap(k2));
+		throw new UnsupportedOperationException("should use zero copy method");
+	}
+
+	public int compare(final Slice k1, final Slice k2) {
+		return Slices.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
 	}
 
 	@Override
