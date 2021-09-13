@@ -2,33 +2,34 @@ package ezdb.leveldb.util;
 
 import java.io.Closeable;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.iq80.leveldb.util.Slice;
+
+import ezdb.RawTableRow;
 
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public interface EzDBIterator extends Iterator<Map.Entry<Slice, Slice>>, Closeable {
+public interface EzDBIterator<H, R, V> extends Iterator<RawTableRow<H, R, V>>, Closeable {
 
 	/**
 	 * Repositions the iterator so the key of the next BlockElement returned greater
 	 * than or equal to the specified targetKey.
 	 */
-	public void seek(Slice key);
+	void seek(Slice key);
 
 	/**
 	 * Repositions the iterator so is is at the beginning of the Database.
 	 */
-	public void seekToFirst();
+	void seekToFirst();
 
 	/**
 	 * Returns the next element in the iteration, without advancing the iteration.
 	 */
-	public Map.Entry<Slice, Slice> peekNext();
+	RawTableRow<H, R, V> peekNext();
 
-	public Slice peekNextKey();
+	Slice peekNextKey();
 
 	/**
 	 * @return true if there is a previous entry in the iteration.
@@ -38,22 +39,24 @@ public interface EzDBIterator extends Iterator<Map.Entry<Slice, Slice>>, Closeab
 	/**
 	 * @return the previous element in the iteration and rewinds the iteration.
 	 */
-	Map.Entry<Slice, Slice> prev();
+	RawTableRow<H, R, V> prev();
+
+	Slice nextKey();
 
 	/**
 	 * @return the previous element in the iteration, without rewinding the
 	 *         iteration.
 	 */
-	public Map.Entry<Slice, Slice> peekPrev();
+	RawTableRow<H, R, V> peekPrev();
 
-	public Slice peekPrevKey();
+	Slice peekPrevKey();
 
 	/**
 	 * Repositions the iterator so it is at the end of of the Database.
 	 */
-	public void seekToLast();
+	void seekToLast();
 
 	@Override
-	public void close();
+	void close();
 
 }

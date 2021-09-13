@@ -6,9 +6,8 @@ import java.util.Map.Entry;
 
 import org.iq80.leveldb.util.Slice;
 
-import ezdb.LazyGetter;
+import ezdb.LazyValueGetter;
 import ezdb.RawTableRow;
-import ezdb.TableRow;
 import ezdb.serde.Serde;
 import io.netty.buffer.ByteBuf;
 
@@ -26,13 +25,13 @@ public class Slices {
 		return new Slice(buffer.array(), buffer.readerIndex() + buffer.arrayOffset(), buffer.readableBytes());
 	}
 
-	public static <H, R, V> TableRow<H, R, V> newRawTableRow(final Entry<Slice, Slice> rawRow,
+	public static <H, R, V> RawTableRow<H, R, V> newRawTableRow(final Slice keyBuffer, final Slice valueBuffer,
 			final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
 		// extract hashKeyBytes/rangeKeyBytes only if needed
-		final LazyGetter<Entry<ByteBuffer, ByteBuffer>> hashKeyBytes_rangeKeyBytes = new LazyGetter<Entry<ByteBuffer, ByteBuffer>>() {
+		final LazyValueGetter<Entry<ByteBuffer, ByteBuffer>> hashKeyBytes_rangeKeyBytes = new LazyValueGetter<Entry<ByteBuffer, ByteBuffer>>() {
 			@Override
-			protected Entry<ByteBuffer, ByteBuffer> internalGet() {
-				final Slice compoundKeyBytes = rawRow.getKey();
+			protected Entry<ByteBuffer, ByteBuffer> initialize() {
+				final Slice compoundKeyBytes = keyBuffer;
 				int index = 0;
 				// leveldb stores data in little endian
 				final int hashKeyBytesLength = Integer.reverseBytes(compoundKeyBytes.getInt(index));
@@ -71,16 +70,16 @@ public class Slices {
 			}
 		};
 
-		final LazyGetter<H> hashKey = new LazyGetter<H>() {
+		final LazyValueGetter<H> hashKey = new LazyValueGetter<H>() {
 			@Override
-			protected H internalGet() {
+			protected H initialize() {
 				final ByteBuffer hashKeyBytes = hashKeyBytes_rangeKeyBytes.get().getKey();
 				return hashKeySerde.fromBuffer(hashKeyBytes);
 			}
 		};
-		final LazyGetter<R> rangeKey = new LazyGetter<R>() {
+		final LazyValueGetter<R> rangeKey = new LazyValueGetter<R>() {
 			@Override
-			protected R internalGet() {
+			protected R initialize() {
 				final ByteBuffer rangeKeyBytes = hashKeyBytes_rangeKeyBytes.get().getValue();
 				if (rangeKeyBytes == null) {
 					return null;
@@ -89,10 +88,10 @@ public class Slices {
 				}
 			}
 		};
-		final LazyGetter<V> value = new LazyGetter<V>() {
+		final LazyValueGetter<V> value = new LazyValueGetter<V>() {
 			@Override
-			protected V internalGet() {
-				final ByteBuffer valueBytes = unwrap(rawRow.getValue());
+			protected V initialize() {
+				final ByteBuffer valueBytes = unwrap(valueBuffer);
 				return valueSerde.fromBuffer(valueBytes);
 			}
 		};

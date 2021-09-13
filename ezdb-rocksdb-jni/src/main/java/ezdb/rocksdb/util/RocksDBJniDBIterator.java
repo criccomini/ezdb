@@ -31,22 +31,30 @@
  */
 package ezdb.rocksdb.util;
 
-import java.util.AbstractMap;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.rocksdb.RocksIterator;
+
+import ezdb.RawTableRow;
+import ezdb.serde.Serde;
 
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class RocksDBJniDBIterator implements DBIterator {
+public class RocksDBJniDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 
 	private final RocksIterator iterator;
+	private final Serde<H> hashKeySerde;
+	private final Serde<R> rangeKeySerde;
+	private final Serde<V> valueSerde;
 
-	public RocksDBJniDBIterator(final RocksIterator iterator) {
+	public RocksDBJniDBIterator(final RocksIterator iterator, final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
+			final Serde<V> valueSerde) {
 		this.iterator = iterator;
+		this.hashKeySerde = hashKeySerde;
+		this.rangeKeySerde = rangeKeySerde;
+		this.valueSerde = valueSerde;
 	}
 
 	@Override
@@ -75,11 +83,11 @@ public class RocksDBJniDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<byte[], byte[]> peekNext() {
+	public RawTableRow<H, R, V> peekNext() {
 		if (!iterator.isValid()) {
 			throw new NoSuchElementException();
 		}
-		return new AbstractMap.SimpleImmutableEntry<byte[], byte[]>(iterator.key(), iterator.value());
+		return RawTableRow.valueOfBytes(iterator.key(), iterator.value(), hashKeySerde, rangeKeySerde, valueSerde);
 	}
 
 	@Override
@@ -96,8 +104,15 @@ public class RocksDBJniDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<byte[], byte[]> next() {
-		final Map.Entry<byte[], byte[]> rc = peekNext();
+	public RawTableRow<H, R, V> next() {
+		final RawTableRow<H, R, V> rc = peekNext();
+		iterator.next();
+		return rc;
+	}
+
+	@Override
+	public byte[] nextKey() {
+		final byte[] rc = peekNextKey();
 		iterator.next();
 		return rc;
 	}
@@ -120,7 +135,7 @@ public class RocksDBJniDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<byte[], byte[]> peekPrev() {
+	public RawTableRow<H, R, V> peekPrev() {
 		iterator.prev();
 		try {
 			return peekNext();
@@ -148,8 +163,8 @@ public class RocksDBJniDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<byte[], byte[]> prev() {
-		final Map.Entry<byte[], byte[]> rc = peekPrev();
+	public RawTableRow<H, R, V> prev() {
+		final RawTableRow<H, R, V> rc = peekPrev();
 		iterator.prev();
 		return rc;
 	}

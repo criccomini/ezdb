@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
 import org.rocksdb.Options;
@@ -12,13 +11,13 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
 import ezdb.DbException;
+import ezdb.EmptyTableIterator;
 import ezdb.RangeTable;
-import ezdb.RawTableRow;
 import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.batch.Batch;
 import ezdb.batch.RangeBatch;
-import ezdb.rocksdb.util.DBIterator;
+import ezdb.rocksdb.util.EzDBIterator;
 import ezdb.rocksdb.util.RocksDBJniDBIterator;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
@@ -90,20 +89,21 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(final H hashKey) {
-		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
+		final EzDBIterator<H, R, V> iterator = new RocksDBJniDBIterator<H, R, V>(db.newIterator(), hashKeySerde,
+				rangeKeySerde, valueSerde);
 		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, null);
 		iterator.seek(keyBytesFrom.array());
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 			@Override
 			public boolean hasNext() {
 				return iterator.hasNext() && Util.compareKeys(hashKeyComparator, null, keyBytesFrom,
-						ByteBuffer.wrap(iterator.peekNext().getKey())) == 0;
+						ByteBuffer.wrap(iterator.peekNextKey())) == 0;
 			}
 
 			@Override
 			public TableRow<H, R, V> next() {
 				if (hasNext()) {
-					return RawTableRow.valueOfBytes(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.next();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -130,20 +130,21 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return range(hashKey);
 		}
-		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
+		final EzDBIterator<H, R, V> iterator = new RocksDBJniDBIterator<H, R, V>(db.newIterator(), hashKeySerde,
+				rangeKeySerde, valueSerde);
 		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		iterator.seek(keyBytesFrom.array());
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 			@Override
 			public boolean hasNext() {
 				return iterator.hasNext() && Util.compareKeys(hashKeyComparator, null, keyBytesFrom,
-						ByteBuffer.wrap(iterator.peekNext().getKey())) == 0;
+						ByteBuffer.wrap(iterator.peekNextKey())) == 0;
 			}
 
 			@Override
 			public TableRow<H, R, V> next() {
 				if (hasNext()) {
-					return RawTableRow.valueOfBytes(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.next();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -170,7 +171,8 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
+		final EzDBIterator<H, R, V> iterator = new RocksDBJniDBIterator<H, R, V>(db.newIterator(), hashKeySerde,
+				rangeKeySerde, valueSerde);
 		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		final ByteBuffer keyBytesTo = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
 		iterator.seek(keyBytesFrom.array());
@@ -178,13 +180,13 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 			@Override
 			public boolean hasNext() {
 				return iterator.hasNext() && Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo,
-						ByteBuffer.wrap(iterator.peekNext().getKey())) >= 0;
+						ByteBuffer.wrap(iterator.peekNextKey())) >= 0;
 			}
 
 			@Override
 			public TableRow<H, R, V> next() {
 				if (hasNext()) {
-					return RawTableRow.valueOfBytes(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.next();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -208,7 +210,8 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
-		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
+		final EzDBIterator<H, R, V> iterator = new RocksDBJniDBIterator<H, R, V>(db.newIterator(), hashKeySerde,
+				rangeKeySerde, valueSerde);
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
 				peekKey) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, ByteBuffer.wrap(peekKey)) == 0;
 		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, null);
@@ -250,10 +253,10 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public TableRow<H, R, V> next() {
 				if (useFixFirst()) {
 					fixFirst = false;
-					return RawTableRow.valueOfBytes(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.peekNext();
 				}
 				if (hasNext()) {
-					return RawTableRow.valueOfBytes(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.prev();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -279,40 +282,20 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	private TableIterator<H, R, V> reverseSeekToLast(final H hashKey, final R fromRangeKey, final R toRangeKey,
-			final ByteBuffer keyBytesFrom, final ByteBuffer keyBytesTo, final DBIterator iterator,
+			final ByteBuffer keyBytesFrom, final ByteBuffer keyBytesTo, final EzDBIterator<H, R, V> iterator,
 			final CheckKeysFunction<H, R, V> checkKeys) {
 		iterator.seek(keyBytesFrom.array());
-		Entry<byte[], byte[]> last = null;
+		byte[] lastKey = null;
 		while (iterator.hasNext() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
 				iterator.peekNextKey())) {
-			last = iterator.next();
+			lastKey = iterator.nextKey();
 		}
 		// if there is no last one, there is nothing at all in the table
-		if (last == null) {
-			return new TableIterator<H, R, V>() {
-
-				@Override
-				public boolean hasNext() {
-					return false;
-				}
-
-				@Override
-				public TableRow<H, R, V> next() {
-					throw new NoSuchElementException();
-				}
-
-				@Override
-				public void remove() {
-					throw new NoSuchElementException();
-				}
-
-				@Override
-				public void close() {
-				}
-			};
+		if (lastKey == null) {
+			return EmptyTableIterator.get();
 		}
 		// since last has been found, seek again for that one
-		iterator.seek(last.getKey());
+		iterator.seek(lastKey);
 		return null;
 	}
 
@@ -321,7 +304,8 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
-		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
+		final EzDBIterator<H, R, V> iterator = new RocksDBJniDBIterator<H, R, V>(db.newIterator(), hashKeySerde,
+				rangeKeySerde, valueSerde);
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey, keyBytesFrom, keyBytesTo,
 				peekKey) -> {
 			final ByteBuffer peekKeyBuffer = ByteBuffer.wrap(peekKey);
@@ -370,10 +354,10 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public TableRow<H, R, V> next() {
 				if (useFixFirst()) {
 					fixFirst = false;
-					return RawTableRow.valueOfBytes(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.peekNext();
 				}
 				if (hasNext()) {
-					return RawTableRow.valueOfBytes(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.prev();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -403,7 +387,8 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = new RocksDBJniDBIterator(db.newIterator());
+		final EzDBIterator<H, R, V> iterator = new RocksDBJniDBIterator<H, R, V>(db.newIterator(), hashKeySerde,
+				rangeKeySerde, valueSerde);
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey1, keyBytesFrom, keyBytesTo,
 				peekKey) -> {
 			final ByteBuffer peekKeyBuffer = ByteBuffer.wrap(peekKey);
@@ -457,10 +442,10 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public TableRow<H, R, V> next() {
 				if (useFixFirst()) {
 					fixFirst = false;
-					return RawTableRow.valueOfBytes(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.peekNext();
 				}
 				if (hasNext()) {
-					return RawTableRow.valueOfBytes(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.prev();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -543,6 +528,7 @@ public class EzRocksDbTable<H, R, V> implements RangeTable<H, R, V> {
 			delegate.remove();
 		}
 
+		@SuppressWarnings("deprecation")
 		@Override
 		protected void finalize() throws Throwable {
 			super.finalize();

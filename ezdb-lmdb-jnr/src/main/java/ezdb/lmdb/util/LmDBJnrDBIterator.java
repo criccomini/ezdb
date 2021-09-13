@@ -32,8 +32,6 @@
 package ezdb.lmdb.util;
 
 import java.nio.ByteBuffer;
-import java.util.AbstractMap;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.lmdbjava.Cursor;
@@ -42,23 +40,33 @@ import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
+import ezdb.RawTableRow;
+import ezdb.serde.Serde;
+
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class LmDBJnrDBIterator implements DBIterator {
+public class LmDBJnrDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 
 	private final Env<ByteBuffer> env;
 	private final Dbi<ByteBuffer> dbi;
 	private final Txn<ByteBuffer> txn;
 	private final Cursor<ByteBuffer> cursor;
+	private final Serde<H> hashKeySerde;
+	private final Serde<R> rangeKeySerde;
+	private final Serde<V> valueSerde;
 	private boolean valid = false;
 
-	public LmDBJnrDBIterator(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
+	public LmDBJnrDBIterator(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi, final Serde<H> hashKeySerde,
+			final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
 		this.env = env;
 		this.dbi = dbi;
 		this.txn = env.txnRead();
 		this.cursor = dbi.openCursor(txn);
+		this.hashKeySerde = hashKeySerde;
+		this.rangeKeySerde = rangeKeySerde;
+		this.valueSerde = valueSerde;
 	}
 
 	@Override
@@ -94,12 +102,12 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<ByteBuffer, ByteBuffer> peekNext() {
+	public RawTableRow<H, R, V> peekNext() {
 		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		return new AbstractMap.SimpleImmutableEntry<ByteBuffer, ByteBuffer>(cursor.key().duplicate(),
-				cursor.val().duplicate());
+		return RawTableRow.valueOfBuffer(cursor.key().duplicate(), cursor.val().duplicate(), hashKeySerde,
+				rangeKeySerde, valueSerde);
 	}
 
 	@Override
@@ -108,8 +116,15 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<ByteBuffer, ByteBuffer> next() {
-		final Map.Entry<ByteBuffer, ByteBuffer> rc = peekNext();
+	public RawTableRow<H, R, V> next() {
+		final RawTableRow<H, R, V> rc = peekNext();
+		valid = cursor.next();
+		return rc;
+	}
+
+	@Override
+	public ByteBuffer nextKey() {
+		final ByteBuffer rc = peekNextKey();
 		valid = cursor.next();
 		return rc;
 	}
@@ -132,7 +147,7 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<ByteBuffer, ByteBuffer> peekPrev() {
+	public RawTableRow<H, R, V> peekPrev() {
 		valid = cursor.prev();
 		try {
 			return peekNext();
@@ -146,8 +161,8 @@ public class LmDBJnrDBIterator implements DBIterator {
 	}
 
 	@Override
-	public Map.Entry<ByteBuffer, ByteBuffer> prev() {
-		final Map.Entry<ByteBuffer, ByteBuffer> rc = peekPrev();
+	public RawTableRow<H, R, V> prev() {
+		final RawTableRow<H, R, V> rc = peekPrev();
 		valid = cursor.prev();
 		return rc;
 	}

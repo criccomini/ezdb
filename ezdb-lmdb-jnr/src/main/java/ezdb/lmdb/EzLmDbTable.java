@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
 import org.lmdbjava.Dbi;
@@ -14,13 +13,13 @@ import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
 
 import ezdb.DbException;
+import ezdb.EmptyTableIterator;
 import ezdb.RangeTable;
-import ezdb.RawTableRow;
 import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.batch.Batch;
 import ezdb.batch.RangeBatch;
-import ezdb.lmdb.util.DBIterator;
+import ezdb.lmdb.util.EzDBIterator;
 import ezdb.lmdb.util.LmDBJnrDBIterator;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
@@ -105,7 +104,8 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(final H hashKey) {
-		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
+		final EzDBIterator<H, R, V> iterator = new LmDBJnrDBIterator<H, R, V>(env, db, hashKeySerde, rangeKeySerde,
+				valueSerde);
 		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.directBuffer();
 		Util.combineBuf(keyBytesFromBuf, hashKeySerde, rangeKeySerde, hashKey, null);
 		final ByteBuffer keyBytesFrom = keyBytesFromBuf.nioBuffer();
@@ -120,7 +120,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			@Override
 			public TableRow<H, R, V> next() {
 				if (hasNext()) {
-					return RawTableRow.valueOfBuffer(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.next();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -148,7 +148,8 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return range(hashKey);
 		}
-		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
+		final EzDBIterator<H, R, V> iterator = new LmDBJnrDBIterator<H, R, V>(env, db, hashKeySerde, rangeKeySerde,
+				valueSerde);
 		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.directBuffer();
 		Util.combineBuf(keyBytesFromBuf, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		final ByteBuffer keyBytesFrom = keyBytesFromBuf.nioBuffer();
@@ -163,7 +164,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			@Override
 			public TableRow<H, R, V> next() {
 				if (hasNext()) {
-					return RawTableRow.valueOfBuffer(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.next();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -191,7 +192,8 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
+		final EzDBIterator<H, R, V> iterator = new LmDBJnrDBIterator<H, R, V>(env, db, hashKeySerde, rangeKeySerde,
+				valueSerde);
 		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.directBuffer();
 		Util.combineBuf(keyBytesFromBuf, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
 		final ByteBuffer keyBytesFrom = keyBytesFromBuf.nioBuffer();
@@ -209,7 +211,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			@Override
 			public TableRow<H, R, V> next() {
 				if (hasNext()) {
-					return RawTableRow.valueOfBuffer(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.next();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -235,7 +237,8 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
-		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
+		final EzDBIterator<H, R, V> iterator = new LmDBJnrDBIterator<H, R, V>(env, db, hashKeySerde, rangeKeySerde,
+				valueSerde);
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
 				peekKey) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0;
 		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.directBuffer();
@@ -280,10 +283,10 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public TableRow<H, R, V> next() {
 				if (useFixFirst()) {
 					fixFirst = false;
-					return RawTableRow.valueOfBuffer(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.peekNext();
 				}
 				if (hasNext()) {
-					return RawTableRow.valueOfBuffer(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.prev();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -310,40 +313,20 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	private TableIterator<H, R, V> reverseSeekToLast(final H hashKey, final R fromRangeKey, final R toRangeKey,
-			final ByteBuffer keyBytesFrom, final ByteBuffer keyBytesTo, final DBIterator iterator,
+			final ByteBuffer keyBytesFrom, final ByteBuffer keyBytesTo, final EzDBIterator iterator,
 			final CheckKeysFunction<H, R, V> checkKeys) {
 		iterator.seek(keyBytesFrom);
-		Entry<ByteBuffer, ByteBuffer> last = null;
+		ByteBuffer last = null;
 		while (iterator.hasNext() && checkKeys.checkKeys(hashKey, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
 				iterator.peekNextKey())) {
-			last = iterator.next();
+			last = iterator.nextKey();
 		}
 		// if there is no last one, there is nothing at all in the table
 		if (last == null) {
-			return new TableIterator<H, R, V>() {
-
-				@Override
-				public boolean hasNext() {
-					return false;
-				}
-
-				@Override
-				public TableRow<H, R, V> next() {
-					throw new NoSuchElementException();
-				}
-
-				@Override
-				public void remove() {
-					throw new NoSuchElementException();
-				}
-
-				@Override
-				public void close() {
-				}
-			};
+			return EmptyTableIterator.get();
 		}
 		// since last has been found, seek again for that one
-		iterator.seek(last.getKey());
+		iterator.seek(last);
 		return null;
 	}
 
@@ -352,7 +335,8 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
-		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
+		final EzDBIterator<H, R, V> iterator = new LmDBJnrDBIterator<H, R, V>(env, db, hashKeySerde, rangeKeySerde,
+				valueSerde);
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey, keyBytesFrom, keyBytesTo,
 				peekKey) -> {
 			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0 && (fromRangeKey1 == null
@@ -409,10 +393,10 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public TableRow<H, R, V> next() {
 				if (useFixFirst()) {
 					fixFirst = false;
-					return RawTableRow.valueOfBuffer(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.peekNext();
 				}
 				if (hasNext()) {
-					return RawTableRow.valueOfBuffer(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.prev();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -443,7 +427,8 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
-		final DBIterator iterator = new LmDBJnrDBIterator(env, db);
+		final EzDBIterator<H, R, V> iterator = new LmDBJnrDBIterator<H, R, V>(env, db, hashKeySerde, rangeKeySerde,
+				valueSerde);
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey1, toRangeKey1, keyBytesFrom, keyBytesTo,
 				peekKey) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKey) == 0
 						&& (fromRangeKey1 == null
@@ -506,10 +491,10 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			public TableRow<H, R, V> next() {
 				if (useFixFirst()) {
 					fixFirst = false;
-					return RawTableRow.valueOfBuffer(iterator.peekNext(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.peekNext();
 				}
 				if (hasNext()) {
-					return RawTableRow.valueOfBuffer(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+					return iterator.prev();
 				} else {
 					throw new NoSuchElementException();
 				}
@@ -596,6 +581,7 @@ public class EzLmDbTable<H, R, V> implements RangeTable<H, R, V> {
 			delegate.remove();
 		}
 
+		@SuppressWarnings("deprecation")
 		@Override
 		protected void finalize() throws Throwable {
 			super.finalize();

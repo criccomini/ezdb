@@ -1,21 +1,21 @@
-package ezdb.lmdb.util;
+package ezdb.rocksdb.util;
 
 import java.io.Closeable;
-import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.Map;
+
+import ezdb.RawTableRow;
 
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public interface DBIterator extends Iterator<Map.Entry<ByteBuffer, ByteBuffer>>, Closeable {
+public interface EzDBIterator<H, R, V> extends Iterator<RawTableRow<H, R, V>>, Closeable {
 
 	/**
 	 * Repositions the iterator so the key of the next BlockElement returned greater
 	 * than or equal to the specified targetKey.
 	 */
-	public void seek(ByteBuffer key);
+	public void seek(byte[] key);
 
 	/**
 	 * Repositions the iterator so is is at the beginning of the Database.
@@ -25,7 +25,11 @@ public interface DBIterator extends Iterator<Map.Entry<ByteBuffer, ByteBuffer>>,
 	/**
 	 * Returns the next element in the iteration, without advancing the iteration.
 	 */
-	public Map.Entry<ByteBuffer, ByteBuffer> peekNext();
+	public RawTableRow<H, R, V> peekNext();
+
+	public byte[] nextKey();
+
+	public byte[] peekNextKey();
 
 	/**
 	 * @return true if there is a previous entry in the iteration.
@@ -35,13 +39,15 @@ public interface DBIterator extends Iterator<Map.Entry<ByteBuffer, ByteBuffer>>,
 	/**
 	 * @return the previous element in the iteration and rewinds the iteration.
 	 */
-	Map.Entry<ByteBuffer, ByteBuffer> prev();
+	RawTableRow<H, R, V> prev();
 
 	/**
 	 * @return the previous element in the iteration, without rewinding the
 	 *         iteration.
 	 */
-	public Map.Entry<ByteBuffer, ByteBuffer> peekPrev();
+	RawTableRow<H, R, V> peekPrev();
+
+	public byte[] peekPrevKey();
 
 	/**
 	 * Repositions the iterator so it is at the end of of the Database.
@@ -50,9 +56,5 @@ public interface DBIterator extends Iterator<Map.Entry<ByteBuffer, ByteBuffer>>,
 
 	@Override
 	public void close();
-
-	public ByteBuffer peekNextKey();
-
-	public ByteBuffer peekPrevKey();
 
 }

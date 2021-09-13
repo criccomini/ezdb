@@ -12,6 +12,7 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 
 import ezdb.DbException;
+import ezdb.EmptyTableIterator;
 import ezdb.RangeTable;
 import ezdb.RawTableRow;
 import ezdb.TableIterator;
@@ -276,27 +277,7 @@ public class EzLevelDbJniTable<H, R, V> implements RangeTable<H, R, V> {
 		}
 		// if there is no last one, there is nothing at all in the table
 		if (last == null) {
-			return new TableIterator<H, R, V>() {
-
-				@Override
-				public boolean hasNext() {
-					return false;
-				}
-
-				@Override
-				public TableRow<H, R, V> next() {
-					throw new NoSuchElementException();
-				}
-
-				@Override
-				public void remove() {
-					throw new NoSuchElementException();
-				}
-
-				@Override
-				public void close() {
-				}
-			};
+			return EmptyTableIterator.get();
 		}
 		// since last has been found, seek again for that one
 		iterator.seek(last.getKey());
