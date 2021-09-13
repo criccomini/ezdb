@@ -528,7 +528,10 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
-		// delete does not work when we try zero copy here
+		/*
+		 * delete does not work when we try zero copy here, maybe because the delete is
+		 * performed async?
+		 */
 		this.db.delete(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
 	}
 

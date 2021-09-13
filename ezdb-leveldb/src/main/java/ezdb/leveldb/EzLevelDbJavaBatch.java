@@ -55,7 +55,10 @@ public class EzLevelDbJavaBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
-		// delete does not work when we try zero copy here
+		/*
+		 * delete does not work when we try zero copy here, maybe because the delete is
+		 * performed async?
+		 */
 		writeBatch.delete(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
 	}
 
