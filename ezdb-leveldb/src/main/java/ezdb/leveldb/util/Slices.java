@@ -14,7 +14,7 @@ import ezdb.serde.Serde;
 public class Slices {
 
 	public static ByteBuffer unwrap(final Slice slice) {
-		return ByteBuffer.wrap(slice.getRawArray(), slice.getRawOffset(), slice.length()).slice();
+		return ByteBuffer.wrap(slice.getRawArray(), slice.getRawOffset(), slice.length());
 	}
 
 	public static ByteBuffer unwrapSlice(final Slice slice, final int index, final int length) {
