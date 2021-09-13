@@ -46,7 +46,7 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		this.map = newMap(comparator);
 	}
 
-	protected ConcurrentSkipListMap<ByteBuffer, ByteBuffer> newMap(final Comparator<ByteBuffer> comparator) {
+	protected NavigableMap<ByteBuffer, ByteBuffer> newMap(final Comparator<ByteBuffer> comparator) {
 		return new ConcurrentSkipListMap<ByteBuffer, ByteBuffer>(comparator);
 	}
 

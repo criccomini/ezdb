@@ -37,7 +37,7 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		this.map = newMap(comparator);
 	}
 
-	protected ConcurrentSkipListMap<ObjectTableKey<H, R>, V> newMap(final Comparator<ObjectTableKey<H, R>> comparator) {
+	protected NavigableMap<ObjectTableKey<H, R>, V> newMap(final Comparator<ObjectTableKey<H, R>> comparator) {
 		return new ConcurrentSkipListMap<ObjectTableKey<H, R>, V>(comparator);
 	}
 
