@@ -16,21 +16,23 @@ import io.netty.buffer.ByteBufAllocator;
 
 public class EzLmDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 
-	private final Env<ByteBuffer> env;
 	private final Dbi<ByteBuffer> db;
 	private final Txn<ByteBuffer> txn;
 	private final Serde<H> hashKeySerde;
 	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
+	private final ByteBuf keyBuffer;
+	private final ByteBuf valueBuffer;
 
 	public EzLmDbBatch(final Env<ByteBuffer> env, final Dbi<ByteBuffer> db, final Serde<H> hashKeySerde,
 			final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
-		this.env = env;
 		this.db = db;
 		this.txn = env.txnWrite();
 		this.hashKeySerde = hashKeySerde;
 		this.rangeKeySerde = rangeKeySerde;
 		this.valueSerde = valueSerde;
+		this.keyBuffer = ByteBufAllocator.DEFAULT.directBuffer();
+		this.valueBuffer = ByteBufAllocator.DEFAULT.directBuffer();
 	}
 
 	@Override
@@ -56,31 +58,24 @@ public class EzLmDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	public void close() throws IOException {
 		flush();
 		txn.close();
+		this.keyBuffer.release(keyBuffer.refCnt());
+		this.valueBuffer.release(valueBuffer.refCnt());
 	}
 
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
-		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.directBuffer();
+		keyBuffer.clear();
 		Util.combineBuf(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
-		final ByteBuf valueBuffer = ByteBufAllocator.DEFAULT.directBuffer();
+		valueBuffer.clear();
 		valueSerde.toBuffer(valueBuffer, value);
-		try {
-			db.put(txn, keyBuffer.nioBuffer(), valueBuffer.nioBuffer());
-		} finally {
-			keyBuffer.release(keyBuffer.refCnt());
-			valueBuffer.release(valueBuffer.refCnt());
-		}
+		db.put(txn, keyBuffer.nioBuffer(), valueBuffer.nioBuffer());
 	}
 
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
-		final ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer();
-		try {
-			Util.combineBuf(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
-			db.delete(txn, buffer.nioBuffer());
-		} finally {
-			buffer.release(buffer.refCnt());
-		}
+		keyBuffer.clear();
+		Util.combineBuf(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+		db.delete(txn, keyBuffer.nioBuffer());
 	}
 
 }

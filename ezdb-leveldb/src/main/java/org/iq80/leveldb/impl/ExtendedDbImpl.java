@@ -835,6 +835,12 @@ public class ExtendedDbImpl implements DB {
 		}
 	}
 
+	public Snapshot put(final Slice key, final Slice value, final WriteOptions options) throws DBException {
+		try (WriteBatchImpl writeBatch = new WriteBatchImpl()) {
+			return writeInternal(writeBatch.put(key, value), options);
+		}
+	}
+
 	@Override
 	public void delete(final byte[] key) throws DBException {
 		delete(key, new WriteOptions());
