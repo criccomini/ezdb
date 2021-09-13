@@ -352,15 +352,18 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		iterator.seek(Slices.wrap(keyBytesFromBuf));
 		if (!iterator.hasNext() || fromRangeKey == null) {
 			final ByteBuf keyBytesFromForSeekLastBuf = ByteBufAllocator.DEFAULT.heapBuffer();
-			Util.combineBuf(keyBytesFromForSeekLastBuf, hashKeySerde, rangeKeySerde, hashKey, null);
-			final ByteBuffer keyBytesFromForSeekLast = keyBytesFromForSeekLastBuf.nioBuffer();
-			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null,
-					keyBytesFromForSeekLastBuf, keyBytesFromForSeekLast, null, iterator, checkKeys);
-			if (emptyIterator != null) {
-				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
+			try {
+				Util.combineBuf(keyBytesFromForSeekLastBuf, hashKeySerde, rangeKeySerde, hashKey, null);
+				final ByteBuffer keyBytesFromForSeekLast = keyBytesFromForSeekLastBuf.nioBuffer();
+				final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null,
+						keyBytesFromForSeekLastBuf, keyBytesFromForSeekLast, null, iterator, checkKeys);
+				if (emptyIterator != null) {
+					keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
+					iterator.close();
+					return emptyIterator;
+				}
+			} finally {
 				keyBytesFromForSeekLastBuf.release(keyBytesFromForSeekLastBuf.refCnt());
-				iterator.close();
-				return emptyIterator;
 			}
 		}
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
@@ -446,16 +449,19 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		iterator.seek(Slices.wrap(keyBytesFromBuf));
 		if (!iterator.hasNext() || fromRangeKey == null) {
 			final ByteBuf keyBytesFromForSeekLastBuf = ByteBufAllocator.DEFAULT.heapBuffer();
-			Util.combineBuf(keyBytesFromForSeekLastBuf, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
-			final ByteBuffer keyBytesFromForSeekLast = keyBytesFromForSeekLastBuf.nioBuffer();
-			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, toRangeKey,
-					keyBytesFromForSeekLastBuf, keyBytesFromForSeekLast, keyBytesTo, iterator, checkKeys);
-			if (emptyIterator != null) {
-				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
-				keyBytesToBuf.release(keyBytesToBuf.refCnt());
+			try {
+				Util.combineBuf(keyBytesFromForSeekLastBuf, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+				final ByteBuffer keyBytesFromForSeekLast = keyBytesFromForSeekLastBuf.nioBuffer();
+				final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, toRangeKey,
+						keyBytesFromForSeekLastBuf, keyBytesFromForSeekLast, keyBytesTo, iterator, checkKeys);
+				if (emptyIterator != null) {
+					keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
+					keyBytesToBuf.release(keyBytesToBuf.refCnt());
+					iterator.close();
+					return emptyIterator;
+				}
+			} finally {
 				keyBytesFromForSeekLastBuf.release(keyBytesFromForSeekLastBuf.refCnt());
-				iterator.close();
-				return emptyIterator;
 			}
 		}
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
