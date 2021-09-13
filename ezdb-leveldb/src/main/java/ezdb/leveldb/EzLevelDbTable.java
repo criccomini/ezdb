@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.ReadOptions;
+import org.iq80.leveldb.WriteOptions;
 import org.iq80.leveldb.impl.ExtendedDbImpl;
 import org.iq80.leveldb.util.Slice;
 
@@ -27,7 +28,8 @@ import io.netty.buffer.ByteBufAllocator;
 
 public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
-	private static final ReadOptions DEFAULT_READ_OPTIONS = new ReadOptions().verifyChecksums(false);
+	private static final WriteOptions DEFAULT_WRITE_OPTIONS = new WriteOptions();
+	private final ReadOptions defaultReadOptions;
 
 	private final ExtendedDbImpl db;
 	private final Serde<H> hashKeySerde;
@@ -36,7 +38,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	private final Comparator<ByteBuffer> hashKeyComparator;
 	private final Comparator<ByteBuffer> rangeKeyComparator;
 
-	public EzLevelDbTable(final File path, final EzLevelDbFactory factory, final Serde<H> hashKeySerde,
+	public EzLevelDbTable(final File path, final EzLevelDbJavaFactory factory, final Serde<H> hashKeySerde,
 			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuffer> hashKeyComparator,
 			final Comparator<ByteBuffer> rangeKeyComparator) {
 		this.hashKeySerde = hashKeySerde;
@@ -47,7 +49,8 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 		final Options options = new Options();
 		options.createIfMissing(true);
-		options.comparator(new EzLevelDbComparator(hashKeyComparator, rangeKeyComparator));
+		defaultReadOptions = new ReadOptions().verifyChecksums(options.paranoidChecks());
+		options.comparator(new EzLevelDbJavaComparator(hashKeyComparator, rangeKeyComparator));
 
 		try {
 			this.db = factory.open(path, options);
@@ -76,7 +79,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.heapBuffer();
 		try {
 			Util.combineBuf(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
-			final Slice valueBytes = db.get(Slices.wrap(keyBuffer), DEFAULT_READ_OPTIONS);
+			final Slice valueBytes = db.get(Slices.wrap(keyBuffer), defaultReadOptions);
 
 			if (valueBytes == null) {
 				return null;
@@ -91,7 +94,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public TableIterator<H, R, V> range(final H hashKey) {
 		final EzLevelDBIterator iterator = new EzLevelDBIterator(db.iterator());
-		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, null);
+		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(keyBytesFromBuf, hashKeySerde, rangeKeySerde, hashKey, null);
+		final ByteBuffer keyBytesFrom = keyBytesFromBuf.nioBuffer();
 		iterator.seek(Slices.wrap(keyBytesFrom));
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 			@Override
@@ -116,6 +121,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public void close() {
+				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
 				try {
 					iterator.close();
 				} catch (final Exception e) {
@@ -131,7 +137,9 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 			return range(hashKey);
 		}
 		final EzLevelDBIterator iterator = new EzLevelDBIterator(db.iterator());
-		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(keyBytesFromBuf, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuffer keyBytesFrom = keyBytesFromBuf.nioBuffer();
 		iterator.seek(Slices.wrap(keyBytesFrom));
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 			@Override
@@ -156,6 +164,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public void close() {
+				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
 				try {
 					iterator.close();
 				} catch (final Exception e) {
@@ -171,8 +180,12 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 			return range(hashKey, fromRangeKey);
 		}
 		final EzLevelDBIterator iterator = new EzLevelDBIterator(db.iterator());
-		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final ByteBuffer keyBytesTo = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(keyBytesFromBuf, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuffer keyBytesFrom = keyBytesFromBuf.nioBuffer();
+		final ByteBuf keyBytesToBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(keyBytesToBuf, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+		final ByteBuffer keyBytesTo = keyBytesToBuf.nioBuffer();
 		iterator.seek(Slices.wrap(keyBytesFrom));
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<H, R, V>() {
 			@Override
@@ -197,6 +210,8 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public void close() {
+				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
+				keyBytesToBuf.release(keyBytesToBuf.refCnt());
 				try {
 					iterator.close();
 				} catch (final Exception e) {
@@ -211,10 +226,13 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 		final EzLevelDBIterator iterator = new EzLevelDBIterator(db.iterator());
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
 				peekKey) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, Slices.unwrap(peekKey)) == 0;
-		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, null);
+		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(keyBytesFromBuf, hashKeySerde, rangeKeySerde, hashKey, null);
+		final ByteBuffer keyBytesFrom = keyBytesFromBuf.nioBuffer();
 		final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFrom, null,
 				iterator, checkKeys);
 		if (emptyIterator != null) {
+			keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
 			iterator.close();
 			return emptyIterator;
 		}
@@ -269,6 +287,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public void close() {
+				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
 				try {
 					iterator.close();
 				} catch (final Exception e) {
@@ -328,13 +347,19 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 			return Util.compareKeys(hashKeyComparator, null, keyBytesFrom, peekKeyBuffer) == 0 && (fromRangeKey1 == null
 					|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, peekKeyBuffer) >= 0);
 		};
-		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(keyBytesFromBuf, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuffer keyBytesFrom = keyBytesFromBuf.nioBuffer();
 		iterator.seek(Slices.wrap(keyBytesFrom));
 		if (!iterator.hasNext() || fromRangeKey == null) {
-			final ByteBuffer keyBytesFromForSeekLast = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, null);
+			final ByteBuf keyBytesFromForSeekLastBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+			Util.combineBuf(keyBytesFromForSeekLastBuf, hashKeySerde, rangeKeySerde, hashKey, null);
+			final ByteBuffer keyBytesFromForSeekLast = keyBytesFromForSeekLastBuf.nioBuffer();
 			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, null, keyBytesFromForSeekLast,
 					null, iterator, checkKeys);
 			if (emptyIterator != null) {
+				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
+				keyBytesFromForSeekLastBuf.release(keyBytesFromForSeekLastBuf.refCnt());
 				iterator.close();
 				return emptyIterator;
 			}
@@ -389,6 +414,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public void close() {
+				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
 				try {
 					iterator.close();
 				} catch (final Exception e) {
@@ -412,15 +438,23 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 					&& (toRangeKey1 == null
 							|| Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesTo, peekKeyBuffer) <= 0);
 		};
-		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
-		final ByteBuffer keyBytesTo = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+		final ByteBuf keyBytesFromBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(keyBytesFromBuf, hashKeySerde, rangeKeySerde, hashKey, fromRangeKey);
+		final ByteBuffer keyBytesFrom = keyBytesFromBuf.nioBuffer();
+		final ByteBuf keyBytesToBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(keyBytesToBuf, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+		final ByteBuffer keyBytesTo = keyBytesToBuf.nioBuffer();
 		iterator.seek(Slices.wrap(keyBytesFrom));
 		if (!iterator.hasNext() || fromRangeKey == null) {
-			final ByteBuffer keyBytesFromForSeekLast = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey,
-					toRangeKey);
+			final ByteBuf keyBytesFromForSeekLastBuf = ByteBufAllocator.DEFAULT.heapBuffer();
+			Util.combineBuf(keyBytesFromForSeekLastBuf, hashKeySerde, rangeKeySerde, hashKey, toRangeKey);
+			final ByteBuffer keyBytesFromForSeekLast = keyBytesFromForSeekLastBuf.nioBuffer();
 			final TableIterator<H, R, V> emptyIterator = reverseSeekToLast(hashKey, null, toRangeKey,
 					keyBytesFromForSeekLast, keyBytesTo, iterator, checkKeys);
 			if (emptyIterator != null) {
+				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
+				keyBytesToBuf.release(keyBytesToBuf.refCnt());
+				keyBytesFromForSeekLastBuf.release(keyBytesFromForSeekLastBuf.refCnt());
 				iterator.close();
 				return emptyIterator;
 			}
@@ -476,6 +510,8 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 			@Override
 			public void close() {
+				keyBytesFromBuf.release(keyBytesFromBuf.refCnt());
+				keyBytesToBuf.release(keyBytesToBuf.refCnt());
 				try {
 					iterator.close();
 				} catch (final Exception e) {
@@ -492,7 +528,13 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
-		this.db.delete(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey));
+		final ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+		try {
+			this.db.delete(Slices.wrap(buffer), DEFAULT_WRITE_OPTIONS);
+		} finally {
+			buffer.release(buffer.refCnt());
+		}
 	}
 
 	@Override
@@ -638,7 +680,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public RangeBatch<H, R, V> newRangeBatch() {
-		return new EzLevelDbBatch<H, R, V>(db, hashKeySerde, rangeKeySerde, valueSerde);
+		return new EzLevelDbJavaBatch<H, R, V>(db, hashKeySerde, rangeKeySerde, valueSerde);
 	}
 
 	@Override

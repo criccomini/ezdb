@@ -25,16 +25,16 @@ import ezdb.serde.Serde;
  * @author criccomini
  * 
  */
-public class EzLevelDb implements Db<ByteBuffer> {
+public class EzLevelDbJava implements Db<ByteBuffer> {
 	private final File root;
 	private final Map<String, RangeTable<?, ?, ?>> cache;
-	private final EzLevelDbFactory factory;
+	private final EzLevelDbJavaFactory factory;
 
-	public EzLevelDb(final File root) {
+	public EzLevelDbJava(final File root) {
 		this(root, new EzLevelDbJavaFactory());
 	}
 
-	public EzLevelDb(final File root, final EzLevelDbFactory factory) {
+	public EzLevelDbJava(final File root, final EzLevelDbJavaFactory factory) {
 		this.root = root;
 		this.factory = factory;
 		this.cache = new HashMap<String, RangeTable<?, ?, ?>>();

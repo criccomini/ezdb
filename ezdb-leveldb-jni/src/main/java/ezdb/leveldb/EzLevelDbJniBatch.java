@@ -9,7 +9,7 @@ import ezdb.batch.RangeBatch;
 import ezdb.serde.Serde;
 import ezdb.util.Util;
 
-public class EzLevelDbBatch<H, R, V> implements RangeBatch<H, R, V> {
+public class EzLevelDbJniBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	private final DB db;
 	private final WriteBatch writeBatch;
@@ -17,7 +17,7 @@ public class EzLevelDbBatch<H, R, V> implements RangeBatch<H, R, V> {
 	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
 
-	public EzLevelDbBatch(final DB db, final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
+	public EzLevelDbJniBatch(final DB db, final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
 			final Serde<V> valueSerde) {
 		this.db = db;
 		this.writeBatch = db.createWriteBatch();

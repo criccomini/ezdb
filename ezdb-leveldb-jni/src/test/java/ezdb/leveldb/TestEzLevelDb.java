@@ -12,7 +12,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.NoSuchElementException;
 
-import org.iq80.leveldb.fileenv.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -342,7 +341,7 @@ public class TestEzLevelDb {
 	public void before() {
 		FileUtils.deleteRecursively(ROOT);
 		ROOT.mkdirs();
-		ezdb = new EzLevelDbJava(ROOT, newFactory());
+		ezdb = new EzLevelDbJni(ROOT, newFactory());
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
 
@@ -353,8 +352,8 @@ public class TestEzLevelDb {
 		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
 	}
 
-	protected EzLevelDbJavaFactory newFactory() {
-		return new EzLevelDbJavaFactory();
+	protected EzLevelDbJniFactory newFactory() {
+		return new EzLevelDbJniFactory();
 	}
 
 	@After

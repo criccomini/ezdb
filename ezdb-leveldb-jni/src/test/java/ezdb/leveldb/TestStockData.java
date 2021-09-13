@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-import org.iq80.leveldb.fileenv.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,13 +51,13 @@ public class TestStockData {
 	public void before() {
 		FileUtils.deleteRecursively(ROOT);
 		ROOT.mkdirs();
-		ezdb = new EzLevelDbJava(ROOT, newFactory());
+		ezdb = new EzLevelDbJni(ROOT, newFactory());
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", hashKeySerde, hashRangeSerde, valueSerde, hashKeyComparator, rangeKeyComparator);
 	}
 
-	protected EzLevelDbJavaFactory newFactory() {
-		return new EzLevelDbJavaFactory();
+	protected EzLevelDbJniFactory newFactory() {
+		return new EzLevelDbJniFactory();
 	}
 
 	@After

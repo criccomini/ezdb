@@ -36,11 +36,11 @@ public class TestEzLevelDbTorture {
 
 	@Before
 	public void before() {
-		db = new EzLevelDbJava(new File("/tmp"), newFactory());
+		db = new EzLevelDbJni(new File("/tmp"), newFactory());
 	}
 
-	protected EzLevelDbJavaFactory newFactory() {
-		return new EzLevelDbJavaFactory();
+	protected EzLevelDbJniFactory newFactory() {
+		return new EzLevelDbJniFactory();
 	}
 
 	@Test

@@ -77,7 +77,7 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Closer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import ezdb.leveldb.EzLevelDbComparator;
+import ezdb.leveldb.EzLevelDbJavaComparator;
 
 @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
 public class ExtendedDbImpl implements DB {
@@ -135,7 +135,7 @@ public class ExtendedDbImpl implements DB {
 		}
 
 		// use custom comparator if set
-		final EzLevelDbComparator comparator = (EzLevelDbComparator) options.comparator();
+		final EzLevelDbJavaComparator comparator = (EzLevelDbJavaComparator) options.comparator();
 		UserComparator userComparator;
 		if (comparator != null) {
 			userComparator = new ExtendedCustomUserComparator(comparator);
@@ -846,6 +846,12 @@ public class ExtendedDbImpl implements DB {
 		}
 	}
 
+	public Snapshot delete(final Slice key, final WriteOptions options) throws DBException {
+		try (WriteBatchImpl writeBatch = new WriteBatchImpl()) {
+			return writeInternal(writeBatch.delete(key), options);
+		}
+	}
+
 	@Override
 	public void write(final WriteBatch updates) throws DBException {
 		writeInternal((WriteBatchImpl) updates, new WriteOptions());
@@ -1007,7 +1013,7 @@ public class ExtendedDbImpl implements DB {
 	}
 
 	@Override
-	public WriteBatch createWriteBatch() {
+	public WriteBatchImpl createWriteBatch() {
 		checkBackgroundException();
 		return new WriteBatchImpl();
 	}
