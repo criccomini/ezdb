@@ -10,7 +10,6 @@ import ezdb.LazyGetter;
 import ezdb.RawTableRow;
 import ezdb.TableRow;
 import ezdb.serde.Serde;
-import ezdb.util.Util;
 
 public class Slices {
 
@@ -18,7 +17,7 @@ public class Slices {
 		return ByteBuffer.wrap(slice.getRawArray(), slice.getRawOffset(), slice.length());
 	}
 
-	public static ByteBuffer slice(final Slice slice, final int index, final int length) {
+	public static ByteBuffer unwrapSlice(final Slice slice, final int index, final int length) {
 		return ByteBuffer.wrap(slice.getRawArray(), slice.getRawOffset() + index, length);
 	}
 
@@ -32,18 +31,19 @@ public class Slices {
 		final LazyGetter<Entry<ByteBuffer, ByteBuffer>> hashKeyBytes_rangeKeyBytes = new LazyGetter<Entry<ByteBuffer, ByteBuffer>>() {
 			@Override
 			protected Entry<ByteBuffer, ByteBuffer> internalGet() {
-				final ByteBuffer compoundKeyBytes = unwrap(rawRow.getKey());
+				final Slice compoundKeyBytes = rawRow.getKey();
 				int index = 0;
-				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
+				// leveldb stores data in little endian
+				final int hashKeyBytesLength = Integer.reverseBytes(compoundKeyBytes.getInt(index));
 				index += Integer.BYTES;
-				final ByteBuffer hashKeyBytes = Util.slice(compoundKeyBytes, index, hashKeyBytesLength);
+				final ByteBuffer hashKeyBytes = unwrapSlice(compoundKeyBytes, index, hashKeyBytesLength);
 				index += hashKeyBytesLength;
-				final int rangeKeyBytesLength = compoundKeyBytes.getInt(index);
+				final int rangeKeyBytesLength = Integer.reverseBytes(compoundKeyBytes.getInt(index));
 				index += Integer.BYTES;
 				final ByteBuffer rangeKeyBytes;
 
 				if (rangeKeyBytesLength > 0) {
-					rangeKeyBytes = Util.slice(compoundKeyBytes, index, rangeKeyBytesLength);
+					rangeKeyBytes = unwrapSlice(compoundKeyBytes, index, rangeKeyBytesLength);
 				} else {
 					rangeKeyBytes = null;
 				}
@@ -105,13 +105,13 @@ public class Slices {
 		// leveldb stores data in little endian
 		final int k1HashKeyLength = Integer.reverseBytes(k1.getInt(k1Index));
 		k1Index += Integer.BYTES;
-		final ByteBuffer k1HashKeyBytes = slice(k1, k1Index, k1HashKeyLength);
+		final ByteBuffer k1HashKeyBytes = unwrapSlice(k1, k1Index, k1HashKeyLength);
 
 		// Second hash key
 		int k2Index = 0;
 		final int k2HashKeyLength = Integer.reverseBytes(k2.getInt(k2Index));
 		k2Index += Integer.BYTES;
-		final ByteBuffer k2HashKeyBytes = slice(k2, k2Index, k2HashKeyLength);
+		final ByteBuffer k2HashKeyBytes = unwrapSlice(k2, k2Index, k2HashKeyLength);
 
 		final int hashComparison = hashKeyComparator.compare(k1HashKeyBytes, k2HashKeyBytes);
 
@@ -120,13 +120,13 @@ public class Slices {
 			k1Index += k1HashKeyLength;
 			final int k1RangeKeyLength = Integer.reverseBytes(k1.getInt(k1Index));
 			k1Index += Integer.BYTES;
-			final ByteBuffer k1RangeKeyBytes = slice(k1, k1Index, k1RangeKeyLength);
+			final ByteBuffer k1RangeKeyBytes = unwrapSlice(k1, k1Index, k1RangeKeyLength);
 
 			// Second range key
 			k2Index += k2HashKeyLength;
 			final int k2RangeKeyLength = Integer.reverseBytes(k2.getInt(k2Index));
 			k2Index += Integer.BYTES;
-			final ByteBuffer k2RangeKeyBytes = slice(k2, k2Index, k2RangeKeyLength);
+			final ByteBuffer k2RangeKeyBytes = unwrapSlice(k2, k2Index, k2RangeKeyLength);
 
 			return rangeKeyComparator.compare(k1RangeKeyBytes, k2RangeKeyBytes);
 		}
