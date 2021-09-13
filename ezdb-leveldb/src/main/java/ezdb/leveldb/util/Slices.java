@@ -25,6 +25,12 @@ public class Slices {
 		return new Slice(buffer.array(), buffer.readerIndex() + buffer.arrayOffset(), buffer.readableBytes());
 	}
 
+	public static byte[] wrapCopy(final ByteBuf buffer) {
+		final byte[] bytes = new byte[buffer.readableBytes()];
+		buffer.readBytes(bytes);
+		return bytes;
+	}
+
 	public static <H, R, V> RawTableRow<H, R, V> newRawTableRow(final Slice keyBuffer, final Slice valueBuffer,
 			final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
 		// extract hashKeyBytes/rangeKeyBytes only if needed
