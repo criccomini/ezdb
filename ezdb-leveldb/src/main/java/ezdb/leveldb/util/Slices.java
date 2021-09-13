@@ -22,10 +22,6 @@ public class Slices {
 		return ByteBuffer.wrap(slice.getRawArray(), slice.getRawOffset() + index, length).slice();
 	}
 
-	public static Slice wrap(final ByteBuffer buffer) {
-		return new Slice(buffer.array(), buffer.position(), buffer.remaining());
-	}
-
 	public static Slice wrap(final ByteBuf buffer) {
 		return new Slice(buffer.array(), buffer.readerIndex() + buffer.arrayOffset(), buffer.readableBytes());
 	}
