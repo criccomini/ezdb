@@ -55,6 +55,7 @@ import org.iq80.leveldb.impl.Filename.FileType;
 import org.iq80.leveldb.impl.WriteBatchImpl.Handler;
 import org.iq80.leveldb.iterator.DBIteratorAdapter;
 import org.iq80.leveldb.iterator.DbIterator;
+import org.iq80.leveldb.iterator.ExtendedDBIteratorAdapter;
 import org.iq80.leveldb.iterator.InternalIterator;
 import org.iq80.leveldb.iterator.MergingIterator;
 import org.iq80.leveldb.iterator.SnapshotSeekingIterator;
@@ -1034,6 +1035,21 @@ public class ExtendedDbImpl implements DB {
 			final SnapshotSeekingIterator snapshotIterator = new SnapshotSeekingIterator(rawIterator, snapshot,
 					internalKeyComparator.getUserComparator(), new RecordBytesListener());
 			return new DBIteratorAdapter(snapshotIterator);
+		} finally {
+			mutex.unlock();
+		}
+	}
+
+	public ExtendedDBIteratorAdapter extendedIterator(final ReadOptions options) {
+		mutex.lock();
+		try {
+			final InternalIterator rawIterator = internalIterator(options);
+
+			// filter out any entries not visible in our snapshot
+			final long snapshot = getSnapshot(options);
+			final SnapshotSeekingIterator snapshotIterator = new SnapshotSeekingIterator(rawIterator, snapshot,
+					internalKeyComparator.getUserComparator(), new RecordBytesListener());
+			return new ExtendedDBIteratorAdapter(snapshotIterator);
 		} finally {
 			mutex.unlock();
 		}

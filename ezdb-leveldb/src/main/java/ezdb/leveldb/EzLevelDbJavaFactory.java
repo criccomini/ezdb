@@ -13,6 +13,10 @@ public class EzLevelDbJavaFactory {
 		return new ExtendedDbImpl(options, path.getAbsolutePath(), EnvImpl.createEnv());
 	}
 
+	public boolean isVerifyChecksums() {
+		return true;
+	}
+
 	public void destroy(final File path, final Options options) throws IOException {
 		Iq80DBFactory.factory.destroy(path, options);
 	}

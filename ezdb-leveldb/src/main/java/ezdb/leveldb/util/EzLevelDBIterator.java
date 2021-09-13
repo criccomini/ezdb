@@ -35,7 +35,6 @@ import java.util.AbstractMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.iterator.ExtendedDBIteratorAdapter;
 import org.iq80.leveldb.util.Slice;
 
@@ -48,8 +47,8 @@ public class EzLevelDBIterator implements EzDBIterator {
 	private final ExtendedDBIteratorAdapter iterator;
 	private boolean valid = false;
 
-	public EzLevelDBIterator(final DBIterator iterator) {
-		this.iterator = ExtendedDBIteratorAdapter.wrap(iterator);
+	public EzLevelDBIterator(final ExtendedDBIteratorAdapter iterator) {
+		this.iterator = iterator;
 	}
 
 	@Override
