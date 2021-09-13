@@ -66,6 +66,7 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
+		// writing operations need to work with byte arrays
 		db.put(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey), valueSerde.toBytes(value));
 	}
 

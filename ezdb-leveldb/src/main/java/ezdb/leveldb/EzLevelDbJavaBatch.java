@@ -48,6 +48,7 @@ public class EzLevelDbJavaBatch<H, R, V> implements RangeBatch<H, R, V> {
 
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
+		// writing operations need to work with byte arrays
 		final byte[] valueBytes = valueSerde.toBytes(value);
 		final byte[] keyBytes = Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey);
 		writeBatch.put(keyBytes, valueBytes);
