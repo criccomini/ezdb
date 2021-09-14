@@ -67,16 +67,19 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
-		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.heapBuffer();
-		Util.combineBuf(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
-		final ByteBuf valueBuffer = ByteBufAllocator.DEFAULT.heapBuffer();
-		valueSerde.toBuffer(valueBuffer, value);
-		try {
-			db.put(Slices.wrapCopy(keyBuffer), Slices.wrapCopy(valueBuffer), DEFAULT_WRITE_OPTIONS);
-		} finally {
-			keyBuffer.release(keyBuffer.refCnt());
-			valueBuffer.release(valueBuffer.refCnt());
-		}
+//		final ByteBuf keyBuffer = ByteBufAllocator.DEFAULT.heapBuffer();
+//		Util.combineBuf(keyBuffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+//		final ByteBuf valueBuffer = ByteBufAllocator.DEFAULT.heapBuffer();
+//		valueSerde.toBuffer(valueBuffer, value);
+//		try {
+//			db.put(Slices.wrapCopy(keyBuffer), Slices.wrapCopy(valueBuffer), DEFAULT_WRITE_OPTIONS);
+//		} finally {
+//			keyBuffer.release(keyBuffer.refCnt());
+//			valueBuffer.release(valueBuffer.refCnt());
+//		}
+		// writing operations need to work with byte arrays
+		db.put(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey), valueSerde.toBytes(value),
+				DEFAULT_WRITE_OPTIONS);
 	}
 
 	@Override
@@ -529,13 +532,18 @@ public class EzLevelDbTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
-		final ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer();
-		Util.combineBuf(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
-		try {
-			this.db.delete(Slices.wrapCopy(buffer), DEFAULT_WRITE_OPTIONS);
-		} finally {
-			buffer.release(buffer.refCnt());
-		}
+//		final ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer();
+//		Util.combineBuf(buffer, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+//		try {
+//			this.db.delete(Slices.wrapCopy(buffer), DEFAULT_WRITE_OPTIONS);
+//		} finally {
+//			buffer.release(buffer.refCnt());
+//		}
+		/*
+		 * delete does not work when we try zero copy here, maybe because the delete is
+		 * performed async?
+		 */
+		this.db.delete(Util.combineBytes(hashKeySerde, rangeKeySerde, hashKey, rangeKey), DEFAULT_WRITE_OPTIONS);
 	}
 
 	@Override
