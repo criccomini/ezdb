@@ -18,7 +18,7 @@ import ezdb.util.ObjectTableKey;
  */
 public interface EzLsmTreeDbFactory {
 
-	public <H, R, V> Store<ObjectTableKey<H, R>, V> open(String tableName, File path,
+	public <H, R, V> Store<ObjectTableKey<H, R>, V> open(File path,
 			final Serializer<ObjectTableKey<H, R>> keySerializer, final Serializer<V> valueSerializer,
 			EzLsmTreeDbComparator<H, R> comparator) throws IOException;
 

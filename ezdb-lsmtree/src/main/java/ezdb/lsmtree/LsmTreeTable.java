@@ -1,15 +1,12 @@
 package ezdb.lsmtree;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
 import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListMap;
 
+import com.indeed.lsmtree.core.Store;
 import com.indeed.util.serialization.Serializer;
 
 import ezdb.EmptyTableIterator;
@@ -23,26 +20,21 @@ import ezdb.util.ObjectTableRow;
 import ezdb.util.Util;
 
 public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
-	private final NavigableMap<ObjectTableKey<H, R>, V> map;
+	private final Store<ObjectTableKey<H, R>, V> store;
 	private final Comparator<H> hashKeyComparator;
 	private final Comparator<R> rangeKeyComparator;
 
-	public LsmTreeTable(final Serializer<H> hashKeySerializer, final Serializer<R> rangeKeySerializer,
-			final Serializer<V> valueSerializer, final Comparator<H> hashKeyComparator,
-			final Comparator<R> rangeKeyComparator) {
+	public LsmTreeTable(final File path, final EzLsmTreeDbFactory factory, final Serializer<H> hashKeySerializer,
+			final Serializer<R> rangeKeySerializer, final Serializer<V> valueSerializer,
+			final Comparator<H> hashKeyComparator, final Comparator<R> rangeKeyComparator) {
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
-		final Comparator<ObjectTableKey<H, R>> comparator = new Comparator<ObjectTableKey<H, R>>() {
-			@Override
-			public int compare(final ObjectTableKey<H, R> k1, final ObjectTableKey<H, R> k2) {
-				return Util.compareKeys(hashKeyComparator, rangeKeyComparator, k1, k2);
-			}
-		};
-		this.map = newMap(comparator);
-	}
-
-	protected NavigableMap<ObjectTableKey<H, R>, V> newMap(final Comparator<ObjectTableKey<H, R>> comparator) {
-		return new ConcurrentSkipListMap<ObjectTableKey<H, R>, V>(comparator);
+		try {
+			this.store = factory.open(path, null, valueSerializer,
+					new EzLsmTreeDbComparator<>(hashKeyComparator, rangeKeyComparator));
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -57,22 +49,34 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
-		map.put(Util.combine(hashKey, rangeKey), value);
+		try {
+			store.put(Util.combine(hashKey, rangeKey), value);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public V get(final H hashKey, final R rangeKey) {
-		final V value = map.get(Util.combine(hashKey, rangeKey));
-		return value;
+		try {
+			final V value = store.get(Util.combine(hashKey, rangeKey));
+			return value;
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public TableIterator<H, R, V> range(final H hashKey) {
 		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null);
-		final Set<Entry<ObjectTableKey<H, R>, V>> tailMapEntries = map.tailMap(keyBytesFrom, true).entrySet();
-		final Iterator<Entry<ObjectTableKey<H, R>, V>> iterator = tailMapEntries.iterator();
+		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
+		try {
+			iterator = store.iterator(keyBytesFrom, true);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 		return new TableIterator<H, R, V>() {
-			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+			private Store.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			@Override
 			public boolean hasNext() {
@@ -84,7 +88,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				TableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new ObjectTableRow<H, R, V>(next);
+					row = new ObjectTableRow<H, R, V>(next.getKey(), next.getValue());
 				}
 
 				if (iterator.hasNext()) {
@@ -105,7 +109,11 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				if (next == null) {
 					throw new IllegalStateException("next is null");
 				}
-				map.remove(next.getKey());
+				try {
+					store.delete(next.getKey());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
 				next();
 			}
 
@@ -122,10 +130,14 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 			return range(hashKey);
 		}
 		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
-		final Set<Entry<ObjectTableKey<H, R>, V>> tailMapEntries = map.tailMap(keyBytesFrom, true).entrySet();
-		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = tailMapEntries.iterator();
+		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
+		try {
+			iterator = store.iterator(keyBytesFrom, true);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 		return new TableIterator<H, R, V>() {
-			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+			private Store.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			@Override
 			public boolean hasNext() {
@@ -137,7 +149,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				ObjectTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new ObjectTableRow<H, R, V>(next);
+					row = new ObjectTableRow<H, R, V>(next.getKey(), next.getValue());
 				}
 
 				if (iterator.hasNext()) {
@@ -158,7 +170,11 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				if (next == null) {
 					throw new IllegalStateException("next is null");
 				}
-				map.remove(next.getKey());
+				try {
+					store.delete(next.getKey());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
 				next();
 			}
 
@@ -180,11 +196,14 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				&& Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, keyBytesTo) > 0) {
 			return EmptyTableIterator.get();
 		}
-		final Set<Entry<ObjectTableKey<H, R>, V>> subMapEntries = map.subMap(keyBytesFrom, true, keyBytesTo, true)
-				.entrySet();
-		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = subMapEntries.iterator();
+		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
+		try {
+			iterator = store.iterator(keyBytesFrom, true);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 		return new TableIterator<H, R, V>() {
-			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+			private Store.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			@Override
 			public boolean hasNext() {
@@ -197,7 +216,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				ObjectTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new ObjectTableRow<H, R, V>(next);
+					row = new ObjectTableRow<H, R, V>(next.getKey(), next.getValue());
 				}
 
 				if (iterator.hasNext()) {
@@ -218,7 +237,11 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				if (next == null) {
 					throw new IllegalStateException("next is null");
 				}
-				map.remove(next.getKey());
+				try {
+					store.delete(next.getKey());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
 				next();
 			}
 
@@ -236,7 +259,11 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
-		map.remove(Util.combine(hashKey, rangeKey));
+		try {
+			store.delete(Util.combine(hashKey, rangeKey));
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -246,11 +273,14 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
 		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null);
-		final Set<Entry<ObjectTableKey<H, R>, V>> headMapEntries = map.descendingMap().headMap(keyBytesFrom, true)
-				.entrySet();
-		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = headMapEntries.iterator();
+		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
+		try {
+			iterator = store.reverseIterator(keyBytesFrom, true);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 		return new TableIterator<H, R, V>() {
-			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+			private Store.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			{
 				while (next != null && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, next.getKey()) != 0
@@ -269,7 +299,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				TableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new ObjectTableRow<H, R, V>(next);
+					row = new ObjectTableRow<H, R, V>(next.getKey(), next.getValue());
 				}
 
 				if (iterator.hasNext()) {
@@ -290,7 +320,11 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				if (next == null) {
 					throw new IllegalStateException("next is null");
 				}
-				map.remove(next.getKey());
+				try {
+					store.delete(next.getKey());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
 				next();
 			}
 
@@ -307,11 +341,14 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 			return rangeReverse(hashKey);
 		}
 		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
-		final Set<Entry<ObjectTableKey<H, R>, V>> tailMapEntries = map.descendingMap().tailMap(keyBytesFrom, true)
-				.entrySet();
-		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator = tailMapEntries.iterator();
+		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
+		try {
+			iterator = store.reverseIterator(keyBytesFrom, true);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 		return new TableIterator<H, R, V>() {
-			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+			private Store.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			{
 				while (next != null && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, next.getKey()) != 0
@@ -330,7 +367,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				ObjectTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new ObjectTableRow<H, R, V>(next);
+					row = new ObjectTableRow<H, R, V>(next.getKey(), next.getValue());
 				}
 
 				if (iterator.hasNext()) {
@@ -351,7 +388,11 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				if (next == null) {
 					throw new IllegalStateException("next is null");
 				}
-				map.remove(next.getKey());
+				try {
+					store.delete(next.getKey());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
 				next();
 			}
 
@@ -373,18 +414,14 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				&& Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, keyBytesTo) < 0) {
 			return EmptyTableIterator.get();
 		}
-		final Iterator<Map.Entry<ObjectTableKey<H, R>, V>> iterator;
-		if (fromRangeKey != null) {
-			final Set<Entry<ObjectTableKey<H, R>, V>> tailMapEntries = map.descendingMap().tailMap(keyBytesFrom, true)
-					.entrySet();
-			iterator = tailMapEntries.iterator();
-		} else {
-			final Set<Entry<ObjectTableKey<H, R>, V>> headMapEntries = map.descendingMap().headMap(keyBytesFrom, true)
-					.entrySet();
-			iterator = headMapEntries.iterator();
+		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
+		try {
+			iterator = store.reverseIterator(keyBytesFrom, true);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
 		}
 		return new TableIterator<H, R, V>() {
-			Map.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+			private Store.Entry<ObjectTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
 
 			{
 				while (next != null && Util.compareKeys(hashKeyComparator, null, keyBytesFrom, next.getKey()) != 0
@@ -404,7 +441,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				ObjectTableRow<H, R, V> row = null;
 
 				if (hasNext()) {
-					row = new ObjectTableRow<H, R, V>(next);
+					row = new ObjectTableRow<H, R, V>(next.getKey(), next.getValue());
 				}
 
 				if (iterator.hasNext()) {
@@ -425,7 +462,11 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 				if (next == null) {
 					throw new IllegalStateException("next is null");
 				}
-				map.remove(next.getKey());
+				try {
+					store.delete(next.getKey());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
 				next();
 			}
 

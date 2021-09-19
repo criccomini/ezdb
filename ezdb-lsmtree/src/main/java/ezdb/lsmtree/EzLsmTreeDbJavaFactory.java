@@ -14,16 +14,7 @@ import com.indeed.util.serialization.Serializer;
 
 import ezdb.util.ObjectTableKey;
 
-public class EzLsmTreeDbJnrFactory implements EzLsmTreeDbFactory {
-
-	@Override
-	public <H, R, V> Store<ObjectTableKey<H, R>, V> open(final String tableName, final File path,
-			final Serializer<ObjectTableKey<H, R>> keySerializer, final Serializer<V> valueSerializer,
-			final EzLsmTreeDbComparator<H, R> comparator) throws IOException {
-		final StoreBuilder<ObjectTableKey<H, R>, V> config = new StoreBuilder<>(path, keySerializer, valueSerializer)
-				.setCodec(newCodec()).setStorageType(newStorageType());
-		return configure(config).build();
-	}
+public class EzLsmTreeDbJavaFactory implements EzLsmTreeDbFactory {
 
 	protected StorageType newStorageType() {
 		return StorageType.BLOCK_COMPRESSED;
@@ -41,6 +32,15 @@ public class EzLsmTreeDbJnrFactory implements EzLsmTreeDbFactory {
 	@Override
 	public void destroy(final File path) throws IOException {
 		FileUtils.deleteQuietly(path);
+	}
+
+	@Override
+	public <H, R, V> Store<ObjectTableKey<H, R>, V> open(final File path,
+			final Serializer<ObjectTableKey<H, R>> keySerializer, final Serializer<V> valueSerializer,
+			final EzLsmTreeDbComparator<H, R> comparator) throws IOException {
+		final StoreBuilder<ObjectTableKey<H, R>, V> config = new StoreBuilder<>(path, keySerializer, valueSerializer)
+				.setCodec(newCodec()).setStorageType(newStorageType());
+		return configure(config).build();
 	}
 
 }
