@@ -40,4 +40,13 @@ public interface Serde<O> {
 	public O fromBytes(byte[] bytes);
 
 	public byte[] toBytes(O obj);
+
+	@SuppressWarnings("unchecked")
+	default <T> T unwrap(final Class<T> type) {
+		if (type.isAssignableFrom(getClass())) {
+			return (T) this;
+		} else {
+			return null;
+		}
+	}
 }
