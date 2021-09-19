@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import ezdb.RangeTable;
 import ezdb.TableIterator;
-import ezdb.lsmtree.EzLsmTreeDb;
 import ezdb.serde.DateSerde;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.Serde;
@@ -44,7 +43,9 @@ public class TestEzLsmTreeDbJni extends TestEzLsmTreeDb {
 	@Override
 	@Before
 	public void before() {
-		ezdb = new EzLsmTreeDb();
+		FileUtils.deleteRecursively(ROOT);
+		ROOT.mkdirs();
+		ezdb = new EzLsmTreeDb(ROOT, newFactory());
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
 
@@ -53,6 +54,11 @@ public class TestEzLsmTreeDbJni extends TestEzLsmTreeDb {
 		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
 		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
 		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
+	}
+
+	@Override
+	protected EzLsmTreeDbFactory newFactory() {
+		return new EzLsmTreeDbJavaFactory();
 	}
 
 	@Override

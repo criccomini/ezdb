@@ -3,6 +3,7 @@ package ezdb.lsmtree;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.Random;
 
@@ -13,7 +14,7 @@ import ezdb.Db;
 import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.comparator.ComparableComparator;
-import ezdb.serde.IntegerSerde;
+import ezdb.treemap.object.ObjectTreeMapTable;
 
 /**
  * This is a little test that mostly just compares random behavior between a
@@ -26,6 +27,8 @@ import ezdb.serde.IntegerSerde;
  * 
  */
 public class TestEzLsmtTreeDbJniTorture {
+	protected static final File ROOT = FileUtils.createTempDir(TestEzLsmtTreeDbJniTorture.class.getSimpleName());
+
 	public static final int NUM_THREADS = 10;
 	public static final int ITERATIONS = 300000;
 	public static final String tableName = "torture";
@@ -34,7 +37,13 @@ public class TestEzLsmtTreeDbJniTorture {
 
 	@Before
 	public void before() {
-		db = new EzLsmTreeDb();
+		FileUtils.deleteRecursively(ROOT);
+		ROOT.mkdirs();
+		db = new EzLsmTreeDb(ROOT, newFactory());
+	}
+
+	protected EzLsmTreeDbFactory newFactory() {
+		return new EzLsmTreeDbJavaFactory();
 	}
 
 	@Test
@@ -66,9 +75,8 @@ public class TestEzLsmtTreeDbJniTorture {
 			final Random rand = new Random();
 			final RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, null, null, null);
 			final Comparator<Integer> integerComparator = ComparableComparator.get();
-			final RangeTable<Integer, Integer, Integer> mockTable = new LsmTreeTable<Integer, Integer, Integer>(
-					EzdbSerializer.valueOf(IntegerSerde.get), EzdbSerializer.valueOf(IntegerSerde.get),
-					EzdbSerializer.valueOf(IntegerSerde.get), integerComparator, integerComparator);
+			final RangeTable<Integer, Integer, Integer> mockTable = new ObjectTreeMapTable<Integer, Integer, Integer>(
+					integerComparator, integerComparator);
 			final long tables = 0;
 			long deletes = 0, writes = 0, reads = 0, rangeH = 0, rangeHF = 0, rangeHFT = 0;
 			final long start = System.currentTimeMillis();

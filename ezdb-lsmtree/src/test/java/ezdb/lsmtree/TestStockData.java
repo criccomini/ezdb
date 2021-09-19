@@ -8,7 +8,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -24,16 +23,10 @@ import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.comparator.ComparableComparator;
-import ezdb.comparator.SerdeComparator;
-import ezdb.lsmtree.EzLsmTreeDb;
-import ezdb.serde.DateSerde;
-import ezdb.serde.Serde;
-import ezdb.serde.SerializingSerde;
-import ezdb.serde.StringSerde;
 import junit.framework.Assert;
 
 public class TestStockData {
-
+	protected static final File ROOT = FileUtils.createTempDir(TestStockData.class.getSimpleName());
 	private static final String MSFT = "MSFT";
 	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1).getTime();
 	private static final Date MIN_DATE = new GregorianCalendar(1, 1, 1).getTime();
@@ -43,9 +36,15 @@ public class TestStockData {
 
 	@Before
 	public void before() {
-		ezdb = new EzLsmTreeDb();
+		FileUtils.deleteRecursively(ROOT);
+		ROOT.mkdirs();
+		ezdb = new EzLsmTreeDb(ROOT, newFactory());
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", null, null, null, ComparableComparator.get(), ComparableComparator.get());
+	}
+
+	protected EzLsmTreeDbFactory newFactory() {
+		return new EzLsmTreeDbJavaFactory();
 	}
 
 	@After
@@ -56,28 +55,29 @@ public class TestStockData {
 
 	@Test
 	public void testStockData() throws IOException, ParseException {
-		FileInputStream in = new FileInputStream(new File("./src/test/java/ezdb/treemap/object/" + MSFT + ".txt"));
-		List<String> lines = CharStreams.readLines(new InputStreamReader(in));
+		final FileInputStream in = new FileInputStream(
+				new File("./src/test/java/ezdb/treemap/object/" + MSFT + ".txt"));
+		final List<String> lines = CharStreams.readLines(new InputStreamReader(in));
 		lines.remove(0);
 		lines.remove(0);
 		Collections.reverse(lines);
 		in.close();
 		Long prevLongTime = null;
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		int countDates = 0;
 		Date firstDate = null;
 		Date lastDate = null;
-		for (String line : lines) {
-			String[] split = line.split(",");
+		for (final String line : lines) {
+			final String[] split = line.split(",");
 			Assert.assertEquals(7, split.length);
 			countDates++;
-			String dateStr = split[0];
-			Date date = df.parse(dateStr);
+			final String dateStr = split[0];
+			final Date date = df.parse(dateStr);
 			if (firstDate == null) {
 				firstDate = date;
 			}
 			lastDate = date;
-			long longTime = date.getTime();
+			final long longTime = date.getTime();
 			if (prevLongTime != null) {
 				// System.out.println(dateStr + ":"+date +
 				// " - "+prevLongTime+" < " + longTime + " -> "
@@ -96,7 +96,7 @@ public class TestStockData {
 		TableIterator<String, Date, Integer> range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime());
 		int countBars = 0;
 		while (range.hasNext()) {
-			TableRow<String, Date, Integer> next = range.next();
+			final TableRow<String, Date, Integer> next = range.next();
 //			System.out.println(next.getValue());
 			countBars++;
 		}
@@ -106,7 +106,7 @@ public class TestStockData {
 		range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime(), null);
 		countBars = 0;
 		while (range.hasNext()) {
-			TableRow<String, Date, Integer> next = range.next();
+			final TableRow<String, Date, Integer> next = range.next();
 //			System.out.println(next.getValue());
 			countBars++;
 		}
@@ -116,7 +116,7 @@ public class TestStockData {
 		range = table.range(MSFT, null, new GregorianCalendar(1987, 0, 1).getTime());
 		countBars = 0;
 		while (range.hasNext()) {
-			TableRow<String, Date, Integer> next = range.next();
+			final TableRow<String, Date, Integer> next = range.next();
 //			System.out.println(next.getValue());
 			countBars++;
 		}
@@ -124,15 +124,15 @@ public class TestStockData {
 		range.close();
 	}
 
-	private void assertIteration(int countDates, Date fromDate, Date toDate) {
+	private void assertIteration(final int countDates, final Date fromDate, final Date toDate) {
 		TableIterator<String, Date, Integer> range = table.range(MSFT, fromDate, toDate);
 		int iteratedBars = 0;
 		int prevValue = 0;
 		Date left1000Date = null;
 		Date left900Date = null;
 		while (range.hasNext()) {
-			TableRow<String, Date, Integer> next = range.next();
-			Integer value = next.getValue();
+			final TableRow<String, Date, Integer> next = range.next();
+			final Integer value = next.getValue();
 			// System.out.println(value);
 			iteratedBars++;
 			Assert.assertTrue(prevValue < value);
@@ -156,18 +156,20 @@ public class TestStockData {
 		int curLeftIt = 0;
 		TableRow<String, Date, Integer> prev = null;
 		while (range.hasNext()) {
-			TableRow<String, Date, Integer> next = range.next();
+			final TableRow<String, Date, Integer> next = range.next();
 			curLeftIt++;
 			Assert.assertEquals((Integer) (countDates - 1000 + curLeftIt), next.getValue());
 			if (prev != null) {
-				Integer nextFromPrevPlus = table.getNext(MSFT, new Date(prev.getRangeKey().getTime() + 1)).getValue();
+				final Integer nextFromPrevPlus = table.getNext(MSFT, new Date(prev.getRangeKey().getTime() + 1))
+						.getValue();
 				Assert.assertEquals(next.getValue(), nextFromPrevPlus);
-				Integer prevFromNextMinus = table.getPrev(MSFT, new Date(next.getRangeKey().getTime() - 1)).getValue();
+				final Integer prevFromNextMinus = table.getPrev(MSFT, new Date(next.getRangeKey().getTime() - 1))
+						.getValue();
 				Assert.assertEquals(prev.getValue(), prevFromNextMinus);
 			}
-			Integer nextFromNextIsSame = table.getNext(MSFT, new Date(next.getRangeKey().getTime())).getValue();
+			final Integer nextFromNextIsSame = table.getNext(MSFT, new Date(next.getRangeKey().getTime())).getValue();
 			Assert.assertEquals(next.getValue(), nextFromNextIsSame);
-			Integer prevFromNextIsSame = table.getPrev(MSFT, new Date(next.getRangeKey().getTime())).getValue();
+			final Integer prevFromNextIsSame = table.getPrev(MSFT, new Date(next.getRangeKey().getTime())).getValue();
 			Assert.assertEquals(next.getValue(), prevFromNextIsSame);
 			prev = next;
 		}

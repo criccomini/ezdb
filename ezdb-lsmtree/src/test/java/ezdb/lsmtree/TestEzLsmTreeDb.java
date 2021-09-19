@@ -3,6 +3,7 @@ package ezdb.lsmtree;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Date;
@@ -19,7 +20,6 @@ import ezdb.RangeTable;
 import ezdb.Table;
 import ezdb.TableIterator;
 import ezdb.comparator.ComparableComparator;
-import ezdb.lsmtree.EzLsmTreeDb;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.Serde;
 import ezdb.serde.SerializingSerde;
@@ -30,6 +30,7 @@ import ezdb.util.ObjectTableRow;
 
 public class TestEzLsmTreeDb {
 
+	protected static final File ROOT = FileUtils.createTempDir(TestEzLsmTreeDb.class.getSimpleName());
 	protected Db<Object> ezdb;
 	protected RangeTable<Integer, Integer, Integer> table;
 
@@ -341,7 +342,9 @@ public class TestEzLsmTreeDb {
 
 	@Before
 	public void before() {
-		ezdb = new EzLsmTreeDb();
+		FileUtils.deleteRecursively(ROOT);
+		ROOT.mkdirs();
+		ezdb = new EzLsmTreeDb(ROOT, newFactory());
 		ezdb.deleteTable("test");
 		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
 
@@ -350,6 +353,10 @@ public class TestEzLsmTreeDb {
 		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
 		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
 		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
+	}
+
+	protected EzLsmTreeDbFactory newFactory() {
+		return new EzLsmTreeDbJavaFactory();
 	}
 
 	@After

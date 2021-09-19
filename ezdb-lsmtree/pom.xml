@@ -20,8 +20,18 @@
 			<artifactId>ezdb-api</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.github.criccomini</groupId>
+			<artifactId>ezdb-treemap</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>com.indeed</groupId>
 			<artifactId>lsmtree-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
