@@ -2,6 +2,7 @@ package ezdb.serde;
 
 import java.nio.ByteBuffer;
 
+import ezdb.util.Util;
 import io.netty.buffer.ByteBuf;
 
 public final class VoidSerde implements Serde<Void> {
@@ -13,32 +14,30 @@ public final class VoidSerde implements Serde<Void> {
 
 	@Override
 	public Void fromBuffer(final ByteBuffer buffer) {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
 	public void toBuffer(final ByteBuffer buffer, final Void obj) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Void fromBuffer(final ByteBuf buffer) {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
 	public void toBuffer(final ByteBuf buffer, final Void obj) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Void fromBytes(final byte[] bytes) {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
 	public byte[] toBytes(final Void obj) {
-		throw new UnsupportedOperationException();
+		return Util.EMPTY_BYTES;
 	}
 
 }

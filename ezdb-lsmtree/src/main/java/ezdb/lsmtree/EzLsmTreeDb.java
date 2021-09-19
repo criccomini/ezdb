@@ -10,8 +10,8 @@ import ezdb.Db;
 import ezdb.RangeTable;
 import ezdb.Table;
 import ezdb.comparator.ComparableComparator;
-import ezdb.serde.ByteSerde;
 import ezdb.serde.Serde;
+import ezdb.serde.VoidSerde;
 
 public class EzLsmTreeDb implements Db<Object> {
 	private final Map<String, RangeTable<?, ?, ?>> cache;
@@ -29,7 +29,7 @@ public class EzLsmTreeDb implements Db<Object> {
 
 	@Override
 	public <H, V> Table<H, V> getTable(final String tableName, final Serde<H> hashKeySerde, final Serde<V> valueSerde) {
-		return getTable(tableName, hashKeySerde, ByteSerde.get, valueSerde);
+		return getTable(tableName, hashKeySerde, VoidSerde.get, valueSerde);
 	}
 
 	@Override

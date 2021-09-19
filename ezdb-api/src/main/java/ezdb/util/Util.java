@@ -14,6 +14,7 @@ import io.netty.buffer.ByteBufAllocator;
 public class Util {
 
 	private static final ISliceInvoker SLICE_INVOKER;
+	public static final byte[] EMPTY_BYTES = new byte[0];
 
 	static {
 		SLICE_INVOKER = newSliceInvoker();
