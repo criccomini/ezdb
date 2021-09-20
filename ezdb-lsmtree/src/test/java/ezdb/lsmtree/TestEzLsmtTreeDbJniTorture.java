@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.Random;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import ezdb.Db;
@@ -28,12 +27,11 @@ import ezdb.treemap.object.ObjectTreeMapTable;
  * @author criccomini
  * 
  */
-@Ignore
 public class TestEzLsmtTreeDbJniTorture {
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLsmtTreeDbJniTorture.class.getSimpleName());
 
 	public static final int NUM_THREADS = 10;
-	public static final int ITERATIONS = 300000;
+	public static final int ITERATIONS = 10000;
 	public static final String tableName = "torture";
 
 	public Db<Object> db;
