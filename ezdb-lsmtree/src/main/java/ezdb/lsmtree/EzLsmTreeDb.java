@@ -31,7 +31,7 @@ public class EzLsmTreeDb implements Db<Object> {
 			if (removed != null) {
 				removed.close();
 				try {
-					factory.destroy(new File(root, tableName));
+					factory.destroy(getFile(tableName));
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -74,6 +74,18 @@ public class EzLsmTreeDb implements Db<Object> {
 			final Comparator<R> rangeKeyComparator) {
 		return new LsmTreeTable<H, R, V>(new File(root, tableName), factory, hashKeySerde, rangeKeySerde, valueSerde,
 				hashKeyComparator, rangeKeyComparator);
+	}
+
+	/**
+	 * A helper method used to convert a table name to the location on disk where
+	 * this LevelDB database will be persisted.
+	 * 
+	 * @param tableName The logical name of the table.
+	 * @return The physical location of the directory where this table should be
+	 *         persisted.
+	 */
+	private File getFile(final String tableName) {
+		return new File(root, tableName);
 	}
 
 }
