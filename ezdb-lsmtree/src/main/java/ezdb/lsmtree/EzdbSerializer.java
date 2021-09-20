@@ -52,7 +52,7 @@ public final class EzdbSerializer<E> implements Serializer<E> {
 		}
 	}
 
-	private E readWithBuffer(final ByteBuf buffer, final DataInput in) throws IOException {
+	public E readWithBuffer(final ByteBuf buffer, final DataInput in) throws IOException {
 		final int length = in.readInt();
 		if (length == 0) {
 			return null;

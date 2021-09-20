@@ -10,6 +10,8 @@ import com.indeed.util.serialization.Serializer;
 import ezdb.serde.Serde;
 import ezdb.util.ObjectTableKey;
 import ezdb.util.Util;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 
 public class ObjectTableKeySerializer<H, R> implements Serializer<ObjectTableKey<H, R>> {
 
@@ -35,15 +37,27 @@ public class ObjectTableKeySerializer<H, R> implements Serializer<ObjectTableKey
 
 	@Override
 	public void write(final ObjectTableKey<H, R> t, final DataOutput out) throws IOException {
-		hashKeySerializer.write(t.getHashKey(), out);
-		rangeKeySerializer.write(t.getRangeKey(), out);
+		final ByteBuf buffer = PooledByteBufAllocator.DEFAULT.heapBuffer();
+		try {
+			hashKeySerializer.writeWithBuffer(buffer, t.getHashKey(), out);
+			buffer.clear();
+			rangeKeySerializer.writeWithBuffer(buffer, t.getRangeKey(), out);
+		} finally {
+			buffer.release(buffer.refCnt());
+		}
 	}
 
 	@Override
 	public ObjectTableKey<H, R> read(final DataInput in) throws IOException {
-		final H hashKey = hashKeySerializer.read(in);
-		final R rangeKey = rangeKeySerializer.read(in);
-		return Util.combine(hashKey, rangeKey, comparator);
+		final ByteBuf buffer = PooledByteBufAllocator.DEFAULT.heapBuffer();
+		try {
+			final H hashKey = hashKeySerializer.readWithBuffer(buffer, in);
+			buffer.clear();
+			final R rangeKey = rangeKeySerializer.readWithBuffer(buffer, in);
+			return Util.combine(hashKey, rangeKey, comparator);
+		} finally {
+			buffer.release(buffer.refCnt());
+		}
 	}
 
 }
