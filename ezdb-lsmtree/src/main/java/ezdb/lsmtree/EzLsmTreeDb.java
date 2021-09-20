@@ -1,6 +1,7 @@
 package ezdb.lsmtree;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +27,15 @@ public class EzLsmTreeDb implements Db<Object> {
 	@Override
 	public void deleteTable(final String tableName) {
 		synchronized (cache) {
-			cache.remove(tableName);
+			final RangeTable<?, ?, ?> removed = cache.remove(tableName);
+			if (removed != null) {
+				removed.close();
+				try {
+					factory.destroy(new File(root, tableName));
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
 		}
 	}
 
@@ -63,8 +72,8 @@ public class EzLsmTreeDb implements Db<Object> {
 	public <R, H, V> LsmTreeTable<H, R, V> newTable(final String tableName, final Serde<H> hashKeySerde,
 			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<H> hashKeyComparator,
 			final Comparator<R> rangeKeyComparator) {
-		return new LsmTreeTable<H, R, V>(new File(root, tableName), factory, hashKeySerde, rangeKeySerde,
-				valueSerde, hashKeyComparator, rangeKeyComparator);
+		return new LsmTreeTable<H, R, V>(new File(root, tableName), factory, hashKeySerde, rangeKeySerde, valueSerde,
+				hashKeyComparator, rangeKeyComparator);
 	}
 
 }
