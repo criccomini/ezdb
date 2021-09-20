@@ -221,8 +221,9 @@ public class Util {
 		return hashComparison;
 	}
 
-	public static <H, R> ObjectTableKey<H, R> combine(final H hashKey, final R rangeKey) {
-		return new ObjectTableKey<H, R>(hashKey, rangeKey);
+	public static <H, R> ObjectTableKey<H, R> combine(final H hashKey, final R rangeKey,
+			final Comparator<ObjectTableKey<H, R>> comparator) {
+		return new ObjectTableKey<H, R>(hashKey, rangeKey, comparator);
 	}
 
 }

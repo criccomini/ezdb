@@ -5,8 +5,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.indeed.util.serialization.Serializer;
-
 import ezdb.Db;
 import ezdb.RangeTable;
 import ezdb.Table;
@@ -53,8 +51,7 @@ public class EzLsmTreeDb implements Db<Object> {
 			RangeTable<?, ?, ?> table = cache.get(tableName);
 
 			if (table == null) {
-				table = newTable(tableName, EzdbSerializer.valueOf(hashKeySerde), EzdbSerializer.valueOf(rangeKeySerde),
-						EzdbSerializer.valueOf(valueSerde), (Comparator) hashKeyComparator,
+				table = newTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, (Comparator) hashKeyComparator,
 						(Comparator) rangeKeyComparator);
 				cache.put(tableName, table);
 			}
@@ -63,11 +60,11 @@ public class EzLsmTreeDb implements Db<Object> {
 		}
 	}
 
-	public <R, H, V> LsmTreeTable<H, R, V> newTable(final String tableName, final Serializer<H> hashKeySerializer,
-			final Serializer<R> rangeKeySerializer, final Serializer<V> valueSerializer,
-			final Comparator<H> hashKeyComparator, final Comparator<R> rangeKeyComparator) {
-		return new LsmTreeTable<H, R, V>(new File(root, tableName), factory, hashKeySerializer, rangeKeySerializer,
-				valueSerializer, hashKeyComparator, rangeKeyComparator);
+	public <R, H, V> LsmTreeTable<H, R, V> newTable(final String tableName, final Serde<H> hashKeySerde,
+			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<H> hashKeyComparator,
+			final Comparator<R> rangeKeyComparator) {
+		return new LsmTreeTable<H, R, V>(new File(root, tableName), factory, hashKeySerde, rangeKeySerde,
+				valueSerde, hashKeyComparator, rangeKeyComparator);
 	}
 
 }

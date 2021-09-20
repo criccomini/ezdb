@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import com.indeed.lsmtree.core.Store;
-import com.indeed.util.serialization.Serializer;
+import com.indeed.lsmtree.core.Store.Entry;
 
 import ezdb.EmptyTableIterator;
 import ezdb.RangeTable;
@@ -15,6 +15,7 @@ import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.batch.Batch;
 import ezdb.batch.RangeBatch;
+import ezdb.serde.Serde;
 import ezdb.util.ObjectTableKey;
 import ezdb.util.ObjectTableRow;
 import ezdb.util.Util;
@@ -23,15 +24,18 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 	private final Store<ObjectTableKey<H, R>, V> store;
 	private final Comparator<H> hashKeyComparator;
 	private final Comparator<R> rangeKeyComparator;
+	private final EzLsmTreeDbComparator<H, R> keyComparator;
 
-	public LsmTreeTable(final File path, final EzLsmTreeDbFactory factory, final Serializer<H> hashKeySerializer,
-			final Serializer<R> rangeKeySerializer, final Serializer<V> valueSerializer,
-			final Comparator<H> hashKeyComparator, final Comparator<R> rangeKeyComparator) {
+	public LsmTreeTable(final File path, final EzLsmTreeDbFactory factory, final Serde<H> hashKeySerde,
+			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<H> hashKeyComparator,
+			final Comparator<R> rangeKeyComparator) {
 		this.hashKeyComparator = hashKeyComparator;
 		this.rangeKeyComparator = rangeKeyComparator;
+		this.keyComparator = new EzLsmTreeDbComparator<H, R>(hashKeyComparator, rangeKeyComparator);
 		try {
-			this.store = factory.open(path, null, valueSerializer,
-					new EzLsmTreeDbComparator<>(hashKeyComparator, rangeKeyComparator));
+			this.store = factory.open(path,
+					new ObjectTableKeySerializer<H, R>(hashKeySerde, rangeKeySerde, keyComparator),
+					EzdbSerializer.valueOf(valueSerde), keyComparator);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -50,7 +54,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
 		try {
-			store.put(Util.combine(hashKey, rangeKey), value);
+			store.put(Util.combine(hashKey, rangeKey, keyComparator), value);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -59,7 +63,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public V get(final H hashKey, final R rangeKey) {
 		try {
-			final V value = store.get(Util.combine(hashKey, rangeKey));
+			final V value = store.get(Util.combine(hashKey, rangeKey, keyComparator));
 			return value;
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
@@ -68,10 +72,14 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> range(final H hashKey) {
-		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null);
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null, keyComparator);
 		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
 		try {
-			iterator = store.iterator(keyBytesFrom, true);
+			if (hashKey == null) {
+				iterator = store.iterator();
+			} else {
+				iterator = store.iterator(keyBytesFrom, true);
+			}
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -129,7 +137,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 		if (fromRangeKey == null) {
 			return range(hashKey);
 		}
-		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey, keyComparator);
 		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
 		try {
 			iterator = store.iterator(keyBytesFrom, true);
@@ -190,8 +198,8 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return range(hashKey, fromRangeKey);
 		}
-		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
-		final ObjectTableKey<H, R> keyBytesTo = Util.combine(hashKey, toRangeKey);
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey, keyComparator);
+		final ObjectTableKey<H, R> keyBytesTo = Util.combine(hashKey, toRangeKey, keyComparator);
 		if (fromRangeKey != null
 				&& Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, keyBytesTo) > 0) {
 			return EmptyTableIterator.get();
@@ -260,7 +268,7 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 	@Override
 	public void delete(final H hashKey, final R rangeKey) {
 		try {
-			store.delete(Util.combine(hashKey, rangeKey));
+			store.delete(Util.combine(hashKey, rangeKey, keyComparator));
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -272,10 +280,18 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public TableIterator<H, R, V> rangeReverse(final H hashKey) {
-		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null);
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null, keyComparator);
 		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
 		try {
-			iterator = store.reverseIterator(keyBytesFrom, true);
+			if (hashKey == null) {
+				iterator = store.reverseIterator();
+			} else {
+				final ObjectTableKey<H, R> seekLast = seekLastFrom(keyBytesFrom);
+				if (seekLast == null) {
+					return EmptyTableIterator.get();
+				}
+				iterator = store.reverseIterator(seekLast, true);
+			}
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -335,14 +351,47 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 		};
 	}
 
+	private ObjectTableKey<H, R> seekLastFrom(final ObjectTableKey<H, R> keyBytesFrom) {
+		TableRow<H, R, V> last = null;
+		final Iterator<TableRow<H, R, V>> iterator = range(keyBytesFrom.getHashKey(), keyBytesFrom.getRangeKey());
+		try {
+			while (true) {
+				last = iterator.next();
+			}
+		} catch (final NoSuchElementException e) {
+			// end reached
+		}
+		if (last == null) {
+			return null;
+		} else {
+			return new ObjectTableKey<H, R>(last.getHashKey(), last.getRangeKey(), keyComparator);
+		}
+	}
+
+	private ObjectTableKey<H, R> seekLastTo(final ObjectTableKey<H, R> keyBytesTo) {
+		try {
+			final Entry<ObjectTableKey<H, R>, V> floor = store.floor(keyBytesTo);
+			if (floor == null) {
+				return null;
+			}
+			return floor.getKey();
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	@Override
 	public TableIterator<H, R, V> rangeReverse(final H hashKey, final R fromRangeKey) {
 		if (fromRangeKey == null) {
 			return rangeReverse(hashKey);
 		}
-		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey, keyComparator);
 		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
 		try {
+			final ObjectTableKey<H, R> seekLast = seekLastTo(keyBytesFrom);
+			if (seekLast == null) {
+				return EmptyTableIterator.get();
+			}
 			iterator = store.reverseIterator(keyBytesFrom, true);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
@@ -408,15 +457,19 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 		if (toRangeKey == null) {
 			return rangeReverse(hashKey, fromRangeKey);
 		}
-		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey);
-		final ObjectTableKey<H, R> keyBytesTo = Util.combine(hashKey, toRangeKey);
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, fromRangeKey, keyComparator);
+		final ObjectTableKey<H, R> keyBytesTo = Util.combine(hashKey, toRangeKey, keyComparator);
 		if (fromRangeKey != null
 				&& Util.compareKeys(hashKeyComparator, rangeKeyComparator, keyBytesFrom, keyBytesTo) < 0) {
 			return EmptyTableIterator.get();
 		}
 		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
 		try {
-			iterator = store.reverseIterator(keyBytesFrom, true);
+			final ObjectTableKey<H, R> seekLast = seekLastTo(keyBytesFrom);
+			if (seekLast == null) {
+				return EmptyTableIterator.get();
+			}
+			iterator = store.reverseIterator(seekLast, true);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}

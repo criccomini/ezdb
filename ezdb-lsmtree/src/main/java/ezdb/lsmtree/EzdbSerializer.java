@@ -47,7 +47,7 @@ public final class EzdbSerializer<E> implements Serializer<E> {
 		}
 	}
 
-	private static void getBytesTo(final ByteBuf buffer, final DataOutput dst, final int length) throws IOException {
+	public static void getBytesTo(final ByteBuf buffer, final DataOutput dst, final int length) throws IOException {
 		int i = 0;
 		while (i < length) {
 			final byte b = buffer.getByte(i);
@@ -56,7 +56,7 @@ public final class EzdbSerializer<E> implements Serializer<E> {
 		}
 	}
 
-	private static void putBytesTo(final ByteBuf buffer, final DataInput src, final int length) throws IOException {
+	public static void putBytesTo(final ByteBuf buffer, final DataInput src, final int length) throws IOException {
 		ensureCapacity(buffer, length);
 		int i = 0;
 		while (i < length) {

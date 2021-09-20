@@ -8,12 +8,14 @@ import java.util.Comparator;
 import java.util.Random;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ezdb.Db;
 import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.comparator.ComparableComparator;
+import ezdb.serde.IntegerSerde;
 import ezdb.treemap.object.ObjectTreeMapTable;
 
 /**
@@ -26,6 +28,7 @@ import ezdb.treemap.object.ObjectTreeMapTable;
  * @author criccomini
  * 
  */
+@Ignore
 public class TestEzLsmtTreeDbJniTorture {
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLsmtTreeDbJniTorture.class.getSimpleName());
 
@@ -73,7 +76,8 @@ public class TestEzLsmtTreeDbJniTorture {
 		@Override
 		public void run() {
 			final Random rand = new Random();
-			final RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, null, null, null);
+			final RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, IntegerSerde.get,
+					IntegerSerde.get, IntegerSerde.get);
 			final Comparator<Integer> integerComparator = ComparableComparator.get();
 			final RangeTable<Integer, Integer, Integer> mockTable = new ObjectTreeMapTable<Integer, Integer, Integer>(
 					integerComparator, integerComparator);

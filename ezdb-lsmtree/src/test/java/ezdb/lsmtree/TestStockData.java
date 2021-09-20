@@ -23,6 +23,9 @@ import ezdb.RangeTable;
 import ezdb.TableIterator;
 import ezdb.TableRow;
 import ezdb.comparator.ComparableComparator;
+import ezdb.serde.DateSerde;
+import ezdb.serde.IntegerSerde;
+import ezdb.serde.StringSerde;
 import junit.framework.Assert;
 
 public class TestStockData {
@@ -40,7 +43,8 @@ public class TestStockData {
 		ROOT.mkdirs();
 		ezdb = new EzLsmTreeDb(ROOT, newFactory());
 		ezdb.deleteTable("test");
-		table = ezdb.getTable("test", null, null, null, ComparableComparator.get(), ComparableComparator.get());
+		table = ezdb.getTable("test", StringSerde.get, DateSerde.get, IntegerSerde.get, ComparableComparator.get(),
+				ComparableComparator.get());
 	}
 
 	protected EzLsmTreeDbFactory newFactory() {
@@ -55,8 +59,7 @@ public class TestStockData {
 
 	@Test
 	public void testStockData() throws IOException, ParseException {
-		final FileInputStream in = new FileInputStream(
-				new File("./src/test/java/ezdb/treemap/object/" + MSFT + ".txt"));
+		final FileInputStream in = new FileInputStream(new File("./src/test/java/ezdb/lsmtree/" + MSFT + ".txt"));
 		final List<String> lines = CharStreams.readLines(new InputStreamReader(in));
 		lines.remove(0);
 		lines.remove(0);
