@@ -276,6 +276,11 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void close() {
+		try {
+			store.close();
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -465,7 +470,12 @@ public class LsmTreeTable<H, R, V> implements RangeTable<H, R, V> {
 		}
 		final Iterator<Store.Entry<ObjectTableKey<H, R>, V>> iterator;
 		try {
-			final ObjectTableKey<H, R> seekLast = seekLastTo(keyBytesFrom);
+			final ObjectTableKey<H, R> seekLast;
+			if (fromRangeKey == null) {
+				seekLast = seekLastFrom(keyBytesTo);
+			} else {
+				seekLast = seekLastTo(keyBytesFrom);
+			}
 			if (seekLast == null) {
 				return EmptyTableIterator.get();
 			}
