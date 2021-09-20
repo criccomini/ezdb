@@ -9,7 +9,7 @@ import com.indeed.lsmtree.core.StorageType;
 import com.indeed.lsmtree.core.Store;
 import com.indeed.lsmtree.core.StoreBuilder;
 import com.indeed.util.compress.CompressionCodec;
-import com.indeed.util.compress.GzipCodec;
+import com.indeed.util.compress.SnappyCodec;
 import com.indeed.util.serialization.Serializer;
 
 import ezdb.util.ObjectTableKey;
@@ -21,7 +21,7 @@ public class EzLsmTreeDbJavaFactory implements EzLsmTreeDbFactory {
 	}
 
 	protected CompressionCodec newCodec() {
-		return new GzipCodec();
+		return new SnappyCodec();
 	}
 
 	protected <H, R, V> StoreBuilder<ObjectTableKey<H, R>, V> configure(

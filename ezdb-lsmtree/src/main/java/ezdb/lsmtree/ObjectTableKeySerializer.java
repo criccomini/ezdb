@@ -40,7 +40,8 @@ public class ObjectTableKeySerializer<H, R> implements Serializer<ObjectTableKey
 		final ByteBuf buffer = PooledByteBufAllocator.DEFAULT.heapBuffer();
 		try {
 			Util.combineBuf(buffer, hashKeySerde, rangeKeySerde, t.getHashKey(), t.getRangeKey());
-			EzdbSerializer.getBytesTo(buffer, out, buffer.readableBytes());
+			final int length = buffer.readableBytes();
+			EzdbSerializer.getBytesTo(buffer, out, length);
 		} finally {
 			buffer.release(buffer.refCnt());
 		}
@@ -51,11 +52,13 @@ public class ObjectTableKeySerializer<H, R> implements Serializer<ObjectTableKey
 	public ObjectTableKey<H, R> read(final DataInput in) throws IOException {
 		final ByteBuf buffer = PooledByteBufAllocator.DEFAULT.heapBuffer();
 		try {
-			final int hashKeyBytesLength = in.readInt();
+			// DataInput uses Little Endian while ByteBuf uses Big Endian, thus reverse
+			final int hashKeyBytesLength = Integer.reverse(in.readInt());
 			EzdbSerializer.putBytesTo(buffer, in, hashKeyBytesLength);
 			final H hashKey = hashKeySerde.fromBuffer(buffer);
 
-			final int rangeKeyBytesLength = in.readInt();
+			//// DataInput uses Little Endian while ByteBuf uses Big Endian, thus reverse
+			final int rangeKeyBytesLength = Integer.reverse(in.readInt());
 			final R rangeKey;
 			if (rangeKeyBytesLength > 0) {
 				buffer.clear();
