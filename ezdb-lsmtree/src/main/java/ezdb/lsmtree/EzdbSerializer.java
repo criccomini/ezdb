@@ -17,7 +17,7 @@ public final class EzdbSerializer<E> implements Serializer<E> {
 
 	private final Serde<E> serde;
 
-	private EzdbSerializer(final Serde<E> serde) {
+	public EzdbSerializer(final Serde<E> serde) {
 		this.serde = serde;
 	}
 
@@ -25,12 +25,20 @@ public final class EzdbSerializer<E> implements Serializer<E> {
 	public void write(final E t, final DataOutput out) throws IOException {
 		final ByteBuf buffer = PooledByteBufAllocator.DEFAULT.heapBuffer();
 		try {
+			writeWithBuffer(buffer, t, out);
+		} finally {
+			buffer.release(buffer.refCnt());
+		}
+	}
+
+	public void writeWithBuffer(final ByteBuf buffer, final E t, final DataOutput out) throws IOException {
+		if (t == null) {
+			out.writeInt(0);
+		} else {
 			serde.toBuffer(buffer, t);
 			final int length = buffer.readableBytes();
 			out.writeInt(length);
 			getBytesTo(buffer, out, length);
-		} finally {
-			buffer.release(buffer.refCnt());
 		}
 	}
 
@@ -38,12 +46,20 @@ public final class EzdbSerializer<E> implements Serializer<E> {
 	public E read(final DataInput in) throws IOException {
 		final ByteBuf buffer = PooledByteBufAllocator.DEFAULT.heapBuffer();
 		try {
-			final int length = in.readInt();
+			return readWithBuffer(buffer, in);
+		} finally {
+			buffer.release(buffer.refCnt());
+		}
+	}
+
+	private E readWithBuffer(final ByteBuf buffer, final DataInput in) throws IOException {
+		final int length = in.readInt();
+		if (length == 0) {
+			return null;
+		} else {
 			ensureCapacity(buffer, length);
 			putBytesTo(buffer, in, length);
 			return serde.fromBuffer(buffer);
-		} finally {
-			buffer.release(buffer.refCnt());
 		}
 	}
 

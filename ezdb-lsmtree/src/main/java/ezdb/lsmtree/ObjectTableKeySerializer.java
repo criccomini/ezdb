@@ -10,13 +10,11 @@ import com.indeed.util.serialization.Serializer;
 import ezdb.serde.Serde;
 import ezdb.util.ObjectTableKey;
 import ezdb.util.Util;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
 
 public class ObjectTableKeySerializer<H, R> implements Serializer<ObjectTableKey<H, R>> {
 
-	private final Serde<H> hashKeySerde;
-	private final Serde<R> rangeKeySerde;
+	private final EzdbSerializer<H> hashKeySerializer;
+	private final EzdbSerializer<R> rangeKeySerializer;
 	private final Comparator<ObjectTableKey<H, R>> comparator;
 
 	public ObjectTableKeySerializer(final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
@@ -30,48 +28,22 @@ public class ObjectTableKeySerializer<H, R> implements Serializer<ObjectTableKey
 		if (comparator == null) {
 			throw new NullPointerException("comparator should not be null");
 		}
-		this.hashKeySerde = hashKeySerde;
-		this.rangeKeySerde = rangeKeySerde;
+		this.hashKeySerializer = new EzdbSerializer<H>(hashKeySerde);
+		this.rangeKeySerializer = new EzdbSerializer<R>(rangeKeySerde);
 		this.comparator = comparator;
 	}
 
 	@Override
 	public void write(final ObjectTableKey<H, R> t, final DataOutput out) throws IOException {
-		final ByteBuf buffer = PooledByteBufAllocator.DEFAULT.heapBuffer();
-		try {
-			Util.combineBuf(buffer, hashKeySerde, rangeKeySerde, t.getHashKey(), t.getRangeKey());
-			final int length = buffer.readableBytes();
-			EzdbSerializer.getBytesTo(buffer, out, length);
-		} finally {
-			buffer.release(buffer.refCnt());
-		}
-
+		hashKeySerializer.write(t.getHashKey(), out);
+		rangeKeySerializer.write(t.getRangeKey(), out);
 	}
 
 	@Override
 	public ObjectTableKey<H, R> read(final DataInput in) throws IOException {
-		final ByteBuf buffer = PooledByteBufAllocator.DEFAULT.heapBuffer();
-		try {
-			// DataInput uses Little Endian while ByteBuf uses Big Endian, thus reverse
-			final int hashKeyBytesLength = Integer.reverse(in.readInt());
-			EzdbSerializer.putBytesTo(buffer, in, hashKeyBytesLength);
-			final H hashKey = hashKeySerde.fromBuffer(buffer);
-
-			//// DataInput uses Little Endian while ByteBuf uses Big Endian, thus reverse
-			final int rangeKeyBytesLength = Integer.reverse(in.readInt());
-			final R rangeKey;
-			if (rangeKeyBytesLength > 0) {
-				buffer.clear();
-				EzdbSerializer.putBytesTo(buffer, in, rangeKeyBytesLength);
-				rangeKey = rangeKeySerde.fromBuffer(buffer);
-			} else {
-				rangeKey = null;
-			}
-			return Util.combine(hashKey, rangeKey, comparator);
-		} finally {
-			buffer.release(buffer.refCnt());
-		}
-
+		final H hashKey = hashKeySerializer.read(in);
+		final R rangeKey = rangeKeySerializer.read(in);
+		return Util.combine(hashKey, rangeKey, comparator);
 	}
 
 }
