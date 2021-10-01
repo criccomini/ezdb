@@ -450,10 +450,10 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (value == null || Util.compareKeys(hashKeyComparator, null, keyBytesFrom, value.getKey()) != 0) {
 			value = map.ceilingEntry(keyBytesFrom);
 		}
-		if (value != null) {
-			return new ObjectTableRow<H, R, V>(value.getKey(), value.getValue());
-		} else {
+		if (value == null || Util.compareKeys(hashKeyComparator, null, keyBytesFrom, value.getKey()) != 0) {
 			return null;
+		} else {
+			return new ObjectTableRow<H, R, V>(value.getKey(), value.getValue());
 		}
 	}
 

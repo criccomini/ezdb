@@ -508,11 +508,11 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 			if (value == null || Util.compareKeys(hashKeyComparator, null, keyBytesFromBuffer, value.getKey()) != 0) {
 				value = map.ceilingEntry(keyBytesFromBuffer);
 			}
-			if (value != null) {
+			if (value == null || Util.compareKeys(hashKeyComparator, null, keyBytesFromBuffer, value.getKey()) != 0) {
+				return null;
+			} else {
 				return RawTableRow.valueOfBuffer(value.getKey(), value.getValue(), hashKeySerde, rangeKeySerde,
 						valueSerde);
-			} else {
-				return null;
 			}
 		} finally {
 			keyBytesFrom.release(keyBytesFrom.refCnt());
