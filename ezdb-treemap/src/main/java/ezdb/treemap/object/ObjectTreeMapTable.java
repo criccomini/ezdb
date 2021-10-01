@@ -444,18 +444,15 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (rangeKey == null) {
 			return getLatest(hashKey);
 		}
-		try (TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey, rangeKey)) {
-			if (rangeReverse.hasNext()) {
-				return rangeReverse.next();
-			} else {
-				try (TableIterator<H, R, V> range = range(hashKey)) {
-					if (range.hasNext()) {
-						return range.next();
-					} else {
-						return null;
-					}
-				}
-			}
+		final ObjectTableKey<H, R> keyBytesFrom = Util.combine(hashKey, rangeKey, keyComparator);
+		Entry<ObjectTableKey<H, R>, V> value = map.floorEntry(keyBytesFrom);
+		if (value == null || Util.compareKeys(hashKeyComparator, null, keyBytesFrom, value.getKey()) != 0) {
+			value = map.ceilingEntry(keyBytesFrom);
+		}
+		if (value != null) {
+			return new ObjectTableRow<H, R, V>(value.getKey(), value.getValue());
+		} else {
+			return null;
 		}
 	}
 

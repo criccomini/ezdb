@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -499,18 +500,17 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 		if (rangeKey == null) {
 			return getLatest(hashKey);
 		}
-		try (TableIterator<H, R, V> rangeReverse = rangeReverse(hashKey, rangeKey)) {
-			if (rangeReverse.hasNext()) {
-				return rangeReverse.next();
-			} else {
-				try (TableIterator<H, R, V> range = range(hashKey)) {
-					if (range.hasNext()) {
-						return range.next();
-					} else {
-						return null;
-					}
-				}
-			}
+		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
+		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
+		Entry<ByteBuffer, ByteBuffer> value = map.floorEntry(keyBytesFromBuffer);
+		if (value == null || Util.compareKeys(hashKeyComparator, null, keyBytesFromBuffer, value.getKey()) != 0) {
+			value = map.ceilingEntry(keyBytesFromBuffer);
+		}
+		if (value != null) {
+			return RawTableRow.valueOfBuffer(value.getKey(), value.getValue(), hashKeySerde, rangeKeySerde, valueSerde);
+		} else {
+			return null;
 		}
 	}
 
