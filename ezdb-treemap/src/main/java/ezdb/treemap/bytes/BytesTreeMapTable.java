@@ -501,16 +501,21 @@ public class BytesTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 			return getLatest(hashKey);
 		}
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
-		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
-		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
-		Entry<ByteBuffer, ByteBuffer> value = map.floorEntry(keyBytesFromBuffer);
-		if (value == null || Util.compareKeys(hashKeyComparator, null, keyBytesFromBuffer, value.getKey()) != 0) {
-			value = map.ceilingEntry(keyBytesFromBuffer);
-		}
-		if (value != null) {
-			return RawTableRow.valueOfBuffer(value.getKey(), value.getValue(), hashKeySerde, rangeKeySerde, valueSerde);
-		} else {
-			return null;
+		try {
+			Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, rangeKey);
+			final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
+			Entry<ByteBuffer, ByteBuffer> value = map.floorEntry(keyBytesFromBuffer);
+			if (value == null || Util.compareKeys(hashKeyComparator, null, keyBytesFromBuffer, value.getKey()) != 0) {
+				value = map.ceilingEntry(keyBytesFromBuffer);
+			}
+			if (value != null) {
+				return RawTableRow.valueOfBuffer(value.getKey(), value.getValue(), hashKeySerde, rangeKeySerde,
+						valueSerde);
+			} else {
+				return null;
+			}
+		} finally {
+			keyBytesFrom.release(keyBytesFrom.refCnt());
 		}
 	}
 
