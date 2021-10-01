@@ -49,7 +49,8 @@ public class ObjectTreeMapTable<H, R, V> implements RangeTable<H, R, V> {
 
 	@Override
 	public void put(final H hashKey, final R rangeKey, final V value) {
-		map.put(Util.combine(hashKey, rangeKey, keyComparator), value);
+		final ObjectTableKey<H, R> key = Util.combine(hashKey, rangeKey, keyComparator);
+		map.put(key, value);
 	}
 
 	@Override
