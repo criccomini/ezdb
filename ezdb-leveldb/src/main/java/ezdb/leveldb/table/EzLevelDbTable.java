@@ -45,7 +45,7 @@ public class EzLevelDbTable<H, V> implements Table<H, V> {
 		options.comparator(new EzLevelDbJavaComparator(hashKeyComparator));
 
 		try {
-			this.db = factory.open(path, options);
+			this.db = factory.open(path, options, false);
 		} catch (final IOException e) {
 			throw new DbException(e);
 		}

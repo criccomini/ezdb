@@ -22,7 +22,7 @@ public interface EzLmDbFactory {
 	public Env<ByteBuffer> create(File path, EnvFlags... envFlags) throws IOException;
 
 	public Dbi<ByteBuffer> open(String tableName, Env<ByteBuffer> env, Comparator<ByteBuffer> comparator,
-			DbiFlags... dbiFlags) throws IOException;
+			boolean rangeTable, DbiFlags... dbiFlags) throws IOException;
 
 	public void destroy(File path) throws IOException;
 }

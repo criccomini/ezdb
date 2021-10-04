@@ -46,7 +46,7 @@ public class EzLmDbTable<H, V> implements Table<H, V> {
 		}
 		final EzLmDbComparator comparator = new EzLmDbComparator(hashKeyComparator);
 		try {
-			this.db = factory.open(path.getName(), env, comparator, DbiFlags.MDB_CREATE);
+			this.db = factory.open(path.getName(), env, comparator, false, DbiFlags.MDB_CREATE);
 		} catch (final IOException e) {
 			throw new DbException(e);
 		}

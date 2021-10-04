@@ -45,7 +45,7 @@ public class EzLevelDbJniRangeTable<H, R, V> implements RangeTable<H, R, V> {
 		options.comparator(new EzLevelDbJniRangeComparator(hashKeyComparator, rangeKeyComparator));
 
 		try {
-			this.db = factory.open(path, options);
+			this.db = factory.open(path, options, true);
 		} catch (final IOException e) {
 			throw new DbException(e);
 		}

@@ -15,7 +15,7 @@ import org.rocksdb.RocksDB;
  * 
  */
 public interface EzRocksDbFactory {
-  public RocksDB open(File path, Options options) throws IOException;
+	public RocksDB open(File path, Options options, boolean rangeTable) throws IOException;
 
-  public void destroy(File path, Options options) throws IOException;
+	public void destroy(File path, Options options) throws IOException;
 }

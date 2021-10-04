@@ -30,7 +30,8 @@ public class EzLmDbJnrFactory implements EzLmDbFactory {
 
 	@Override
 	public Dbi<ByteBuffer> open(final String tableName, final Env<ByteBuffer> env,
-			final Comparator<ByteBuffer> comparator, final DbiFlags... dbiFlags) throws IOException {
+			final Comparator<ByteBuffer> comparator, final boolean rangeTable, final DbiFlags... dbiFlags)
+			throws IOException {
 		final Dbi<ByteBuffer> dbi = env.openDbi(tableName, comparator, dbiFlags);
 		return dbi;
 	}
