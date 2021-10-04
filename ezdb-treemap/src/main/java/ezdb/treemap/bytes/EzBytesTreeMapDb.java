@@ -6,17 +6,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ezdb.Db;
-import ezdb.RangeTable;
-import ezdb.Table;
 import ezdb.comparator.LexicographicalComparator;
-import ezdb.serde.ByteSerde;
 import ezdb.serde.Serde;
+import ezdb.table.Table;
+import ezdb.table.range.RangeTable;
+import ezdb.treemap.bytes.table.BytesTreeMapTable;
+import ezdb.treemap.bytes.table.range.BytesTreeMapRangeTable;
 
 public class EzBytesTreeMapDb implements Db<ByteBuffer> {
-	private final Map<String, RangeTable<?, ?, ?>> cache;
+	private final Map<String, Table<?, ?>> cache;
 
 	public EzBytesTreeMapDb() {
-		this.cache = new HashMap<String, RangeTable<?, ?, ?>>();
+		this.cache = new HashMap<String, Table<?, ?>>();
 	}
 
 	@Override
@@ -26,28 +27,45 @@ public class EzBytesTreeMapDb implements Db<ByteBuffer> {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <H, V> Table<H, V> getTable(final String tableName, final Serde<H> hashKeySerde, final Serde<V> valueSerde) {
-		return getTable(tableName, hashKeySerde, ByteSerde.get, valueSerde);
+		return getTable(tableName, hashKeySerde, valueSerde, new LexicographicalComparator());
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <H, V> Table<H, V> getTable(final String tableName, final Serde<H> hashKeySerde, final Serde<V> valueSerde,
+			final Comparator<ByteBuffer> hashKeyComparator) {
+		synchronized (cache) {
+			Table<?, ?> table = cache.get(tableName);
+
+			if (table == null) {
+				table = newTable(hashKeySerde, valueSerde, hashKeyComparator);
+				cache.put(tableName, table);
+			}
+
+			return (Table<H, V>) table;
+		}
 	}
 
 	@Override
-	public <H, R, V> RangeTable<H, R, V> getTable(final String tableName, final Serde<H> hashKeySerde,
+	public <H, R, V> RangeTable<H, R, V> getRangeTable(final String tableName, final Serde<H> hashKeySerde,
 			final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
-		return getTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator(),
+		return getRangeTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator(),
 				new LexicographicalComparator());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <H, R, V> RangeTable<H, R, V> getTable(final String tableName, final Serde<H> hashKeySerde,
+	public <H, R, V> RangeTable<H, R, V> getRangeTable(final String tableName, final Serde<H> hashKeySerde,
 			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuffer> hashKeyComparator,
 			final Comparator<ByteBuffer> rangeKeyComparator) {
 		synchronized (cache) {
-			RangeTable<?, ?, ?> table = cache.get(tableName);
+			RangeTable<?, ?, ?> table = (RangeTable<?, ?, ?>) cache.get(tableName);
 
 			if (table == null) {
-				table = newTable(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
+				table = newRangeTable(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
 				cache.put(tableName, table);
 			}
 
@@ -55,11 +73,16 @@ public class EzBytesTreeMapDb implements Db<ByteBuffer> {
 		}
 	}
 
-	protected <V, H, R> BytesTreeMapTable<H, R, V> newTable(final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
-			final Serde<V> valueSerde, final Comparator<ByteBuffer> hashKeyComparator,
+	protected <H, R, V> BytesTreeMapRangeTable<H, R, V> newRangeTable(final Serde<H> hashKeySerde,
+			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuffer> hashKeyComparator,
 			final Comparator<ByteBuffer> rangeKeyComparator) {
-		return new BytesTreeMapTable<H, R, V>(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator,
+		return new BytesTreeMapRangeTable<H, R, V>(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator,
 				rangeKeyComparator);
+	}
+
+	protected <H, V> BytesTreeMapTable<H, V> newTable(final Serde<H> hashKeySerde, final Serde<V> valueSerde,
+			final Comparator<ByteBuffer> hashKeyComparator) {
+		return new BytesTreeMapTable<H, V>(hashKeySerde, valueSerde, hashKeyComparator);
 	}
 
 }

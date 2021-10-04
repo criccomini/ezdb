@@ -11,11 +11,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ezdb.Db;
-import ezdb.RangeTable;
-import ezdb.TableIterator;
 import ezdb.comparator.ComparableComparator;
 import ezdb.serde.IntegerSerde;
-import ezdb.treemap.object.ObjectTreeMapTable;
+import ezdb.table.RangeTableRow;
+import ezdb.table.range.RangeTable;
+import ezdb.treemap.object.table.range.ObjectTreeMapRangeTable;
+import ezdb.util.TableIterator;
 
 /**
  * This is a little test that mostly just compares random behavior between a
@@ -74,10 +75,10 @@ public class TestEzLsmtTreeDbJniTorture {
 		@Override
 		public void run() {
 			final Random rand = new Random();
-			final RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, IntegerSerde.get,
+			final RangeTable<Integer, Integer, Integer> table = db.getRangeTable(tableName, IntegerSerde.get,
 					IntegerSerde.get, IntegerSerde.get);
 			final Comparator<Integer> integerComparator = ComparableComparator.get();
-			final RangeTable<Integer, Integer, Integer> mockTable = new ObjectTreeMapTable<Integer, Integer, Integer>(
+			final RangeTable<Integer, Integer, Integer> mockTable = new ObjectTreeMapRangeTable<Integer, Integer, Integer>(
 					integerComparator, integerComparator);
 			final long tables = 0;
 			long deletes = 0, writes = 0, reads = 0, rangeH = 0, rangeHF = 0, rangeHFT = 0;
@@ -107,8 +108,8 @@ public class TestEzLsmtTreeDbJniTorture {
 				} else if (pick < 0.70) {
 					// 10% of the time range(h)
 					final int hash = rand.nextInt(500) + offset;
-					final TableIterator<Integer, Integer, Integer> iterator = table.range(hash);
-					final TableIterator<Integer, Integer, Integer> mockIterator = table.range(hash);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> iterator = table.range(hash);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> mockIterator = table.range(hash);
 
 					while (iterator.hasNext() && mockIterator.hasNext()) {
 						assertEquals(mockIterator.next(), iterator.next());
@@ -123,8 +124,9 @@ public class TestEzLsmtTreeDbJniTorture {
 					// 10% of the time range(h, f)
 					final int hash = rand.nextInt(500) + offset;
 					final int from = rand.nextInt(500);
-					final TableIterator<Integer, Integer, Integer> iterator = table.range(hash, from);
-					final TableIterator<Integer, Integer, Integer> mockIterator = table.range(hash, from);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> iterator = table.range(hash, from);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> mockIterator = table.range(hash,
+							from);
 
 					while (iterator.hasNext() && mockIterator.hasNext()) {
 						assertEquals(mockIterator.next(), iterator.next());
@@ -140,8 +142,10 @@ public class TestEzLsmtTreeDbJniTorture {
 					final int hash = rand.nextInt(500) + offset;
 					final int from = rand.nextInt(500);
 					final int to = rand.nextInt(500);
-					final TableIterator<Integer, Integer, Integer> iterator = table.range(hash, from, to);
-					final TableIterator<Integer, Integer, Integer> mockIterator = table.range(hash, from, to);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> iterator = table.range(hash, from,
+							to);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> mockIterator = table.range(hash, from,
+							to);
 
 					while (iterator.hasNext() && mockIterator.hasNext()) {
 						assertEquals(mockIterator.next(), iterator.next());

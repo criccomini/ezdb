@@ -36,26 +36,24 @@ import java.util.NoSuchElementException;
 import org.iq80.leveldb.iterator.ExtendedDBIteratorAdapter;
 import org.iq80.leveldb.util.Slice;
 
-import ezdb.RawTableRow;
 import ezdb.serde.Serde;
+import ezdb.table.RawTableRow;
 
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class EzLevelDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
+public class EzLevelDBIterator<H, V> implements EzDBIterator<H, V> {
 
 	private final ExtendedDBIteratorAdapter iterator;
 	private final Serde<H> hashKeySerde;
-	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
 	private boolean valid = false;
 
 	public EzLevelDBIterator(final ExtendedDBIteratorAdapter iterator, final Serde<H> hashKeySerde,
-			final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
+			final Serde<V> valueSerde) {
 		this.iterator = iterator;
 		this.hashKeySerde = hashKeySerde;
-		this.rangeKeySerde = rangeKeySerde;
 		this.valueSerde = valueSerde;
 	}
 
@@ -92,11 +90,11 @@ public class EzLevelDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> peekNext() {
+	public RawTableRow<H, V> peekNext() {
 		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		return Slices.newRawTableRow(iterator.getKey(), iterator.getValue(), hashKeySerde, rangeKeySerde, valueSerde);
+		return Slices.newRawTableRow(iterator.getKey(), iterator.getValue(), hashKeySerde, valueSerde);
 	}
 
 	@Override
@@ -105,8 +103,8 @@ public class EzLevelDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> next() {
-		final RawTableRow<H, R, V> rc = peekNext();
+	public RawTableRow<H, V> next() {
+		final RawTableRow<H, V> rc = peekNext();
 		valid = iterator.next();
 		return rc;
 	}
@@ -136,7 +134,7 @@ public class EzLevelDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> peekPrev() {
+	public RawTableRow<H, V> peekPrev() {
 		valid = iterator.prev();
 		try {
 			return peekNext();
@@ -150,8 +148,8 @@ public class EzLevelDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> prev() {
-		final RawTableRow<H, R, V> rc = peekPrev();
+	public RawTableRow<H, V> prev() {
+		final RawTableRow<H, V> rc = peekPrev();
 		valid = iterator.prev();
 		return rc;
 	}

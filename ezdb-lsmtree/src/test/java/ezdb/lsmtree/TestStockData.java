@@ -19,13 +19,13 @@ import org.junit.Test;
 import com.google.common.io.CharStreams;
 
 import ezdb.Db;
-import ezdb.RangeTable;
-import ezdb.TableIterator;
-import ezdb.TableRow;
 import ezdb.comparator.ComparableComparator;
 import ezdb.serde.DateSerde;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.StringSerde;
+import ezdb.table.RangeTableRow;
+import ezdb.table.range.RangeTable;
+import ezdb.util.TableIterator;
 import junit.framework.Assert;
 
 public class TestStockData {
@@ -43,7 +43,7 @@ public class TestStockData {
 		ROOT.mkdirs();
 		ezdb = new EzLsmTreeDb(ROOT, newFactory());
 		ezdb.deleteTable("test");
-		table = ezdb.getTable("test", StringSerde.get, DateSerde.get, IntegerSerde.get, ComparableComparator.get(),
+		table = ezdb.getRangeTable("test", StringSerde.get, DateSerde.get, IntegerSerde.get, ComparableComparator.get(),
 				ComparableComparator.get());
 	}
 
@@ -96,10 +96,11 @@ public class TestStockData {
 		assertIteration(countDates, firstDate, lastDate);
 
 //		Fri Jan 24 23:46:40 UTC 2014
-		TableIterator<String, Date, Integer> range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime());
+		TableIterator<RangeTableRow<String, Date, Integer>> range = table.range(MSFT,
+				new GregorianCalendar(2014, 0, 23).getTime());
 		int countBars = 0;
 		while (range.hasNext()) {
-			final TableRow<String, Date, Integer> next = range.next();
+			final RangeTableRow<String, Date, Integer> next = range.next();
 //			System.out.println(next.getValue());
 			countBars++;
 		}
@@ -109,7 +110,7 @@ public class TestStockData {
 		range = table.range(MSFT, new GregorianCalendar(2014, 0, 23).getTime(), null);
 		countBars = 0;
 		while (range.hasNext()) {
-			final TableRow<String, Date, Integer> next = range.next();
+			final RangeTableRow<String, Date, Integer> next = range.next();
 //			System.out.println(next.getValue());
 			countBars++;
 		}
@@ -119,7 +120,7 @@ public class TestStockData {
 		range = table.range(MSFT, null, new GregorianCalendar(1987, 0, 1).getTime());
 		countBars = 0;
 		while (range.hasNext()) {
-			final TableRow<String, Date, Integer> next = range.next();
+			final RangeTableRow<String, Date, Integer> next = range.next();
 //			System.out.println(next.getValue());
 			countBars++;
 		}
@@ -128,13 +129,13 @@ public class TestStockData {
 	}
 
 	private void assertIteration(final int countDates, final Date fromDate, final Date toDate) {
-		TableIterator<String, Date, Integer> range = table.range(MSFT, fromDate, toDate);
+		TableIterator<RangeTableRow<String, Date, Integer>> range = table.range(MSFT, fromDate, toDate);
 		int iteratedBars = 0;
 		int prevValue = 0;
 		Date left1000Date = null;
 		Date left900Date = null;
 		while (range.hasNext()) {
-			final TableRow<String, Date, Integer> next = range.next();
+			final RangeTableRow<String, Date, Integer> next = range.next();
 			final Integer value = next.getValue();
 			// System.out.println(value);
 			iteratedBars++;
@@ -157,9 +158,9 @@ public class TestStockData {
 //		System.out.println(left1000Date +" -> "+left900Date);
 		range = table.range(MSFT, left1000Date, left900Date);
 		int curLeftIt = 0;
-		TableRow<String, Date, Integer> prev = null;
+		RangeTableRow<String, Date, Integer> prev = null;
 		while (range.hasNext()) {
-			final TableRow<String, Date, Integer> next = range.next();
+			final RangeTableRow<String, Date, Integer> next = range.next();
 			curLeftIt++;
 			Assert.assertEquals((Integer) (countDates - 1000 + curLeftIt), next.getValue());
 			if (prev != null) {

@@ -4,13 +4,13 @@ import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
-import ezdb.RawTableRow;
+import ezdb.table.RawTableRow;
 
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public interface EzDBIterator<H, R, V> extends Iterator<RawTableRow<H, R, V>>, Closeable {
+public interface EzDBIterator<H, V> extends Iterator<RawTableRow<H, V>>, Closeable {
 
 	/**
 	 * Repositions the iterator so the key of the next BlockElement returned greater
@@ -26,7 +26,7 @@ public interface EzDBIterator<H, R, V> extends Iterator<RawTableRow<H, R, V>>, C
 	/**
 	 * Returns the next element in the iteration, without advancing the iteration.
 	 */
-	public RawTableRow<H, R, V> peekNext();
+	public RawTableRow<H, V> peekNext();
 
 	public ByteBuffer nextKey();
 
@@ -38,13 +38,13 @@ public interface EzDBIterator<H, R, V> extends Iterator<RawTableRow<H, R, V>>, C
 	/**
 	 * @return the previous element in the iteration and rewinds the iteration.
 	 */
-	RawTableRow<H, R, V> prev();
+	RawTableRow<H, V> prev();
 
 	/**
 	 * @return the previous element in the iteration, without rewinding the
 	 *         iteration.
 	 */
-	public RawTableRow<H, R, V> peekPrev();
+	public RawTableRow<H, V> peekPrev();
 
 	/**
 	 * Repositions the iterator so it is at the end of of the Database.

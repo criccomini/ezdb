@@ -6,9 +6,10 @@ import java.util.Map.Entry;
 
 import org.iq80.leveldb.util.Slice;
 
-import ezdb.LazyValueGetter;
-import ezdb.RawTableRow;
 import ezdb.serde.Serde;
+import ezdb.table.RawTableRow;
+import ezdb.table.range.RawRangeTableRow;
+import ezdb.util.LazyValueGetter;
 import io.netty.buffer.ByteBuf;
 
 public class Slices {
@@ -31,8 +32,9 @@ public class Slices {
 		return bytes;
 	}
 
-	public static <H, R, V> RawTableRow<H, R, V> newRawTableRow(final Slice keyBuffer, final Slice valueBuffer,
-			final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
+	public static <H, R, V> RawRangeTableRow<H, R, V> newRawRangeTableRow(final Slice keyBuffer,
+			final Slice valueBuffer, final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
+			final Serde<V> valueSerde) {
 		// extract hashKeyBytes/rangeKeyBytes only if needed
 		final LazyValueGetter<Entry<ByteBuffer, ByteBuffer>> hashKeyBytes_rangeKeyBytes = new LazyValueGetter<Entry<ByteBuffer, ByteBuffer>>() {
 			@Override
@@ -101,7 +103,30 @@ public class Slices {
 				return valueSerde.fromBuffer(valueBytes);
 			}
 		};
-		return new RawTableRow<>(hashKey, rangeKey, value);
+		return new RawRangeTableRow<>(hashKey, rangeKey, value);
+	}
+
+	public static <H, V> RawTableRow<H, V> newRawTableRow(final Slice keyBuffer, final Slice valueBuffer,
+			final Serde<H> hashKeySerde, final Serde<V> valueSerde) {
+		final LazyValueGetter<H> hashKey = new LazyValueGetter<H>() {
+			@Override
+			protected H initialize() {
+				int index = 0;
+				// leveldb stores data in little endian
+				final int hashKeyBytesLength = Integer.reverseBytes(keyBuffer.getInt(index));
+				index += Integer.BYTES;
+				final ByteBuffer hashKeyBytes = unwrapSlice(keyBuffer, index, hashKeyBytesLength);
+				return hashKeySerde.fromBuffer(hashKeyBytes);
+			}
+		};
+		final LazyValueGetter<V> value = new LazyValueGetter<V>() {
+			@Override
+			protected V initialize() {
+				final ByteBuffer valueBytes = unwrap(valueBuffer);
+				return valueSerde.fromBuffer(valueBytes);
+			}
+		};
+		return new RawTableRow<>(hashKey, value);
 	}
 
 	public static int compareKeys(final Comparator<ByteBuffer> hashKeyComparator,
@@ -137,6 +162,22 @@ public class Slices {
 			return rangeKeyComparator.compare(k1RangeKeyBytes, k2RangeKeyBytes);
 		}
 
+		return hashComparison;
+	}
+
+	public static int compareKeys(final Comparator<ByteBuffer> hashKeyComparator, final Slice k1, final Slice k2) {
+		// First hash key
+		final int k1Index = 0;
+		// leveldb stores data in little endian
+		final int k1HashKeyLength = k1.length();
+		final ByteBuffer k1HashKeyBytes = unwrapSlice(k1, k1Index, k1HashKeyLength);
+
+		// Second hash key
+		final int k2Index = 0;
+		final int k2HashKeyLength = k2.length();
+		final ByteBuffer k2HashKeyBytes = unwrapSlice(k2, k2Index, k2HashKeyLength);
+
+		final int hashComparison = hashKeyComparator.compare(k1HashKeyBytes, k2HashKeyBytes);
 		return hashComparison;
 	}
 

@@ -40,32 +40,30 @@ import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
-import ezdb.RawTableRow;
 import ezdb.serde.Serde;
+import ezdb.table.RawTableRow;
 
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class LmDBJnrDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
+public class LmDBJnrDBIterator<H, V> implements EzDBIterator<H, V> {
 
 	private final Env<ByteBuffer> env;
 	private final Dbi<ByteBuffer> dbi;
 	private final Txn<ByteBuffer> txn;
 	private final Cursor<ByteBuffer> cursor;
 	private final Serde<H> hashKeySerde;
-	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
 	private boolean valid = false;
 
 	public LmDBJnrDBIterator(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi, final Serde<H> hashKeySerde,
-			final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
+			final Serde<V> valueSerde) {
 		this.env = env;
 		this.dbi = dbi;
 		this.txn = env.txnRead();
 		this.cursor = dbi.openCursor(txn);
 		this.hashKeySerde = hashKeySerde;
-		this.rangeKeySerde = rangeKeySerde;
 		this.valueSerde = valueSerde;
 	}
 
@@ -102,12 +100,11 @@ public class LmDBJnrDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> peekNext() {
+	public RawTableRow<H, V> peekNext() {
 		if (!valid) {
 			throw new NoSuchElementException();
 		}
-		return RawTableRow.valueOfBuffer(cursor.key().duplicate(), cursor.val().duplicate(), hashKeySerde,
-				rangeKeySerde, valueSerde);
+		return RawTableRow.valueOfBuffer(cursor.key().duplicate(), cursor.val().duplicate(), hashKeySerde, valueSerde);
 	}
 
 	@Override
@@ -116,8 +113,8 @@ public class LmDBJnrDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> next() {
-		final RawTableRow<H, R, V> rc = peekNext();
+	public RawTableRow<H, V> next() {
+		final RawTableRow<H, V> rc = peekNext();
 		valid = cursor.next();
 		return rc;
 	}
@@ -147,7 +144,7 @@ public class LmDBJnrDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> peekPrev() {
+	public RawTableRow<H, V> peekPrev() {
 		valid = cursor.prev();
 		try {
 			return peekNext();
@@ -161,8 +158,8 @@ public class LmDBJnrDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> prev() {
-		final RawTableRow<H, R, V> rc = peekPrev();
+	public RawTableRow<H, V> prev() {
+		final RawTableRow<H, V> rc = peekPrev();
 		valid = cursor.prev();
 		return rc;
 	}

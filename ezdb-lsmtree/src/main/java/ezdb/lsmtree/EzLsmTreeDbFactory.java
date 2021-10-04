@@ -2,11 +2,10 @@ package ezdb.lsmtree;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 
 import com.indeed.lsmtree.core.Store;
 import com.indeed.util.serialization.Serializer;
-
-import ezdb.util.ObjectTableKey;
 
 /**
  * An interface that allows us to inject either a JNI or pure-Java
@@ -18,9 +17,8 @@ import ezdb.util.ObjectTableKey;
  */
 public interface EzLsmTreeDbFactory {
 
-	public <H, R, V> Store<ObjectTableKey<H, R>, V> open(File path,
-			final Serializer<ObjectTableKey<H, R>> keySerializer, final Serializer<V> valueSerializer,
-			EzLsmTreeDbComparator<H, R> comparator) throws IOException;
+	public <K, V> Store<K, V> open(File path, final Serializer<K> keySerializer, final Serializer<V> valueSerializer,
+			Comparator<K> comparator) throws IOException;
 
 	public void destroy(File path) throws IOException;
 }

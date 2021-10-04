@@ -35,25 +35,22 @@ import java.util.NoSuchElementException;
 
 import org.rocksdb.RocksIterator;
 
-import ezdb.RawTableRow;
 import ezdb.serde.Serde;
+import ezdb.table.RawTableRow;
 
 //implementation taken from leveldbjni
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class RocksDBJniDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
+public class RocksDBJniDBIterator<H, V> implements EzDBIterator<H, V> {
 
 	private final RocksIterator iterator;
 	private final Serde<H> hashKeySerde;
-	private final Serde<R> rangeKeySerde;
 	private final Serde<V> valueSerde;
 
-	public RocksDBJniDBIterator(final RocksIterator iterator, final Serde<H> hashKeySerde, final Serde<R> rangeKeySerde,
-			final Serde<V> valueSerde) {
+	public RocksDBJniDBIterator(final RocksIterator iterator, final Serde<H> hashKeySerde, final Serde<V> valueSerde) {
 		this.iterator = iterator;
 		this.hashKeySerde = hashKeySerde;
-		this.rangeKeySerde = rangeKeySerde;
 		this.valueSerde = valueSerde;
 	}
 
@@ -83,11 +80,11 @@ public class RocksDBJniDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> peekNext() {
+	public RawTableRow<H, V> peekNext() {
 		if (!iterator.isValid()) {
 			throw new NoSuchElementException();
 		}
-		return RawTableRow.valueOfBytes(iterator.key(), iterator.value(), hashKeySerde, rangeKeySerde, valueSerde);
+		return RawTableRow.valueOfBytes(iterator.key(), iterator.value(), hashKeySerde, valueSerde);
 	}
 
 	@Override
@@ -104,8 +101,8 @@ public class RocksDBJniDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> next() {
-		final RawTableRow<H, R, V> rc = peekNext();
+	public RawTableRow<H, V> next() {
+		final RawTableRow<H, V> rc = peekNext();
 		iterator.next();
 		return rc;
 	}
@@ -135,7 +132,7 @@ public class RocksDBJniDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> peekPrev() {
+	public RawTableRow<H, V> peekPrev() {
 		iterator.prev();
 		try {
 			return peekNext();
@@ -163,8 +160,8 @@ public class RocksDBJniDBIterator<H, R, V> implements EzDBIterator<H, R, V> {
 	}
 
 	@Override
-	public RawTableRow<H, R, V> prev() {
-		final RawTableRow<H, R, V> rc = peekPrev();
+	public RawTableRow<H, V> prev() {
+		final RawTableRow<H, V> rc = peekPrev();
 		iterator.prev();
 		return rc;
 	}

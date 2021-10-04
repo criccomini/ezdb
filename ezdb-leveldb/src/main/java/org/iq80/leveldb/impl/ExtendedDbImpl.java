@@ -16,7 +16,7 @@ import org.iq80.leveldb.table.ExtendedCustomUserComparator;
 import org.iq80.leveldb.table.UserComparator;
 import org.iq80.leveldb.util.Slice;
 
-import ezdb.leveldb.EzLevelDbJavaComparator;
+import ezdb.leveldb.util.ZeroCopyDBComparator;
 
 @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
 public class ExtendedDbImpl extends ExtensibleDbImpl {
@@ -28,7 +28,7 @@ public class ExtendedDbImpl extends ExtensibleDbImpl {
 
 	@Override
 	protected UserComparator newUserComparator() {
-		final EzLevelDbJavaComparator comparator = (EzLevelDbJavaComparator) options.comparator();
+		final ZeroCopyDBComparator comparator = (ZeroCopyDBComparator) options.comparator();
 		final UserComparator userComparator;
 		if (comparator != null) {
 			return new ExtendedCustomUserComparator(comparator);

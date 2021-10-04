@@ -10,9 +10,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ezdb.Db;
-import ezdb.RangeTable;
-import ezdb.TableIterator;
 import ezdb.comparator.ComparableComparator;
+import ezdb.table.RangeTableRow;
+import ezdb.table.range.RangeTable;
+import ezdb.treemap.object.table.range.ObjectTreeMapRangeTable;
+import ezdb.util.TableIterator;
 
 /**
  * This is a little test that mostly just compares random behavior between a
@@ -39,7 +41,7 @@ public class TestEzObjectTreeMapDbJniTorture {
 	@Test
 	public void testTortureEzLevelDb() throws InterruptedException {
 		db.deleteTable(tableName);
-		Thread[] threads = new Thread[NUM_THREADS];
+		final Thread[] threads = new Thread[NUM_THREADS];
 
 		for (int i = 0; i < NUM_THREADS; ++i) {
 			threads[i] = new Thread(new TortureRunnable(i, db));
@@ -52,29 +54,31 @@ public class TestEzObjectTreeMapDbJniTorture {
 	}
 
 	public static class TortureRunnable implements Runnable {
-		private int offset;
-		private Db<Object> db;
+		private final int offset;
+		private final Db<Object> db;
 
-		public TortureRunnable(int threadId, Db<Object> db) {
+		public TortureRunnable(final int threadId, final Db<Object> db) {
 			this.offset = threadId * 1000;
 			this.db = db;
 		}
 
+		@Override
 		public void run() {
-			Random rand = new Random();
-			RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, null, null, null);
-			Comparator<Integer> integerComparator = ComparableComparator.get();
-			RangeTable<Integer, Integer, Integer> mockTable = new ObjectTreeMapTable<Integer, Integer, Integer>(
+			final Random rand = new Random();
+			final RangeTable<Integer, Integer, Integer> table = db.getRangeTable(tableName, null, null, null);
+			final Comparator<Integer> integerComparator = ComparableComparator.get();
+			final RangeTable<Integer, Integer, Integer> mockTable = new ObjectTreeMapRangeTable<Integer, Integer, Integer>(
 					integerComparator, integerComparator);
-			long tables = 0, deletes = 0, writes = 0, reads = 0, rangeH = 0, rangeHF = 0, rangeHFT = 0;
-			long start = System.currentTimeMillis();
+			final long tables = 0;
+			long deletes = 0, writes = 0, reads = 0, rangeH = 0, rangeHF = 0, rangeHFT = 0;
+			final long start = System.currentTimeMillis();
 
 			for (int i = 0; i < ITERATIONS; ++i) {
 				// pick something to do
-				double pick = rand.nextDouble();
-				int hashKey = rand.nextInt(500) + offset;
-				int rangeKey = rand.nextInt(500);
-				int value = rand.nextInt(500);
+				final double pick = rand.nextDouble();
+				final int hashKey = rand.nextInt(500) + offset;
+				final int rangeKey = rand.nextInt(500);
+				final int value = rand.nextInt(500);
 
 				if (pick < 0.1) {
 					// 10% of the time, delete
@@ -92,9 +96,9 @@ public class TestEzObjectTreeMapDbJniTorture {
 					++reads;
 				} else if (pick < 0.70) {
 					// 10% of the time range(h)
-					int hash = rand.nextInt(500) + offset;
-					TableIterator<Integer, Integer, Integer> iterator = table.range(hash);
-					TableIterator<Integer, Integer, Integer> mockIterator = table.range(hash);
+					final int hash = rand.nextInt(500) + offset;
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> iterator = table.range(hash);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> mockIterator = table.range(hash);
 
 					while (iterator.hasNext() && mockIterator.hasNext()) {
 						assertEquals(mockIterator.next(), iterator.next());
@@ -107,10 +111,11 @@ public class TestEzObjectTreeMapDbJniTorture {
 					mockIterator.close();
 				} else if (pick < 0.80) {
 					// 10% of the time range(h, f)
-					int hash = rand.nextInt(500) + offset;
-					int from = rand.nextInt(500);
-					TableIterator<Integer, Integer, Integer> iterator = table.range(hash, from);
-					TableIterator<Integer, Integer, Integer> mockIterator = table.range(hash, from);
+					final int hash = rand.nextInt(500) + offset;
+					final int from = rand.nextInt(500);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> iterator = table.range(hash, from);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> mockIterator = table.range(hash,
+							from);
 
 					while (iterator.hasNext() && mockIterator.hasNext()) {
 						assertEquals(mockIterator.next(), iterator.next());
@@ -123,11 +128,13 @@ public class TestEzObjectTreeMapDbJniTorture {
 					mockIterator.close();
 				} else {
 					// 20% of the time range(h, f, t)
-					int hash = rand.nextInt(500) + offset;
-					int from = rand.nextInt(500);
-					int to = rand.nextInt(500);
-					TableIterator<Integer, Integer, Integer> iterator = table.range(hash, from, to);
-					TableIterator<Integer, Integer, Integer> mockIterator = table.range(hash, from, to);
+					final int hash = rand.nextInt(500) + offset;
+					final int from = rand.nextInt(500);
+					final int to = rand.nextInt(500);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> iterator = table.range(hash, from,
+							to);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> mockIterator = table.range(hash, from,
+							to);
 
 					while (iterator.hasNext() && mockIterator.hasNext()) {
 						assertEquals(mockIterator.next(), iterator.next());
@@ -141,10 +148,10 @@ public class TestEzObjectTreeMapDbJniTorture {
 				}
 			}
 
-			long seconds = (System.currentTimeMillis() - start) / 1000;
+			final long seconds = (System.currentTimeMillis() - start) / 1000;
 
 			if (seconds > 0) {
-				StringBuffer out = new StringBuffer().append("[").append(Thread.currentThread().getName())
+				final StringBuffer out = new StringBuffer().append("[").append(Thread.currentThread().getName())
 						.append("] table creations: ").append(tables / seconds).append("/s, deletes: ")
 						.append(deletes / seconds).append("/s, writes: ").append(writes / seconds).append("/s, reads: ")
 						.append(reads / seconds).append("/s, range(hash): ").append(rangeH / seconds)

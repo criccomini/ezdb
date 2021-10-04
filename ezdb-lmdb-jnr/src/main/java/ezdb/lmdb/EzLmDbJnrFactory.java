@@ -15,8 +15,8 @@ import ezdb.lmdb.util.FileUtils;
 
 public class EzLmDbJnrFactory implements EzLmDbFactory {
 	@Override
-	public Env<ByteBuffer> create(File path, EnvFlags... envFlags) throws IOException {
-		Env<ByteBuffer> env = newEnv().open(path.getAbsoluteFile(), envFlags);
+	public Env<ByteBuffer> create(final File path, final EnvFlags... envFlags) throws IOException {
+		final Env<ByteBuffer> env = newEnv().open(path.getAbsoluteFile(), envFlags);
 		return env;
 	}
 
@@ -29,14 +29,14 @@ public class EzLmDbJnrFactory implements EzLmDbFactory {
 	}
 
 	@Override
-	public Dbi<ByteBuffer> open(String tableName, Env<ByteBuffer> env, EzLmDbComparator comparator,
-			DbiFlags... dbiFlags) throws IOException {
-		Dbi<ByteBuffer> dbi = env.openDbi(tableName, comparator, dbiFlags);
+	public Dbi<ByteBuffer> open(final String tableName, final Env<ByteBuffer> env,
+			final Comparator<ByteBuffer> comparator, final DbiFlags... dbiFlags) throws IOException {
+		final Dbi<ByteBuffer> dbi = env.openDbi(tableName, comparator, dbiFlags);
 		return dbi;
 	}
 
 	@Override
-	public void destroy(File path) throws IOException {
+	public void destroy(final File path) throws IOException {
 		// implementation taken from java port of leveldb
 		FileUtils.deleteRecursively(path);
 	}

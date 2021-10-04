@@ -11,11 +11,12 @@ import org.iq80.leveldb.Options;
 
 import ezdb.Db;
 import ezdb.DbException;
-import ezdb.RangeTable;
-import ezdb.Table;
 import ezdb.comparator.LexicographicalComparator;
-import ezdb.serde.ByteSerde;
+import ezdb.leveldb.table.EzLevelDbTable;
+import ezdb.leveldb.table.range.EzLevelDbRangeTable;
 import ezdb.serde.Serde;
+import ezdb.table.Table;
+import ezdb.table.range.RangeTable;
 
 /**
  * An implementation of Db that uses LevelDb tables to persist data. Each
@@ -27,7 +28,7 @@ import ezdb.serde.Serde;
  */
 public class EzLevelDbJava implements Db<ByteBuffer> {
 	private final File root;
-	private final Map<String, RangeTable<?, ?, ?>> cache;
+	private final Map<String, Table<?, ?>> cache;
 	private final EzLevelDbJavaFactory factory;
 
 	public EzLevelDbJava(final File root) {
@@ -37,7 +38,7 @@ public class EzLevelDbJava implements Db<ByteBuffer> {
 	public EzLevelDbJava(final File root, final EzLevelDbJavaFactory factory) {
 		this.root = root;
 		this.factory = factory;
-		this.cache = new HashMap<String, RangeTable<?, ?, ?>>();
+		this.cache = new HashMap<String, Table<?, ?>>();
 	}
 
 	@Override
@@ -52,29 +53,47 @@ public class EzLevelDbJava implements Db<ByteBuffer> {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <H, V> Table<H, V> getTable(final String tableName, final Serde<H> hashKeySerde, final Serde<V> valueSerde) {
-		return getTable(tableName, hashKeySerde, ByteSerde.get, valueSerde);
+		return getTable(tableName, hashKeySerde, valueSerde, new LexicographicalComparator());
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <H, V> Table<H, V> getTable(final String tableName, final Serde<H> hashKeySerde, final Serde<V> valueSerde,
+			final Comparator<ByteBuffer> hashKeyComparator) {
+		synchronized (cache) {
+			Table<?, ?> table = cache.get(tableName);
+
+			if (table == null) {
+				table = new EzLevelDbTable<H, V>(new File(root, tableName), factory, hashKeySerde, valueSerde,
+						hashKeyComparator);
+				cache.put(tableName, table);
+			}
+
+			return (Table<H, V>) table;
+		}
 	}
 
 	@Override
-	public <H, R, V> RangeTable<H, R, V> getTable(final String tableName, final Serde<H> hashKeySerde,
+	public <H, R, V> RangeTable<H, R, V> getRangeTable(final String tableName, final Serde<H> hashKeySerde,
 			final Serde<R> rangeKeySerde, final Serde<V> valueSerde) {
-		return getTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator(),
+		return getRangeTable(tableName, hashKeySerde, rangeKeySerde, valueSerde, new LexicographicalComparator(),
 				new LexicographicalComparator());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <H, R, V> RangeTable<H, R, V> getTable(final String tableName, final Serde<H> hashKeySerde,
+	public <H, R, V> RangeTable<H, R, V> getRangeTable(final String tableName, final Serde<H> hashKeySerde,
 			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuffer> hashKeyComparator,
 			final Comparator<ByteBuffer> rangeKeyComparator) {
 		synchronized (cache) {
-			RangeTable<?, ?, ?> table = cache.get(tableName);
+			RangeTable<?, ?, ?> table = (RangeTable<?, ?, ?>) cache.get(tableName);
 
 			if (table == null) {
-				table = new EzLevelDbTable<H, R, V>(new File(root, tableName), factory, hashKeySerde, rangeKeySerde,
-						valueSerde, hashKeyComparator, rangeKeyComparator);
+				table = new EzLevelDbRangeTable<H, R, V>(new File(root, tableName), factory, hashKeySerde,
+						rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
 				cache.put(tableName, table);
 			}
 

@@ -1,8 +1,11 @@
 package ezdb;
 
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 import ezdb.serde.Serde;
+import ezdb.table.Table;
+import ezdb.table.range.RangeTable;
 
 /**
  * The Db interface is used to create and delete tables. This is the entry point
@@ -27,6 +30,9 @@ public interface Db<S> {
 	 */
 	public <H, V> Table<H, V> getTable(String tableName, Serde<H> hashKeySerde, Serde<V> valueSerde);
 
+	public <H, V> Table<H, V> getTable(String tableName, Serde<H> hashKeySerde, Serde<V> valueSerde,
+			Comparator<ByteBuffer> hashKeyComparator);
+
 	/**
 	 * Get a hash/range table with the specified name and serdes. If the table does
 	 * not exist, it should be created. If the table exists, it should be returned.
@@ -42,7 +48,7 @@ public interface Db<S> {
 	 * @param valueSerde    The value serializer.
 	 * @return A hash/range table.
 	 */
-	public <H, R, V> RangeTable<H, R, V> getTable(String tableName, Serde<H> hashKeySerde, Serde<R> rangeKeySerde,
+	public <H, R, V> RangeTable<H, R, V> getRangeTable(String tableName, Serde<H> hashKeySerde, Serde<R> rangeKeySerde,
 			Serde<V> valueSerde);
 
 	/**
@@ -64,7 +70,7 @@ public interface Db<S> {
 	 *                           that have the same hash key.
 	 * @return A hash/range table.
 	 */
-	public <H, R, V> RangeTable<H, R, V> getTable(String tableName, Serde<H> hashKeySerde, Serde<R> rangeKeySerde,
+	public <H, R, V> RangeTable<H, R, V> getRangeTable(String tableName, Serde<H> hashKeySerde, Serde<R> rangeKeySerde,
 			Serde<V> valueSerde, Comparator<S> hashKeyComparator, Comparator<S> rangeKeyComparator);
 
 	/**
@@ -73,4 +79,5 @@ public interface Db<S> {
 	 * @param tableName The logical name of the table to delete.
 	 */
 	public void deleteTable(String tableName);
+
 }

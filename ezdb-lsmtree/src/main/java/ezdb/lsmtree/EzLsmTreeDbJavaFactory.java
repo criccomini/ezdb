@@ -2,6 +2,7 @@ package ezdb.lsmtree;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 
 import org.apache.commons.io.FileUtils;
 
@@ -11,8 +12,6 @@ import com.indeed.lsmtree.core.StoreBuilder;
 import com.indeed.util.compress.CompressionCodec;
 import com.indeed.util.compress.SnappyCodec;
 import com.indeed.util.serialization.Serializer;
-
-import ezdb.util.ObjectTableKey;
 
 public class EzLsmTreeDbJavaFactory implements EzLsmTreeDbFactory {
 
@@ -24,8 +23,7 @@ public class EzLsmTreeDbJavaFactory implements EzLsmTreeDbFactory {
 		return new SnappyCodec();
 	}
 
-	protected <H, R, V> StoreBuilder<ObjectTableKey<H, R>, V> configure(
-			final StoreBuilder<ObjectTableKey<H, R>, V> config) {
+	protected <K, V> StoreBuilder<K, V> configure(final StoreBuilder<K, V> config) {
 		return config;
 	}
 
@@ -35,11 +33,10 @@ public class EzLsmTreeDbJavaFactory implements EzLsmTreeDbFactory {
 	}
 
 	@Override
-	public <H, R, V> Store<ObjectTableKey<H, R>, V> open(final File path,
-			final Serializer<ObjectTableKey<H, R>> keySerializer, final Serializer<V> valueSerializer,
-			final EzLsmTreeDbComparator<H, R> comparator) throws IOException {
-		final StoreBuilder<ObjectTableKey<H, R>, V> config = new StoreBuilder<>(path, keySerializer, valueSerializer)
-				.setCodec(newCodec()).setStorageType(newStorageType());
+	public <K, V> Store<K, V> open(final File path, final Serializer<K> keySerializer,
+			final Serializer<V> valueSerializer, final Comparator<K> comparator) throws IOException {
+		final StoreBuilder<K, V> config = new StoreBuilder<>(path, keySerializer, valueSerializer).setCodec(newCodec())
+				.setStorageType(newStorageType());
 		return configure(config).build();
 	}
 

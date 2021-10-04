@@ -10,10 +10,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ezdb.Db;
-import ezdb.RangeTable;
-import ezdb.TableIterator;
 import ezdb.comparator.LexicographicalComparator;
 import ezdb.serde.IntegerSerde;
+import ezdb.table.RangeTableRow;
+import ezdb.table.range.RangeTable;
+import ezdb.treemap.bytes.table.range.BytesTreeMapRangeTable;
+import ezdb.util.TableIterator;
 
 /**
  * This is a little test that mostly just compares random behavior between a
@@ -64,9 +66,9 @@ public class TestEzBytesTreeMapDbJniTorture {
 		@Override
 		public void run() {
 			final Random rand = new Random();
-			final RangeTable<Integer, Integer, Integer> table = db.getTable(tableName, IntegerSerde.get,
+			final RangeTable<Integer, Integer, Integer> table = db.getRangeTable(tableName, IntegerSerde.get,
 					IntegerSerde.get, IntegerSerde.get);
-			final RangeTable<Integer, Integer, Integer> mockTable = new BytesTreeMapTable<Integer, Integer, Integer>(
+			final RangeTable<Integer, Integer, Integer> mockTable = new BytesTreeMapRangeTable<Integer, Integer, Integer>(
 					IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, LexicographicalComparator.get,
 					LexicographicalComparator.get);
 			final long tables = 0;
@@ -97,8 +99,8 @@ public class TestEzBytesTreeMapDbJniTorture {
 				} else if (pick < 0.70) {
 					// 10% of the time range(h)
 					final int hash = rand.nextInt(500) + offset;
-					final TableIterator<Integer, Integer, Integer> iterator = table.range(hash);
-					final TableIterator<Integer, Integer, Integer> mockIterator = table.range(hash);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> iterator = table.range(hash);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> mockIterator = table.range(hash);
 
 					while (iterator.hasNext() && mockIterator.hasNext()) {
 						assertEquals(mockIterator.next(), iterator.next());
@@ -113,8 +115,9 @@ public class TestEzBytesTreeMapDbJniTorture {
 					// 10% of the time range(h, f)
 					final int hash = rand.nextInt(500) + offset;
 					final int from = rand.nextInt(500);
-					final TableIterator<Integer, Integer, Integer> iterator = table.range(hash, from);
-					final TableIterator<Integer, Integer, Integer> mockIterator = table.range(hash, from);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> iterator = table.range(hash, from);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> mockIterator = table.range(hash,
+							from);
 
 					while (iterator.hasNext() && mockIterator.hasNext()) {
 						assertEquals(mockIterator.next(), iterator.next());
@@ -130,8 +133,10 @@ public class TestEzBytesTreeMapDbJniTorture {
 					final int hash = rand.nextInt(500) + offset;
 					final int from = rand.nextInt(500);
 					final int to = rand.nextInt(500);
-					final TableIterator<Integer, Integer, Integer> iterator = table.range(hash, from, to);
-					final TableIterator<Integer, Integer, Integer> mockIterator = table.range(hash, from, to);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> iterator = table.range(hash, from,
+							to);
+					final TableIterator<RangeTableRow<Integer, Integer, Integer>> mockIterator = table.range(hash, from,
+							to);
 
 					while (iterator.hasNext() && mockIterator.hasNext()) {
 						assertEquals(mockIterator.next(), iterator.next());

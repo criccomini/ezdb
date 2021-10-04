@@ -2,7 +2,6 @@ package ezdb.lmdb;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -11,11 +10,13 @@ import javax.annotation.concurrent.NotThreadSafe;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import ezdb.TableRow;
 import ezdb.comparator.LexicographicalComparator;
+import ezdb.lmdb.table.range.EzLmDbRangeTable;
 import ezdb.lmdb.util.FileUtils;
 import ezdb.serde.LongSerde;
 import ezdb.serde.StringSerde;
+import ezdb.table.RangeTableRow;
+import ezdb.util.TableIterator;
 
 @NotThreadSafe
 @Ignore("manual test")
@@ -25,7 +26,7 @@ public class LmdbPerformanceTest extends ADatabasePerformanceTest {
 
 	@Test
 	public void testLevelDbPerformance() {
-		final EzLmDbTable<String, Long, Long> table = new EzLmDbTable(ROOT, new EzLmDbJnrFactory(), StringSerde.get,
+		final EzLmDbRangeTable<String, Long, Long> table = new EzLmDbRangeTable(ROOT, new EzLmDbJnrFactory(), StringSerde.get,
 				LongSerde.get, LongSerde.get, new LexicographicalComparator(), new LexicographicalComparator());
 
 		// RangeBatch<String, FDate, FDate> batch = table.newRangeBatch();
@@ -56,15 +57,15 @@ public class LmdbPerformanceTest extends ADatabasePerformanceTest {
 		readGetLatest(table);
 	}
 
-	private void readIterator(final EzLmDbTable<String, Long, Long> table) {
+	private void readIterator(final EzLmDbRangeTable<String, Long, Long> table) {
 		final long readsStart = System.currentTimeMillis();
 		for (int reads = 1; reads <= READS; reads++) {
 			Long prevValue = null;
-			final Iterator<TableRow<String, Long, Long>> range = table.range(HASH_KEY);
+			final TableIterator<RangeTableRow<String, Long, Long>> range = table.range(HASH_KEY);
 			int count = 0;
 			while (true) {
 				try {
-					final TableRow<String, Long, Long> value = range.next();
+					final RangeTableRow<String, Long, Long> value = range.next();
 //					if (prevValue != null) {
 //						if (prevValue >= value.getValue()) {
 //							throw new IllegalStateException(prevValue + " >= " + value.getValue());
@@ -81,7 +82,7 @@ public class LmdbPerformanceTest extends ADatabasePerformanceTest {
 		printProgress("ReadsFinished", readsStart, VALUES * READS, VALUES * READS);
 	}
 
-	private void readGet(final EzLmDbTable<String, Long, Long> table) {
+	private void readGet(final EzLmDbRangeTable<String, Long, Long> table) {
 		final List<Long> values = newValues();
 		final long readsStart = System.currentTimeMillis();
 		for (int reads = 1; reads <= READS; reads++) {
@@ -112,14 +113,14 @@ public class LmdbPerformanceTest extends ADatabasePerformanceTest {
 		return values;
 	}
 
-	private void readGetLatest(final EzLmDbTable<String, Long, Long> table) {
+	private void readGetLatest(final EzLmDbRangeTable<String, Long, Long> table) {
 		final List<Long> values = newValues();
 		final long readsStart = System.currentTimeMillis();
 		for (int reads = 1; reads <= READS; reads++) {
 			Long prevValue = null;
 			for (int i = 0; i < values.size(); i++) {
 				try {
-					final TableRow<String, Long, Long> value = table.getLatest(HASH_KEY, values.get(i));
+					final RangeTableRow<String, Long, Long> value = table.getLatest(HASH_KEY, values.get(i));
 //					if (prevValue != null) {
 //						if (prevValue >= value.getValue()) {
 //							throw new IllegalStateException(prevValue + " >= " + value.getValue());

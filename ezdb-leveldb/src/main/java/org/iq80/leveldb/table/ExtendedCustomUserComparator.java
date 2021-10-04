@@ -4,12 +4,12 @@ import static java.util.Objects.requireNonNull;
 
 import org.iq80.leveldb.util.Slice;
 
-import ezdb.leveldb.EzLevelDbJavaComparator;
+import ezdb.leveldb.util.ZeroCopyDBComparator;
 
 public class ExtendedCustomUserComparator implements UserComparator {
-	private final EzLevelDbJavaComparator comparator;
+	private final ZeroCopyDBComparator comparator;
 
-	public ExtendedCustomUserComparator(final EzLevelDbJavaComparator comparator) {
+	public ExtendedCustomUserComparator(final ZeroCopyDBComparator comparator) {
 		requireNonNull(comparator.name(), "User Comparator name can't be null");
 		this.comparator = comparator;
 	}

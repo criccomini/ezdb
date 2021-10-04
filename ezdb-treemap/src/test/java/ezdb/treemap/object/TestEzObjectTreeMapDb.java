@@ -15,9 +15,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ezdb.Db;
-import ezdb.RangeTable;
-import ezdb.Table;
-import ezdb.TableIterator;
 import ezdb.comparator.ComparableComparator;
 import ezdb.serde.IntegerSerde;
 import ezdb.serde.Serde;
@@ -25,7 +22,11 @@ import ezdb.serde.SerializingSerde;
 import ezdb.serde.StringSerde;
 import ezdb.serde.VersionedSerde;
 import ezdb.serde.VersionedSerde.Versioned;
-import ezdb.util.ObjectTableRow;
+import ezdb.table.RangeTableRow;
+import ezdb.table.Table;
+import ezdb.table.range.RangeTable;
+import ezdb.util.ObjectRangeTableRow;
+import ezdb.util.TableIterator;
 
 public class TestEzObjectTreeMapDb {
 
@@ -58,13 +59,13 @@ public class TestEzObjectTreeMapDb {
 		// test nulls
 		assertEquals(null, table.get(1));
 		assertEquals(null, table.get(1, 1));
-		final TableIterator<Integer, Integer, Integer> range1 = table.range(1);
+		final TableIterator<RangeTableRow<Integer, Integer, Integer>> range1 = table.range(1);
 		assertTrue(!range1.hasNext());
 		range1.close();
-		final TableIterator<Integer, Integer, Integer> range12 = table.range(1, 2);
+		final TableIterator<RangeTableRow<Integer, Integer, Integer>> range12 = table.range(1, 2);
 		assertTrue(!range12.hasNext());
 		range12.close();
-		final TableIterator<Integer, Integer, Integer> range112 = table.range(1, 1, 2);
+		final TableIterator<RangeTableRow<Integer, Integer, Integer>> range112 = table.range(1, 1, 2);
 		assertTrue(!range112.hasNext());
 		range112.close();
 		table.delete(1);
@@ -93,56 +94,56 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void testRangeH() {
-		TableIterator<Integer, Integer, Integer> it = table.range(1);
+		TableIterator<RangeTableRow<Integer, Integer, Integer>> it = table.range(1);
 		table.put(1, 2);
 		table.put(1, 1, 4);
 		table.put(2, 1, 4);
 		it.close();
 		it = table.range(1);
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}
 
 	@Test
 	public void testRangeH0() {
-		TableIterator<Integer, Integer, Integer> it = table.range(1);
+		TableIterator<RangeTableRow<Integer, Integer, Integer>> it = table.range(1);
 		table.put(11, 2);
 		table.put(11, 1, 4);
 		table.put(21, 1, 4);
 		it.close();
 		it = table.range(11, 0);
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(11, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(11, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}
 
 	@Test
 	public void testRangeReverseH() {
-		TableIterator<Integer, Integer, Integer> it = table.rangeReverse(1);
+		TableIterator<RangeTableRow<Integer, Integer, Integer>> it = table.rangeReverse(1);
 		table.put(11, 2);
 		table.put(11, 1, 4);
 		table.put(21, 1, 4);
 		it.close();
 		it = table.rangeReverse(11);
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(11, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(11, 1, 4), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(11, null, 2), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(11, null, 2), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}
 
 	@Test
 	public void testRangeReverseH0() {
-		TableIterator<Integer, Integer, Integer> it = table.rangeReverse(1);
+		TableIterator<RangeTableRow<Integer, Integer, Integer>> it = table.rangeReverse(1);
 		table.put(11, 2);
 		table.put(11, 1, 4);
 		table.put(21, 1, 4);
 		it.close();
 		it = table.rangeReverse(11, 0);
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(11, null, 2), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(11, null, 2), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}
@@ -151,34 +152,34 @@ public class TestEzObjectTreeMapDb {
 	public void testRangeHR() {
 		table.put(1, 2);
 		table.put(1, 1, 4);
-		TableIterator<Integer, Integer, Integer> it = table.range(1, null);
+		TableIterator<RangeTableRow<Integer, Integer, Integer>> it = table.range(1, null);
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		it = table.range(1, 1);
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		table.put(1, 2, 5);
 		table.put(2, 2, 5);
 		it.close();
 		it = table.range(1, 1);
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 2, 5), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 2, 5), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		it = table.range(1, null);
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 2, 5), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 2, 5), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}
@@ -187,27 +188,27 @@ public class TestEzObjectTreeMapDb {
 	public void testRangeHRR() {
 		table.put(1, 2);
 		table.put(1, 1, 4);
-		TableIterator<Integer, Integer, Integer> it = table.range(1, null, 2);
+		TableIterator<RangeTableRow<Integer, Integer, Integer>> it = table.range(1, null, 2);
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, null, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		it = table.range(1, 1, 2);
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(!it.hasNext());
 		table.put(1, 2, 5);
 		table.put(1, 3, 5);
 		it.close();
 		it = table.range(1, 1, 3);
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 1, 4), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 2, 5), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 2, 5), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 3, 5), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 3, 5), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 	}
@@ -234,7 +235,7 @@ public class TestEzObjectTreeMapDb {
 	@Test
 	public void testSortedStrings() {
 		ezdb.deleteTable("test-range-strings");
-		final RangeTable<Integer, String, Integer> table = ezdb.getTable("test-range-strings", IntegerSerde.get,
+		final RangeTable<Integer, String, Integer> table = ezdb.getRangeTable("test-range-strings", IntegerSerde.get,
 				StringSerde.get, IntegerSerde.get);
 
 		table.put(1213, "20120102-foo", 1);
@@ -246,12 +247,12 @@ public class TestEzObjectTreeMapDb {
 		table.put(1214, "20120102-bar", 2);
 		table.put(1213, 12345678);
 
-		final TableIterator<Integer, String, Integer> it = table.range(1213, "20120102", "20120103");
+		final TableIterator<RangeTableRow<Integer, String, Integer>> it = table.range(1213, "20120102", "20120103");
 
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, String, Integer>(1213, "20120102-bar", 2), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, String, Integer>(1213, "20120102-bar", 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, String, Integer>(1213, "20120102-foo", 1), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, String, Integer>(1213, "20120102-foo", 1), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		assertEquals(new Integer(12345678), table.get(1213));
@@ -260,7 +261,7 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void testCustomRangeComparator() {
-		final RangeTable<Integer, Integer, Integer> table = ezdb.getTable("test-custom-range-comparator",
+		final RangeTable<Integer, Integer, Integer> table = ezdb.getRangeTable("test-custom-range-comparator",
 				IntegerSerde.get, IntegerSerde.get, IntegerSerde.get, new ComparableComparator(),
 				new ComparableComparator() {
 					@Override
@@ -273,14 +274,14 @@ public class TestEzObjectTreeMapDb {
 		table.put(1, 2, 2);
 		table.put(1, 3, 3);
 
-		final TableIterator<Integer, Integer, Integer> it = table.range(1, 3);
+		final TableIterator<RangeTableRow<Integer, Integer, Integer>> it = table.range(1, 3);
 
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 3, 3), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 3, 3), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 2, 2), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 2, 2), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, Integer, Integer>(1, 1, 1), it.next());
+		assertEquals(new ObjectRangeTableRow<Integer, Integer, Integer>(1, 1, 1), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
 		table.close();
@@ -289,7 +290,7 @@ public class TestEzObjectTreeMapDb {
 	@Test
 	public void testVersionedSortedStrings() {
 		ezdb.deleteTable("test-range-strings");
-		final RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getTable("test-range-strings",
+		final RangeTable<Integer, String, Versioned<Integer>> table = ezdb.getRangeTable("test-range-strings",
 				IntegerSerde.get, StringSerde.get, new VersionedSerde<Integer>(IntegerSerde.get));
 
 		table.put(1213, "20120102-foo", new Versioned<Integer>(1, 0));
@@ -306,13 +307,14 @@ public class TestEzObjectTreeMapDb {
 		assertEquals(new Versioned<Integer>(3, 1), table.get(1213, "20120102-bar"));
 		assertEquals(new Versioned<Integer>(12345678, 0), table.get(1213));
 
-		TableIterator<Integer, String, Versioned<Integer>> it = table.range(1213, "20120102", "20120103");
+		TableIterator<RangeTableRow<Integer, String, Versioned<Integer>>> it = table.range(1213, "20120102",
+				"20120103");
 
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-bar",
+		assertEquals(new ObjectRangeTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-bar",
 				new Versioned<Integer>(3, 1)), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-foo",
+		assertEquals(new ObjectRangeTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-foo",
 				new Versioned<Integer>(1, 0)), it.next());
 		assertTrue(!it.hasNext());
 		it.close();
@@ -322,13 +324,13 @@ public class TestEzObjectTreeMapDb {
 		// keys
 		it = table.range(1213);
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, null,
+		assertEquals(new ObjectRangeTableRow<Integer, String, Versioned<Integer>>(1213, null,
 				new Versioned<Integer>(12345678, 0)), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, "20120101-foo",
+		assertEquals(new ObjectRangeTableRow<Integer, String, Versioned<Integer>>(1213, "20120101-foo",
 				new Versioned<Integer>(3, 0)), it.next());
 		assertTrue(it.hasNext());
-		assertEquals(new ObjectTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-bar",
+		assertEquals(new ObjectRangeTableRow<Integer, String, Versioned<Integer>>(1213, "20120102-bar",
 				new Versioned<Integer>(3, 1)), it.next());
 		// trust that everything works from here on out
 		while (it.hasNext()) {
@@ -342,10 +344,10 @@ public class TestEzObjectTreeMapDb {
 	public void before() {
 		ezdb = new EzObjectTreeMapDb();
 		ezdb.deleteTable("test");
-		table = ezdb.getTable("test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
+		table = ezdb.getRangeTable("test", IntegerSerde.get, IntegerSerde.get, IntegerSerde.get);
 
 		ezdb.deleteTable("testInverseOrder");
-		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
+		reverseRangeTable = ezdb.getRangeTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
 		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
 		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
 		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
@@ -371,8 +373,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range21Reverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDate,
-				oneDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				twoDate, oneDate);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -387,8 +389,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range21ReversePlus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDatePlus,
-				oneDatePlus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				twoDatePlus, oneDatePlus);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -402,8 +404,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range21ReverseMinus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDateMinus,
-				oneDateMinus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				twoDateMinus, oneDateMinus);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -417,8 +419,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range32Reverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, threeDate,
-				twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				threeDate, twoDate);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -433,8 +435,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range32ReversePlus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, threeDatePlus,
-				twoDatePlus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				threeDatePlus, twoDatePlus);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -448,8 +450,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range32ReverseMinus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, threeDateMinus,
-				twoDateMinus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				threeDateMinus, twoDateMinus);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -463,8 +465,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range12Reverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, oneDate,
-				twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				oneDate, twoDate);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -477,8 +479,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range23Reverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDate,
-				threeDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				twoDate, threeDate);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -491,7 +493,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range21() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, twoDate, oneDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, twoDate,
+				oneDate);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -504,7 +507,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range32() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, threeDate, twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				threeDate, twoDate);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -517,7 +521,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range12() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, oneDate, twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, oneDate,
+				twoDate);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -532,8 +537,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range12Plus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, oneDatePlus,
-				twoDatePlus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				oneDatePlus, twoDatePlus);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -547,8 +552,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range12Minus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, oneDateMinus,
-				twoDateMinus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				oneDateMinus, twoDateMinus);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -562,7 +567,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range23() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, twoDate, threeDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, twoDate,
+				threeDate);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -577,8 +583,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range23Plus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, twoDatePlus,
-				threeDatePlus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				twoDatePlus, threeDatePlus);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -592,8 +598,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range23Minus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, twoDateMinus,
-				threeDateMinus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				twoDateMinus, threeDateMinus);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -607,7 +613,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range2Reverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				twoDate);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -622,7 +629,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range2ReversePlus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDatePlus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				twoDatePlus);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -637,7 +645,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range2ReverseMinus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDateMinus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				twoDateMinus);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -651,7 +660,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNoneReverse() {
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE);
 		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
@@ -667,7 +677,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNullReverse() {
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE, null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null);
 		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
@@ -683,8 +694,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNullNullReverse() {
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE, null,
-				null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null, null);
 		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
@@ -700,8 +711,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range2NullReverse() {
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE,
-				twoDate, null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, twoDate, null);
 		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
 		Assert.assertFalse(rangeNoneReverse.hasNext());
@@ -716,8 +727,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNull2Reverse() {
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE, null,
-				twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null, twoDate);
 		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
 		Assert.assertFalse(rangeNoneReverse.hasNext());
@@ -732,8 +743,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMaxNullReverse() {
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE,
-				MAX_DATE, null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, MAX_DATE, null);
 		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
@@ -749,8 +760,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNullMaxReverse() {
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE, null,
-				MAX_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null, MAX_DATE);
 		Assert.assertFalse(rangeNoneReverse.hasNext());
 		try {
 			rangeNoneReverse.next();
@@ -763,8 +774,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMinNullReverse() {
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE,
-				MIN_DATE, null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, MIN_DATE, null);
 		Assert.assertFalse(rangeNoneReverse.hasNext());
 		try {
 			rangeNoneReverse.next();
@@ -777,8 +788,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNullMinReverse() {
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE, null,
-				MIN_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, null, MIN_DATE);
 		Assert.assertEquals(3, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(2, (int) rangeNoneReverse.next().getValue());
 		Assert.assertEquals(1, (int) rangeNoneReverse.next().getValue());
@@ -794,7 +805,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range3Reverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, threeDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				threeDate);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
@@ -810,7 +822,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range3ReversePlus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, threeDatePlus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				threeDatePlus);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
@@ -826,7 +839,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range3ReverseMinus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, threeDateMinus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				threeDateMinus);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -841,7 +855,7 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range2() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, twoDate);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -856,7 +870,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range2Plus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, twoDatePlus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				twoDatePlus);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -870,7 +885,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range2Minus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, twoDateMinus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				twoDateMinus);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -885,7 +901,7 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNone() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -901,7 +917,7 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNull() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, null);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -917,7 +933,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNullNull() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, null, null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, null,
+				null);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -933,7 +950,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range2Null() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, twoDate, null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, twoDate,
+				null);
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -948,7 +966,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNull2() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, null, twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, null,
+				twoDate);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
@@ -963,7 +982,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMaxNull() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, MAX_DATE, null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, MAX_DATE,
+				null);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -976,7 +996,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNullMax() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, null, MAX_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, null,
+				MAX_DATE);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -992,7 +1013,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMinNull() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, MIN_DATE, null);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, MIN_DATE,
+				null);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -1008,7 +1030,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNullMin() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, null, MIN_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, null,
+				MIN_DATE);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -1021,7 +1044,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range3() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, threeDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				threeDate);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -1035,7 +1059,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range3Plus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, threeDatePlus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				threeDatePlus);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -1048,7 +1073,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void range3Minus() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, threeDateMinus);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				threeDateMinus);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertFalse(range.hasNext());
 		try {
@@ -1062,7 +1088,7 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNow() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, now);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, now);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -1078,7 +1104,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeNowReverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, now);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				now);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -1091,7 +1118,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMin() {
-		final TableIterator<String, Date, Integer> rangeMin = reverseRangeTable.range(HASHKEY_ONE, MIN_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeMin = reverseRangeTable.range(HASHKEY_ONE,
+				MIN_DATE);
 		Assert.assertEquals(1, (int) rangeMin.next().getValue());
 		Assert.assertEquals(2, (int) rangeMin.next().getValue());
 		Assert.assertEquals(3, (int) rangeMin.next().getValue());
@@ -1107,7 +1135,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMinMax() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, MIN_DATE, MAX_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, MIN_DATE,
+				MAX_DATE);
 		Assert.assertEquals(1, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(3, (int) range.next().getValue());
@@ -1123,7 +1152,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMaxMin() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, MAX_DATE, MIN_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE, MAX_DATE,
+				MIN_DATE);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -1136,7 +1166,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMinReverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, MIN_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				MIN_DATE);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -1149,8 +1180,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMinMaxReverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, MIN_DATE,
-				MAX_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				MIN_DATE, MAX_DATE);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -1163,8 +1194,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMaxMinReverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, MAX_DATE,
-				MIN_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				MAX_DATE, MIN_DATE);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
@@ -1180,7 +1211,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMaxReverse() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.rangeReverse(HASHKEY_ONE, MAX_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.rangeReverse(HASHKEY_ONE,
+				MAX_DATE);
 		Assert.assertEquals(3, (int) range.next().getValue());
 		Assert.assertEquals(2, (int) range.next().getValue());
 		Assert.assertEquals(1, (int) range.next().getValue());
@@ -1196,7 +1228,8 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void rangeMax() {
-		final TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE, MAX_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE,
+				MAX_DATE);
 		Assert.assertFalse(range.hasNext());
 		try {
 			range.next();
@@ -1339,7 +1372,7 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void deleteRange() {
-		TableIterator<String, Date, Integer> range = reverseRangeTable.range(HASHKEY_ONE);
+		TableIterator<RangeTableRow<String, Date, Integer>> range = reverseRangeTable.range(HASHKEY_ONE);
 		Assert.assertTrue(range.hasNext());
 		range.close();
 		reverseRangeTable.deleteRange(HASHKEY_ONE);
@@ -1368,7 +1401,7 @@ public class TestEzObjectTreeMapDb {
 	public void testVariationsOfDataset012() throws IllegalArgumentException, IllegalAccessException {
 		clearTable();
 
-		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
+		reverseRangeTable = ezdb.getRangeTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
 		reverseRangeTable.put("0", oneDate, -1);
 		reverseRangeTable.put("0", twoDate, -2);
 		reverseRangeTable.put("0", threeDate, -3);
@@ -1386,7 +1419,7 @@ public class TestEzObjectTreeMapDb {
 	public void testVariationsOfDataset01() throws IllegalArgumentException, IllegalAccessException {
 		clearTable();
 
-		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
+		reverseRangeTable = ezdb.getRangeTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
 		reverseRangeTable.put("0", oneDate, -1);
 		reverseRangeTable.put("0", twoDate, -2);
 		reverseRangeTable.put("0", threeDate, -3);
@@ -1401,7 +1434,7 @@ public class TestEzObjectTreeMapDb {
 	public void testVariationsOfDataset12() throws IllegalArgumentException, IllegalAccessException {
 		clearTable();
 
-		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
+		reverseRangeTable = ezdb.getRangeTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
 		reverseRangeTable.put(HASHKEY_ONE, oneDate, 1);
 		reverseRangeTable.put(HASHKEY_ONE, twoDate, 2);
 		reverseRangeTable.put(HASHKEY_ONE, threeDate, 3);
@@ -1416,7 +1449,7 @@ public class TestEzObjectTreeMapDb {
 	public void testVariationsOfDataset210Reverse() throws IllegalArgumentException, IllegalAccessException {
 		clearTable();
 
-		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
+		reverseRangeTable = ezdb.getRangeTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
 		reverseRangeTable.put("2", threeDate, -30);
 		reverseRangeTable.put("2", twoDate, -20);
 		reverseRangeTable.put("2", oneDate, -10);
@@ -1435,7 +1468,7 @@ public class TestEzObjectTreeMapDb {
 			throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		clearTable();
 
-		reverseRangeTable = ezdb.getTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
+		reverseRangeTable = ezdb.getRangeTable("testInverseOrder", hashKeySerde, hashRangeSerde, valueSerde);
 		reverseRangeTable.put("2", oneDate, -10);
 		reverseRangeTable.put("2", twoDate, -20);
 		reverseRangeTable.put("2", threeDate, -30);
@@ -1451,7 +1484,7 @@ public class TestEzObjectTreeMapDb {
 
 	@Test
 	public void testInverseOrder() {
-		final TableIterator<String, Date, Integer> range3 = reverseRangeTable.range(HASHKEY_ONE, now);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range3 = reverseRangeTable.range(HASHKEY_ONE, now);
 		Assert.assertEquals((Integer) 1, range3.next().getValue());
 		Assert.assertEquals((Integer) 2, range3.next().getValue());
 		Assert.assertEquals((Integer) 3, range3.next().getValue());
@@ -1465,7 +1498,7 @@ public class TestEzObjectTreeMapDb {
 		range3.close(); // should already be closed but should not cause an
 						// error when calling again
 
-		final TableIterator<String, Date, Integer> rangeNone = reverseRangeTable.range(HASHKEY_ONE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNone = reverseRangeTable.range(HASHKEY_ONE);
 		Assert.assertEquals((Integer) 1, rangeNone.next().getValue());
 		Assert.assertEquals((Integer) 2, rangeNone.next().getValue());
 		Assert.assertEquals((Integer) 3, rangeNone.next().getValue());
@@ -1478,7 +1511,8 @@ public class TestEzObjectTreeMapDb {
 		}
 		rangeNone.close();
 
-		final TableIterator<String, Date, Integer> rangeMin = reverseRangeTable.range(HASHKEY_ONE, MIN_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeMin = reverseRangeTable.range(HASHKEY_ONE,
+				MIN_DATE);
 		Assert.assertEquals((Integer) 1, rangeMin.next().getValue());
 		Assert.assertEquals((Integer) 2, rangeMin.next().getValue());
 		Assert.assertEquals((Integer) 3, rangeMin.next().getValue());
@@ -1491,7 +1525,8 @@ public class TestEzObjectTreeMapDb {
 		}
 		rangeMin.close();
 
-		final TableIterator<String, Date, Integer> rangeMax = reverseRangeTable.range(HASHKEY_ONE, MAX_DATE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeMax = reverseRangeTable.range(HASHKEY_ONE,
+				MAX_DATE);
 		Assert.assertFalse(rangeMax.hasNext());
 		try {
 			rangeMax.next();
@@ -1501,7 +1536,8 @@ public class TestEzObjectTreeMapDb {
 		}
 		rangeMax.close();
 
-		final TableIterator<String, Date, Integer> range2 = reverseRangeTable.range(HASHKEY_ONE, twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range2 = reverseRangeTable.range(HASHKEY_ONE,
+				twoDate);
 		Assert.assertEquals((Integer) 2, range2.next().getValue());
 		Assert.assertEquals((Integer) 3, range2.next().getValue());
 		Assert.assertFalse(range2.hasNext());
@@ -1534,8 +1570,8 @@ public class TestEzObjectTreeMapDb {
 	}
 
 	private void testReverse() {
-		final TableIterator<String, Date, Integer> range3Reverse = reverseRangeTable.rangeReverse(HASHKEY_ONE,
-				threeDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range3Reverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, threeDate);
 		Assert.assertEquals((Integer) 3, range3Reverse.next().getValue());
 		Assert.assertEquals((Integer) 2, range3Reverse.next().getValue());
 		Assert.assertEquals((Integer) 1, range3Reverse.next().getValue());
@@ -1548,7 +1584,8 @@ public class TestEzObjectTreeMapDb {
 		}
 		range3Reverse.close();
 
-		final TableIterator<String, Date, Integer> rangeNoneReverse = reverseRangeTable.rangeReverse(HASHKEY_ONE);
+		final TableIterator<RangeTableRow<String, Date, Integer>> rangeNoneReverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE);
 		Assert.assertEquals((Integer) 3, rangeNoneReverse.next().getValue());
 		Assert.assertEquals((Integer) 2, rangeNoneReverse.next().getValue());
 		Assert.assertEquals((Integer) 1, rangeNoneReverse.next().getValue());
@@ -1561,7 +1598,8 @@ public class TestEzObjectTreeMapDb {
 		}
 		rangeNoneReverse.close();
 
-		final TableIterator<String, Date, Integer> range2Reverse = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range2Reverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, twoDate);
 		Assert.assertEquals((Integer) 2, range2Reverse.next().getValue());
 		Assert.assertEquals((Integer) 1, range2Reverse.next().getValue());
 		Assert.assertFalse(range2Reverse.hasNext());
@@ -1573,8 +1611,8 @@ public class TestEzObjectTreeMapDb {
 		}
 		range2Reverse.close();
 
-		final TableIterator<String, Date, Integer> range32Reverse = reverseRangeTable.rangeReverse(HASHKEY_ONE,
-				threeDate, twoDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range32Reverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, threeDate, twoDate);
 		Assert.assertEquals((Integer) 3, range32Reverse.next().getValue());
 		Assert.assertEquals((Integer) 2, range32Reverse.next().getValue());
 		Assert.assertFalse(range32Reverse.hasNext());
@@ -1586,8 +1624,8 @@ public class TestEzObjectTreeMapDb {
 		}
 		range32Reverse.close();
 
-		final TableIterator<String, Date, Integer> range21Reverse = reverseRangeTable.rangeReverse(HASHKEY_ONE, twoDate,
-				oneDate);
+		final TableIterator<RangeTableRow<String, Date, Integer>> range21Reverse = reverseRangeTable
+				.rangeReverse(HASHKEY_ONE, twoDate, oneDate);
 		Assert.assertEquals((Integer) 2, range21Reverse.next().getValue());
 		Assert.assertEquals((Integer) 1, range21Reverse.next().getValue());
 		Assert.assertFalse(range21Reverse.hasNext());
