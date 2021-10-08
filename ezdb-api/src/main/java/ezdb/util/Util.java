@@ -71,6 +71,7 @@ public class Util {
 			return;
 		}
 		final int writeIndexBefore = buffer.writerIndex();
+		buffer.ensureWritable(Integer.BYTES);
 		buffer.writerIndex(writeIndexBefore + Integer.BYTES);
 		serde.toBuffer(buffer, value);
 		final int length = buffer.writerIndex() - writeIndexBefore - Integer.BYTES;
