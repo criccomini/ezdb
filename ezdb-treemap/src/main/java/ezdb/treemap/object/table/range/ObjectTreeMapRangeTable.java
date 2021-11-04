@@ -61,7 +61,58 @@ public class ObjectTreeMapRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> range() {
+		final Iterator<Entry<ObjectRangeTableKey<H, R>, V>> iterator = map.entrySet().iterator();
+		return new TableIterator<RangeTableRow<H, R, V>>() {
+			Map.Entry<ObjectRangeTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+
+			@Override
+			public boolean hasNext() {
+				return next != null;
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				RangeTableRow<H, R, V> row = null;
+
+				if (hasNext()) {
+					row = new ObjectRangeTableRow<H, R, V>(next);
+				}
+
+				if (iterator.hasNext()) {
+					next = iterator.next();
+				} else {
+					next = null;
+				}
+
+				if (row != null) {
+					return row;
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				if (next == null) {
+					throw new IllegalStateException("next is null");
+				}
+				map.remove(next.getKey());
+				next();
+			}
+
+			@Override
+			public void close() {
+				next = null;
+			}
+		};
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> range(final H hashKey) {
+		if (hashKey == null) {
+			return range();
+		}
 		final ObjectRangeTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null, keyComparator);
 		final Set<Entry<ObjectRangeTableKey<H, R>, V>> tailMapEntries = map.tailMap(keyBytesFrom, true).entrySet();
 		final Iterator<Entry<ObjectRangeTableKey<H, R>, V>> iterator = tailMapEntries.iterator();
@@ -238,7 +289,58 @@ public class ObjectTreeMapRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> rangeReverse() {
+		final Iterator<Map.Entry<ObjectRangeTableKey<H, R>, V>> iterator = map.descendingMap().entrySet().iterator();
+		return new TableIterator<RangeTableRow<H, R, V>>() {
+			Map.Entry<ObjectRangeTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+
+			@Override
+			public boolean hasNext() {
+				return next != null;
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				RangeTableRow<H, R, V> row = null;
+
+				if (hasNext()) {
+					row = new ObjectRangeTableRow<H, R, V>(next);
+				}
+
+				if (iterator.hasNext()) {
+					next = iterator.next();
+				} else {
+					next = null;
+				}
+
+				if (row != null) {
+					return row;
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				if (next == null) {
+					throw new IllegalStateException("next is null");
+				}
+				map.remove(next.getKey());
+				next();
+			}
+
+			@Override
+			public void close() {
+				next = null;
+			}
+		};
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> rangeReverse(final H hashKey) {
+		if (hashKey == null) {
+			return rangeReverse();
+		}
 		final ObjectRangeTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null, keyComparator);
 		final Set<Entry<ObjectRangeTableKey<H, R>, V>> headMapEntries = map.descendingMap().headMap(keyBytesFrom, true)
 				.entrySet();

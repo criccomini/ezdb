@@ -84,7 +84,58 @@ public class BytesTreeMapRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> range() {
+		final Iterator<Map.Entry<ByteBuffer, ByteBuffer>> iterator = map.entrySet().iterator();
+		return new TableIterator<RangeTableRow<H, R, V>>() {
+			Map.Entry<ByteBuffer, ByteBuffer> next = (iterator.hasNext()) ? iterator.next() : null;
+
+			@Override
+			public boolean hasNext() {
+				return next != null;
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				RangeTableRow<H, R, V> row = null;
+
+				if (hasNext()) {
+					row = RawRangeTableRow.valueOfBuffer(next, hashKeySerde, rangeKeySerde, valueSerde);
+				}
+
+				if (iterator.hasNext()) {
+					next = iterator.next();
+				} else {
+					next = null;
+				}
+
+				if (row != null) {
+					return row;
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				if (next == null) {
+					throw new IllegalStateException("next is null");
+				}
+				map.remove(next.getKey());
+				next();
+			}
+
+			@Override
+			public void close() {
+				next = null;
+			}
+		};
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> range(final H hashKey) {
+		if (hashKey == null) {
+			return range();
+		}
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, null);
 		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();
@@ -282,7 +333,58 @@ public class BytesTreeMapRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> rangeReverse() {
+		final Iterator<Map.Entry<ByteBuffer, ByteBuffer>> iterator = map.descendingMap().entrySet().iterator();
+		return new TableIterator<RangeTableRow<H, R, V>>() {
+			Map.Entry<ByteBuffer, ByteBuffer> next = (iterator.hasNext()) ? iterator.next() : null;
+
+			@Override
+			public boolean hasNext() {
+				return next != null;
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				RangeTableRow<H, R, V> row = null;
+
+				if (hasNext()) {
+					row = RawRangeTableRow.valueOfBuffer(next, hashKeySerde, rangeKeySerde, valueSerde);
+				}
+
+				if (iterator.hasNext()) {
+					next = iterator.next();
+				} else {
+					next = null;
+				}
+
+				if (row != null) {
+					return row;
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				if (next == null) {
+					throw new IllegalStateException("next is null");
+				}
+				map.remove(next.getKey());
+				next();
+			}
+
+			@Override
+			public void close() {
+				next = null;
+			}
+		};
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> rangeReverse(final H hashKey) {
+		if (hashKey == null) {
+			return rangeReverse();
+		}
 		final ByteBuf keyBytesFrom = ByteBufAllocator.DEFAULT.heapBuffer();
 		Util.combineBuf(keyBytesFrom, hashKeySerde, rangeKeySerde, hashKey, null);
 		final ByteBuffer keyBytesFromBuffer = keyBytesFrom.nioBuffer();

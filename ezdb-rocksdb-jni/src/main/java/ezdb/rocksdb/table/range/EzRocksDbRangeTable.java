@@ -89,7 +89,46 @@ public class EzRocksDbRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> range() {
+		final EzDBRangeIterator<H, R, V> iterator = new RocksDBJniRangeDBIterator<H, R, V>(db.newIterator(),
+				hashKeySerde, rangeKeySerde, valueSerde);
+		iterator.seekToFirst();
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<RangeTableRow<H, R, V>>() {
+			@Override
+			public boolean hasNext() {
+				return iterator.hasNext();
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				if (hasNext()) {
+					return iterator.next();
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				iterator.remove();
+			}
+
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> range(final H hashKey) {
+		if (hashKey == null) {
+			return range();
+		}
 		final EzDBRangeIterator<H, R, V> iterator = new RocksDBJniRangeDBIterator<H, R, V>(db.newIterator(),
 				hashKeySerde, rangeKeySerde, valueSerde);
 		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, null);
@@ -210,7 +249,49 @@ public class EzRocksDbRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> rangeReverse() {
+		final EzDBRangeIterator<H, R, V> iterator = new RocksDBJniRangeDBIterator<H, R, V>(db.newIterator(),
+				hashKeySerde, rangeKeySerde, valueSerde);
+		iterator.seekToLast();
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<RangeTableRow<H, R, V>>() {
+
+			private final boolean fixFirst = true;
+
+			@Override
+			public boolean hasNext() {
+				return iterator.hasPrev();
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				if (hasNext()) {
+					return iterator.prev();
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				iterator.remove();
+			}
+
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> rangeReverse(final H hashKey) {
+		if (hashKey == null) {
+			return rangeReverse();
+		}
 		final EzDBRangeIterator<H, R, V> iterator = new RocksDBJniRangeDBIterator<H, R, V>(db.newIterator(),
 				hashKeySerde, rangeKeySerde, valueSerde);
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,

@@ -78,7 +78,45 @@ public class EzLevelDbJniRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> range() {
+		final DBIterator iterator = db.iterator();
+		iterator.seekToFirst();
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<RangeTableRow<H, R, V>>() {
+			@Override
+			public boolean hasNext() {
+				return iterator.hasNext();
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				if (hasNext()) {
+					return RawRangeTableRow.valueOfBytes(iterator.next(), hashKeySerde, rangeKeySerde, valueSerde);
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				iterator.remove();
+			}
+
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> range(final H hashKey) {
+		if (hashKey == null) {
+			return range();
+		}
 		final DBIterator iterator = db.iterator();
 		final ByteBuffer keyBytesFrom = Util.combineBuffer(hashKeySerde, rangeKeySerde, hashKey, null);
 		iterator.seek(keyBytesFrom.array());
@@ -196,7 +234,46 @@ public class EzLevelDbJniRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> rangeReverse() {
+		final DBIterator iterator = db.iterator();
+		iterator.seekToLast();
+		return new AutoClosingTableIterator<H, R, V>(new TableIterator<RangeTableRow<H, R, V>>() {
+
+			@Override
+			public boolean hasNext() {
+				return iterator.hasPrev();
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				if (hasNext()) {
+					return RawRangeTableRow.valueOfBytes(iterator.prev(), hashKeySerde, rangeKeySerde, valueSerde);
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				iterator.remove();
+			}
+
+			@Override
+			public void close() {
+				try {
+					iterator.close();
+				} catch (final Exception e) {
+					throw new DbException(e);
+				}
+			}
+		});
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> rangeReverse(final H hashKey) {
+		if (hashKey == null) {
+			return rangeReverse();
+		}
 		final DBIterator iterator = db.iterator();
 		final CheckKeysFunction<H, R, V> checkKeys = (hashKey1, fromRangeKey, toRangeKey, keyBytesFrom, keyBytesTo,
 				peek) -> Util.compareKeys(hashKeyComparator, null, keyBytesFrom, ByteBuffer.wrap(peek.getKey())) == 0;

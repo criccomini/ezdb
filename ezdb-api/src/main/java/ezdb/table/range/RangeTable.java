@@ -18,9 +18,9 @@ import ezdb.util.TableIterator;
 public interface RangeTable<H, R, V> extends Table<H, V> {
 
 	@Override
-	default TableIterator<RangeTableRow<H, R, V>> range() {
-		return range(null);
-	}
+	TableIterator<RangeTableRow<H, R, V>> range();
+
+	TableIterator<RangeTableRow<H, R, V>> rangeReverse();
 
 	/**
 	 * Put a value into the table, keyed by both the hash and range key. If a row

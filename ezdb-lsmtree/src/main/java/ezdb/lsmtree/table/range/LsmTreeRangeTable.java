@@ -73,15 +73,71 @@ public class LsmTreeRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> range() {
+		final Iterator<Store.Entry<ObjectRangeTableKey<H, R>, V>> iterator;
+		try {
+			iterator = store.iterator();
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+		return new TableIterator<RangeTableRow<H, R, V>>() {
+			private Store.Entry<ObjectRangeTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+
+			@Override
+			public boolean hasNext() {
+				return next != null;
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				RangeTableRow<H, R, V> row = null;
+
+				if (hasNext()) {
+					row = new ObjectRangeTableRow<H, R, V>(next.getKey(), next.getValue());
+				}
+
+				if (iterator.hasNext()) {
+					next = iterator.next();
+				} else {
+					next = null;
+				}
+
+				if (row != null) {
+					return row;
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				if (next == null) {
+					throw new IllegalStateException("next is null");
+				}
+				try {
+					store.delete(next.getKey());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
+				next();
+			}
+
+			@Override
+			public void close() {
+				next = null;
+			}
+		};
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> range(final H hashKey) {
+		if (hashKey == null) {
+			return range();
+		}
 		final ObjectRangeTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null, keyComparator);
 		final Iterator<Store.Entry<ObjectRangeTableKey<H, R>, V>> iterator;
 		try {
-			if (hashKey == null) {
-				iterator = store.iterator();
-			} else {
-				iterator = store.iterator(keyBytesFrom, true);
-			}
+			iterator = store.iterator(keyBytesFrom, true);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -286,19 +342,81 @@ public class LsmTreeRangeTable<H, R, V> implements RangeTable<H, R, V> {
 	}
 
 	@Override
+	public TableIterator<RangeTableRow<H, R, V>> rangeReverse() {
+		final Iterator<Store.Entry<ObjectRangeTableKey<H, R>, V>> iterator;
+		try {
+			iterator = store.reverseIterator();
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+		return new TableIterator<RangeTableRow<H, R, V>>() {
+			private Store.Entry<ObjectRangeTableKey<H, R>, V> next = (iterator.hasNext()) ? iterator.next() : null;
+
+			{
+				while (next != null && iterator.hasNext()) {
+					next = iterator.next();
+				}
+			}
+
+			@Override
+			public boolean hasNext() {
+				return next != null;
+			}
+
+			@Override
+			public RangeTableRow<H, R, V> next() {
+				RangeTableRow<H, R, V> row = null;
+
+				if (hasNext()) {
+					row = new ObjectRangeTableRow<H, R, V>(next.getKey(), next.getValue());
+				}
+
+				if (iterator.hasNext()) {
+					next = iterator.next();
+				} else {
+					next = null;
+				}
+
+				if (row != null) {
+					return row;
+				} else {
+					throw new NoSuchElementException();
+				}
+			}
+
+			@Override
+			public void remove() {
+				if (next == null) {
+					throw new IllegalStateException("next is null");
+				}
+				try {
+					store.delete(next.getKey());
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
+				next();
+			}
+
+			@Override
+			public void close() {
+				next = null;
+			}
+		};
+	}
+
+	@Override
 	public TableIterator<RangeTableRow<H, R, V>> rangeReverse(final H hashKey) {
+		if (hashKey == null) {
+			return rangeReverse();
+		}
 		final ObjectRangeTableKey<H, R> keyBytesFrom = Util.combine(hashKey, null, keyComparator);
 		final Iterator<Store.Entry<ObjectRangeTableKey<H, R>, V>> iterator;
 		try {
-			if (hashKey == null) {
-				iterator = store.reverseIterator();
-			} else {
-				final ObjectRangeTableKey<H, R> seekLast = seekLastFrom(keyBytesFrom);
-				if (seekLast == null) {
-					return EmptyRangeTableIterator.get();
-				}
-				iterator = store.reverseIterator(seekLast, true);
+			final ObjectRangeTableKey<H, R> seekLast = seekLastFrom(keyBytesFrom);
+			if (seekLast == null) {
+				return EmptyRangeTableIterator.get();
 			}
+			iterator = store.reverseIterator(seekLast, true);
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
