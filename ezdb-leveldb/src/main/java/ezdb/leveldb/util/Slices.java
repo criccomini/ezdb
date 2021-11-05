@@ -111,11 +111,7 @@ public class Slices {
 		final LazyValueGetter<H> hashKey = new LazyValueGetter<H>() {
 			@Override
 			protected H initialize() {
-				int index = 0;
-				// leveldb stores data in little endian
-				final int hashKeyBytesLength = Integer.reverseBytes(keyBuffer.getInt(index));
-				index += Integer.BYTES;
-				final ByteBuffer hashKeyBytes = unwrapSlice(keyBuffer, index, hashKeyBytesLength);
+				final ByteBuffer hashKeyBytes = unwrap(keyBuffer);
 				return hashKeySerde.fromBuffer(hashKeyBytes);
 			}
 		};
