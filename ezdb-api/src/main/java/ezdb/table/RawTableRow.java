@@ -6,7 +6,6 @@ import java.util.function.Supplier;
 
 import ezdb.serde.Serde;
 import ezdb.util.LazyValueGetter;
-import ezdb.util.Util;
 import io.netty.buffer.ByteBuf;
 
 public class RawTableRow<H, V> implements TableRow<H, V> {
@@ -29,11 +28,7 @@ public class RawTableRow<H, V> implements TableRow<H, V> {
 		final LazyValueGetter<H> hashKey = new LazyValueGetter<H>() {
 			@Override
 			protected H initialize() {
-				final ByteBuffer compoundKeyBytes = keyBuffer;
-				int index = 0;
-				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
-				index += Integer.BYTES;
-				final ByteBuffer hashKeyBytes = Util.slice(compoundKeyBytes, index, hashKeyBytesLength);
+				final ByteBuffer hashKeyBytes = keyBuffer;
 				hashKeyBytes.clear();
 				return hashKeySerde.fromBuffer(hashKeyBytes);
 			}
@@ -42,6 +37,7 @@ public class RawTableRow<H, V> implements TableRow<H, V> {
 			@Override
 			protected V initialize() {
 				final ByteBuffer valueBytes = valueBuffer;
+				valueBytes.clear();
 				return valueSerde.fromBuffer(valueBytes);
 			}
 		};
@@ -53,11 +49,7 @@ public class RawTableRow<H, V> implements TableRow<H, V> {
 		final LazyValueGetter<H> hashKey = new LazyValueGetter<H>() {
 			@Override
 			protected H initialize() {
-				final ByteBuffer compoundKeyBytes = rawRow.getKey();
-				int index = 0;
-				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
-				index += Integer.BYTES;
-				final ByteBuffer hashKeyBytes = Util.slice(compoundKeyBytes, index, hashKeyBytesLength);
+				final ByteBuffer hashKeyBytes = rawRow.getKey();
 				hashKeyBytes.clear();
 				return hashKeySerde.fromBuffer(hashKeyBytes);
 			}
@@ -79,11 +71,7 @@ public class RawTableRow<H, V> implements TableRow<H, V> {
 		final LazyValueGetter<H> hashKey = new LazyValueGetter<H>() {
 			@Override
 			protected H initialize() {
-				final ByteBuf compoundKeyBytes = keyBuffer;
-				int index = 0;
-				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
-				index += Integer.BYTES;
-				final ByteBuf hashKeyBytes = compoundKeyBytes.slice(index, hashKeyBytesLength);
+				final ByteBuf hashKeyBytes = keyBuffer;
 				hashKeyBytes.resetReaderIndex();
 				return hashKeySerde.fromBuffer(hashKeyBytes);
 			}
@@ -104,11 +92,7 @@ public class RawTableRow<H, V> implements TableRow<H, V> {
 		final LazyValueGetter<H> hashKey = new LazyValueGetter<H>() {
 			@Override
 			protected H initialize() {
-				final ByteBuf compoundKeyBytes = rawRow.getKey();
-				int index = 0;
-				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
-				index += Integer.BYTES;
-				final ByteBuf hashKeyBytes = compoundKeyBytes.slice(index, hashKeyBytesLength);
+				final ByteBuf hashKeyBytes = rawRow.getKey();
 				hashKeyBytes.resetReaderIndex();
 				return hashKeySerde.fromBuffer(hashKeyBytes);
 			}
@@ -130,13 +114,8 @@ public class RawTableRow<H, V> implements TableRow<H, V> {
 		final LazyValueGetter<H> hashKey = new LazyValueGetter<H>() {
 			@Override
 			protected H initialize() {
-				final ByteBuffer compoundKeyBytes = ByteBuffer.wrap(keyBuffer);
-				int index = 0;
-				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
-				index += Integer.BYTES;
-				final ByteBuffer hashKeyBytes = Util.slice(compoundKeyBytes, index, hashKeyBytesLength);
-				hashKeyBytes.clear();
-				return hashKeySerde.fromBuffer(hashKeyBytes);
+				final byte[] hashKeyBytes = keyBuffer;
+				return hashKeySerde.fromBytes(hashKeyBytes);
 			}
 		};
 		final LazyValueGetter<V> value = new LazyValueGetter<V>() {
@@ -155,13 +134,8 @@ public class RawTableRow<H, V> implements TableRow<H, V> {
 		final LazyValueGetter<H> hashKey = new LazyValueGetter<H>() {
 			@Override
 			protected H initialize() {
-				final ByteBuffer compoundKeyBytes = ByteBuffer.wrap(rawRow.getKey());
-				int index = 0;
-				final int hashKeyBytesLength = compoundKeyBytes.getInt(index);
-				index += Integer.BYTES;
-				final ByteBuffer hashKeyBytes = Util.slice(compoundKeyBytes, index, hashKeyBytesLength);
-				hashKeyBytes.clear();
-				return hashKeySerde.fromBuffer(hashKeyBytes);
+				final byte[] hashKeyBytes = rawRow.getKey();
+				return hashKeySerde.fromBytes(hashKeyBytes);
 			}
 		};
 		final LazyValueGetter<V> value = new LazyValueGetter<V>() {
