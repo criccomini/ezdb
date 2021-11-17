@@ -1,13 +1,12 @@
 package ezdb.rocksdb.util;
 
-import com.google.common.base.Preconditions;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Files;
-
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
 
 //implementation taken from leveldbjni
 public class FileUtils

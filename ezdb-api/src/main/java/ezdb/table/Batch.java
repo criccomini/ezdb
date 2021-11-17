@@ -1,9 +1,6 @@
 package ezdb.table;
 
 import java.io.Closeable;
-import java.io.IOException;
-
-import ezdb.util.Util;
 
 public interface Batch<H, V> extends Closeable {
 

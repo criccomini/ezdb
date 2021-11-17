@@ -1,10 +1,6 @@
 package ezdb.table.range;
 
-import java.io.Closeable;
-import java.io.IOException;
-
 import ezdb.table.Batch;
-import ezdb.util.Util;
 
 public interface RangeBatch<H, R, V> extends Batch<H, V> {
 
