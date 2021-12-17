@@ -255,15 +255,32 @@ public class EzRocksDbRangeTable<H, R, V> implements RangeTable<H, R, V> {
 		iterator.seekToLast();
 		return new AutoClosingTableIterator<H, R, V>(new TableIterator<RangeTableRow<H, R, V>>() {
 
-			private final boolean fixFirst = true;
+			private boolean fixFirst = true;
 
 			@Override
 			public boolean hasNext() {
+				if (useFixFirst()) {
+					return true;
+				}
 				return iterator.hasPrev();
+			}
+
+			private boolean useFixFirst() {
+				if (fixFirst && iterator.hasNext()) {
+					final byte[] peekNextKey = iterator.peekNextKey();
+					if (peekNextKey != null) {
+						return true;
+					}
+				}
+				return false;
 			}
 
 			@Override
 			public RangeTableRow<H, R, V> next() {
+				if (useFixFirst()) {
+					fixFirst = false;
+					return iterator.peekNext();
+				}
 				if (hasNext()) {
 					return iterator.prev();
 				} else {
