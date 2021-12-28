@@ -131,6 +131,72 @@
 				<version>1.0.7</version>
 			</dependency>
 			<dependency>
+				<groupId>com.indeed</groupId>
+				<artifactId>util-mmap</artifactId>
+				<version>1.0.36</version>
+				<exclusions>
+					<exclusion>
+						<groupId>log4j</groupId>
+						<artifactId>log4j</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.indeed</groupId>
+				<artifactId>util-io</artifactId>
+				<version>1.0.36</version>
+				<exclusions>
+					<exclusion>
+						<groupId>log4j</groupId>
+						<artifactId>log4j</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.indeed</groupId>
+				<artifactId>util-serialization</artifactId>
+				<version>1.0.36</version>
+				<exclusions>
+					<exclusion>
+						<groupId>log4j</groupId>
+						<artifactId>log4j</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.indeed</groupId>
+				<artifactId>util-core</artifactId>
+				<version>1.0.36</version>
+				<exclusions>
+					<exclusion>
+						<groupId>log4j</groupId>
+						<artifactId>log4j</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.indeed</groupId>
+				<artifactId>util-varexport</artifactId>
+				<version>1.0.36</version>
+				<exclusions>
+					<exclusion>
+						<groupId>log4j</groupId>
+						<artifactId>log4j</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.indeed</groupId>
+				<artifactId>util-compress</artifactId>
+				<version>1.0.36</version>
+				<exclusions>
+					<exclusion>
+						<groupId>log4j</groupId>
+						<artifactId>log4j</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
 				<version>30.1.1-jre</version>
