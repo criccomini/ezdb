@@ -29,7 +29,6 @@ public class ExtendedDbImpl extends ExtensibleDbImpl {
 	@Override
 	protected UserComparator newUserComparator() {
 		final ZeroCopyDBComparator comparator = (ZeroCopyDBComparator) options.comparator();
-		final UserComparator userComparator;
 		if (comparator != null) {
 			return new ExtendedCustomUserComparator(comparator);
 		} else {
