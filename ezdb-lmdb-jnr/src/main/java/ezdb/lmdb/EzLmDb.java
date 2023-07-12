@@ -68,6 +68,9 @@ public class EzLmDb implements Db<ByteBuffer> {
 				table = new EzLmDbTable<H, V>(new File(root, tableName), factory, hashKeySerde, valueSerde,
 						hashKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof EzLmDbTable)) {
+				throw new IllegalStateException("Expected " + EzLmDbTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (Table<H, V>) table;
@@ -93,6 +96,9 @@ public class EzLmDb implements Db<ByteBuffer> {
 				table = new EzLmDbRangeTable<H, R, V>(new File(root, tableName), factory, hashKeySerde, rangeKeySerde,
 						valueSerde, hashKeyComparator, rangeKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof EzLmDbRangeTable)) {
+				throw new IllegalStateException("Expected " + EzLmDbRangeTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (RangeTable<H, R, V>) table;

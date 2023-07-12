@@ -48,7 +48,7 @@ public class EzLsmTreeDb implements Db<Object> {
 		return getTable(tableName, hashKeySerde, valueSerde, new LexicographicalComparator());
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public <H, V> Table<H, V> getTable(final String tableName, final Serde<H> hashKeySerde, final Serde<V> valueSerde,
 			final Comparator<ByteBuffer> hashKeyComparator) {
@@ -58,6 +58,9 @@ public class EzLsmTreeDb implements Db<Object> {
 			if (table == null) {
 				table = newTable(tableName, hashKeySerde, valueSerde, (Comparator) hashKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof LsmTreeTable)) {
+				throw new IllegalStateException("Expected " + LsmTreeTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (Table<H, V>) table;
@@ -83,18 +86,21 @@ public class EzLsmTreeDb implements Db<Object> {
 				table = newRangeTable(tableName, hashKeySerde, rangeKeySerde, valueSerde,
 						(Comparator) hashKeyComparator, (Comparator) rangeKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof LsmTreeRangeTable)) {
+				throw new IllegalStateException("Expected " + LsmTreeRangeTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (RangeTable<H, R, V>) table;
 		}
 	}
 
-	public <H, V> LsmTreeTable<H, V> newTable(final String tableName, final Serde<H> hashKeySerde,
+	private <H, V> LsmTreeTable<H, V> newTable(final String tableName, final Serde<H> hashKeySerde,
 			final Serde<V> valueSerde, final Comparator<H> hashKeyComparator) {
 		return new LsmTreeTable<H, V>(new File(root, tableName), factory, hashKeySerde, valueSerde, hashKeyComparator);
 	}
 
-	public <H, R, V> LsmTreeRangeTable<H, R, V> newRangeTable(final String tableName, final Serde<H> hashKeySerde,
+	private <H, R, V> LsmTreeRangeTable<H, R, V> newRangeTable(final String tableName, final Serde<H> hashKeySerde,
 			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<H> hashKeyComparator,
 			final Comparator<R> rangeKeyComparator) {
 		return new LsmTreeRangeTable<H, R, V>(new File(root, tableName), factory, hashKeySerde, rangeKeySerde,

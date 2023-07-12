@@ -27,7 +27,6 @@ public class EzBytesTreeMapDb implements Db<ByteBuffer> {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public <H, V> Table<H, V> getTable(final String tableName, final Serde<H> hashKeySerde, final Serde<V> valueSerde) {
 		return getTable(tableName, hashKeySerde, valueSerde, new LexicographicalComparator());
@@ -43,6 +42,9 @@ public class EzBytesTreeMapDb implements Db<ByteBuffer> {
 			if (table == null) {
 				table = newTable(hashKeySerde, valueSerde, hashKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof BytesTreeMapTable)) {
+				throw new IllegalStateException("Expected " + BytesTreeMapTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (Table<H, V>) table;
@@ -67,20 +69,23 @@ public class EzBytesTreeMapDb implements Db<ByteBuffer> {
 			if (table == null) {
 				table = newRangeTable(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof BytesTreeMapRangeTable)) {
+				throw new IllegalStateException("Expected " + BytesTreeMapRangeTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (RangeTable<H, R, V>) table;
 		}
 	}
 
-	protected <H, R, V> BytesTreeMapRangeTable<H, R, V> newRangeTable(final Serde<H> hashKeySerde,
+	private <H, R, V> BytesTreeMapRangeTable<H, R, V> newRangeTable(final Serde<H> hashKeySerde,
 			final Serde<R> rangeKeySerde, final Serde<V> valueSerde, final Comparator<ByteBuffer> hashKeyComparator,
 			final Comparator<ByteBuffer> rangeKeyComparator) {
 		return new BytesTreeMapRangeTable<H, R, V>(hashKeySerde, rangeKeySerde, valueSerde, hashKeyComparator,
 				rangeKeyComparator);
 	}
 
-	protected <H, V> BytesTreeMapTable<H, V> newTable(final Serde<H> hashKeySerde, final Serde<V> valueSerde,
+	private <H, V> BytesTreeMapTable<H, V> newTable(final Serde<H> hashKeySerde, final Serde<V> valueSerde,
 			final Comparator<ByteBuffer> hashKeyComparator) {
 		return new BytesTreeMapTable<H, V>(hashKeySerde, valueSerde, hashKeyComparator);
 	}
