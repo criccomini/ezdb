@@ -821,6 +821,9 @@ public class ExtensibleDbImpl implements DB {
 		final WriteBatchInternal w = new WriteBatchInternal(myBatch, options.sync(), mutex.newCondition());
 		mutex.lock();
 		try {
+			if(versions.getCurrent() == null) {
+				return null;
+			}
 			writers.offerLast(w);
 			while (!w.done && writers.peekFirst() != w) {
 				w.backgroundCondition.awaitUninterruptibly();
