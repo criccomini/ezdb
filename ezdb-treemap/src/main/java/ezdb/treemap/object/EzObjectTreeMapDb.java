@@ -44,6 +44,9 @@ public class EzObjectTreeMapDb implements Db<Object> {
 			if (table == null) {
 				table = newTable(hashKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof ObjectTreeMapTable)) {
+				throw new IllegalStateException("Expected " + ObjectTreeMapTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (Table<H, V>) table;
@@ -68,18 +71,21 @@ public class EzObjectTreeMapDb implements Db<Object> {
 			if (table == null) {
 				table = newRangeTable(hashKeyComparator, rangeKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof ObjectTreeMapRangeTable)) {
+				throw new IllegalStateException("Expected " + ObjectTreeMapRangeTable.class.getSimpleName()
+						+ " but got " + table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (RangeTable<H, R, V>) table;
 		}
 	}
 
-	protected <H, R, V> ObjectTreeMapRangeTable<H, R, V> newRangeTable(final Comparator<H> hashKeyComparator,
+	private <H, R, V> ObjectTreeMapRangeTable<H, R, V> newRangeTable(final Comparator<H> hashKeyComparator,
 			final Comparator<R> rangeKeyComparator) {
 		return new ObjectTreeMapRangeTable<H, R, V>(hashKeyComparator, rangeKeyComparator);
 	}
 
-	protected <H, V> ObjectTreeMapTable<H, V> newTable(final Comparator<H> hashKeyComparator) {
+	private <H, V> ObjectTreeMapTable<H, V> newTable(final Comparator<H> hashKeyComparator) {
 		return new ObjectTreeMapTable<H, V>(hashKeyComparator);
 	}
 

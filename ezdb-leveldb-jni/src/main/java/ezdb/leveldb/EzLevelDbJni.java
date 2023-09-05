@@ -69,6 +69,9 @@ public class EzLevelDbJni implements Db<ByteBuffer> {
 				table = new EzLevelDbJniTable<H, V>(new File(root, tableName), factory, hashKeySerde, valueSerde,
 						hashKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof EzLevelDbJniTable)) {
+				throw new IllegalStateException("Expected " + EzLevelDbJniTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (Table<H, V>) table;
@@ -94,6 +97,9 @@ public class EzLevelDbJni implements Db<ByteBuffer> {
 				table = new EzLevelDbJniRangeTable<H, R, V>(new File(root, tableName), factory, hashKeySerde,
 						rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof EzLevelDbJniRangeTable)) {
+				throw new IllegalStateException("Expected " + EzLevelDbJniRangeTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (RangeTable<H, R, V>) table;

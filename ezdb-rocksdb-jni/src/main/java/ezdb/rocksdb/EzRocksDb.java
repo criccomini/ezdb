@@ -70,6 +70,9 @@ public class EzRocksDb implements Db<ByteBuffer> {
 				table = new EzRocksDbTable<H, V>(new File(root, tableName), factory, hashKeySerde, valueSerde,
 						hashKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof EzRocksDbTable)) {
+				throw new IllegalStateException("Expected " + EzRocksDbTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (Table<H, V>) table;
@@ -95,6 +98,9 @@ public class EzRocksDb implements Db<ByteBuffer> {
 				table = new EzRocksDbRangeTable<H, R, V>(new File(root, tableName), factory, hashKeySerde,
 						rangeKeySerde, valueSerde, hashKeyComparator, rangeKeyComparator);
 				cache.put(tableName, table);
+			} else if (!(table instanceof EzRocksDbRangeTable)) {
+				throw new IllegalStateException("Expected " + EzRocksDbRangeTable.class.getSimpleName() + " but got "
+						+ table.getClass().getSimpleName() + " for: " + tableName);
 			}
 
 			return (RangeTable<H, R, V>) table;

@@ -742,6 +742,10 @@ public class ExtensibleDbImpl implements DB {
 			final MemTable memTable = this.memTable;
 			final MemTable immutableMemTable = this.immutableMemTable;
 			final Version current = versions.getCurrent();
+			if(current == null) {
+				//most likely storage was closed
+				return null;
+			}
 			current.retain();
 			ReadStats readStats = null;
 			mutex.unlock();
@@ -817,6 +821,9 @@ public class ExtensibleDbImpl implements DB {
 		final WriteBatchInternal w = new WriteBatchInternal(myBatch, options.sync(), mutex.newCondition());
 		mutex.lock();
 		try {
+			if(versions.getCurrent() == null) {
+				return null;
+			}
 			writers.offerLast(w);
 			while (!w.done && writers.peekFirst() != w) {
 				w.backgroundCondition.awaitUninterruptibly();
@@ -998,6 +1005,11 @@ public class ExtensibleDbImpl implements DB {
 				builder.add(immutableMemTable.iterator());
 			}
 			final Version current = versions.getCurrent();
+			if(current == null) {
+				//most likely the storage got closed
+				return new DbIterator(new MergingIterator(builder.build(), internalKeyComparator), () -> {
+				});
+			}
 			builder.addAll(current.getLevelIterators(options));
 			current.retain();
 			return new DbIterator(new MergingIterator(builder.build(), internalKeyComparator), () -> {
@@ -1022,7 +1034,8 @@ public class ExtensibleDbImpl implements DB {
 	void recordReadSample(final InternalKey key) {
 		mutex.lock();
 		try {
-			if (versions.getCurrent().recordReadSample(key)) {
+			Version current = versions.getCurrent();
+			if (current != null && current.recordReadSample(key)) {
 				maybeScheduleCompaction();
 			}
 		} finally {
