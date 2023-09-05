@@ -29,6 +29,11 @@ import ezdb.util.TableIterator;
  * 
  */
 public class TestEzLsmtTreeDbJniTorture {
+	
+	static {
+		TestInitializer.init();
+	}
+	
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLsmtTreeDbJniTorture.class.getSimpleName());
 
 	public static final int NUM_THREADS = 10;

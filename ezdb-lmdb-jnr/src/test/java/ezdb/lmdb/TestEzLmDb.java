@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -33,6 +34,11 @@ import ezdb.table.range.RawRangeTableRow;
 import ezdb.util.TableIterator;
 
 public class TestEzLmDb {
+	
+	static {
+		TestInitializer.init();
+	}
+	
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLmDb.class.getSimpleName());
 	protected Db<ByteBuffer> ezdb;
 	protected RangeTable<Integer, Integer, Integer> table;

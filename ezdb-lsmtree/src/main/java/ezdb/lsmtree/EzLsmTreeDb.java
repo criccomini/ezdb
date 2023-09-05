@@ -45,13 +45,13 @@ public class EzLsmTreeDb implements Db<Object> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <H, V> Table<H, V> getTable(final String tableName, final Serde<H> hashKeySerde, final Serde<V> valueSerde) {
-		return getTable(tableName, hashKeySerde, valueSerde, new LexicographicalComparator());
+		return getTable(tableName, hashKeySerde, valueSerde, new ComparableComparator());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <H, V> Table<H, V> getTable(final String tableName, final Serde<H> hashKeySerde, final Serde<V> valueSerde,
-			final Comparator<ByteBuffer> hashKeyComparator) {
+			final Comparator<Object> hashKeyComparator) {
 		synchronized (cache) {
 			Table<?, ?> table = cache.get(tableName);
 

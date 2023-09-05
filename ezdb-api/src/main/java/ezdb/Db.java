@@ -31,7 +31,7 @@ public interface Db<S> {
 	public <H, V> Table<H, V> getTable(String tableName, Serde<H> hashKeySerde, Serde<V> valueSerde);
 
 	public <H, V> Table<H, V> getTable(String tableName, Serde<H> hashKeySerde, Serde<V> valueSerde,
-			Comparator<ByteBuffer> hashKeyComparator);
+			Comparator<S> hashKeyComparator);
 
 	/**
 	 * Get a hash/range table with the specified name and serdes. If the table does

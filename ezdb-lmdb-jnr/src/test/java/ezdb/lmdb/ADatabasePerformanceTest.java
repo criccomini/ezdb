@@ -1,6 +1,12 @@
 package ezdb.lmdb;
 
+import java.util.Objects;
+
 public abstract class ADatabasePerformanceTest {
+	
+	static {
+		TestInitializer.init();
+	}
 
 	protected static final int READS = 10;
 	protected static final int VALUES = 1_000_000;

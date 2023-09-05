@@ -30,6 +30,10 @@ import ezdb.util.ObjectRangeTableRow;
 import ezdb.util.TableIterator;
 
 public class TestEzLsmTreeDb {
+	
+	static {
+		TestInitializer.init();
+	}
 
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLsmTreeDb.class.getSimpleName());
 	protected Db<Object> ezdb;

@@ -15,6 +15,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,9 +31,12 @@ import ezdb.serde.StringSerde;
 import ezdb.table.RangeTableRow;
 import ezdb.table.range.RangeTable;
 import ezdb.util.TableIterator;
-import junit.framework.Assert;
 
 public class TestStockData {
+	
+	static {
+		TestInitializer.init();
+	}
 
 	private static final String MSFT = "MSFT";
 	private static final Date MAX_DATE = new GregorianCalendar(5555, 1, 1).getTime();

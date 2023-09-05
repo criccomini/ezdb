@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.Random;
 
 import org.junit.Before;
@@ -29,6 +30,11 @@ import ezdb.util.TableIterator;
  * 
  */
 public class TestEzLmDbJniTorture {
+	
+	static {
+		TestInitializer.init();
+	}
+	
 	public static final int NUM_THREADS = 10;
 	public static final int ITERATIONS = 50000;
 	public static final String tableName = "torture";

@@ -40,6 +40,7 @@ import static org.lmdbjava.SeekOp.MDB_PREV;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 import org.junit.Rule;
@@ -68,6 +69,10 @@ import org.lmdbjava.Txn;
  * supported.
  */
 public final class TutorialTest {
+	
+	static {
+		TestInitializer.init();
+	}
 
 	private static final String DB_NAME = "my DB";
 	@Rule

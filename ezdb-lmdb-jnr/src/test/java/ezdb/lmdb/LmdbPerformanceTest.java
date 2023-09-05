@@ -23,7 +23,7 @@ import ezdb.util.TableIterator;
 public class LmdbPerformanceTest extends ADatabasePerformanceTest {
 
 	protected static final File ROOT = FileUtils.createTempDir(TestEzLmDb.class.getSimpleName());
-
+	
 	@Test
 	public void testLevelDbPerformance() {
 		final EzLmDbRangeTable<String, Long, Long> table = new EzLmDbRangeTable(ROOT, new EzLmDbJnrFactory(), StringSerde.get,
